@@ -160,7 +160,7 @@ namespace usblib_tester
             {
                 return ret;
             }
-            if (data.Length % 64 == 0)
+            if (transferred % 64 == 0)
             {
                 ret = bulk_transfer(device_handle, 0x01, data, 0, out _, 0);
                 if (ret < 0)
@@ -177,7 +177,7 @@ namespace usblib_tester
             var ret = bulk_transfer(device_handle, 0x81, mem, max, out var transferred, 0);
             if (ret < 0)
             {
-                data = Span<byte>.Empty;
+                data = ReadOnlySpan<byte>.Empty;
                 return ret;
             }
             data = new ReadOnlySpan<byte>(mem, 0, transferred);
