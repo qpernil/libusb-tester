@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace usblib_tester
 {
@@ -91,13 +93,13 @@ namespace usblib_tester
         public delegate int libusb_release_interface_t(IntPtr device_handle, int interface_number);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int libusb_bulk_transfer_t(IntPtr device_handle, byte endpoint, IntPtr data, int length, out int actual_length, uint timeout);
+        public delegate int libusb_bulk_transfer_t(IntPtr device_handle, byte endpoint, byte[] data, int length, out int actual_length, uint timeout);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int libusb_control_transfer_t(IntPtr device_handle, byte request_type, byte request, ushort value, ushort index, IntPtr data, ushort length, uint timeout);
+        public delegate int libusb_control_transfer_t(IntPtr device_handle, byte request_type, byte request, ushort value, ushort index, byte[] data, ushort length, uint timeout);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int libusb_get_string_descriptor_ascii_t(IntPtr device_handle, byte desc_index, IntPtr data, int length);
+        public delegate int libusb_get_string_descriptor_ascii_t(IntPtr device_handle, byte desc_index, byte[] data, int length);
 
         public libusb_init_t init;
         public libusb_exit_t exit;
@@ -153,55 +155,88 @@ namespace usblib_tester
 
         public int WriteUsb(IntPtr device_handle, byte[] data)
         {
-            IntPtr mem = Marshal.AllocHGlobal(data.Length);
-            Marshal.Copy(data, 0, mem, data.Length);
-            int ret = bulk_transfer(device_handle, 0x01, mem, data.Length, out var actual_length, 0);
+            var ret = bulk_transfer(device_handle, 0x01, data, data.Length, out var transferred, 0);
             if (ret < 0)
             {
-                Marshal.FreeHGlobal(mem);
                 return ret;
             }
             if (data.Length % 64 == 0)
             {
-                ret = bulk_transfer(device_handle, 0x01, mem, 0, out _, 0);
+                ret = bulk_transfer(device_handle, 0x01, data, 0, out _, 0);
                 if (ret < 0)
                 {
-                    Marshal.FreeHGlobal(mem);
                     return ret;
                 }
             }
-            Marshal.FreeHGlobal(mem);
-            return actual_length;
+            return transferred;
         }
 
-        public int ReadUsb(IntPtr device_handle, out byte[] data, int max = 2048)
+        public int ReadUsb(IntPtr device_handle, out ReadOnlySpan<byte> data, int max = 2048 + 3)
         {
-            IntPtr mem = Marshal.AllocHGlobal(max);
-            int ret = bulk_transfer(device_handle, 0x81, mem, max, out var actual_length, 0);
+            var mem = new byte[max];
+            var ret = bulk_transfer(device_handle, 0x81, mem, max, out var transferred, 0);
             if (ret < 0)
             {
-                Marshal.FreeHGlobal(mem);
-                data = null;
+                data = Span<byte>.Empty;
                 return ret;
             }
-            data = new byte[actual_length];
-            Marshal.Copy(mem, data, 0, actual_length);
-            Marshal.FreeHGlobal(mem);
-            return actual_length;
+            data = new ReadOnlySpan<byte>(mem, 0, transferred);
+            return transferred;
+        }
+
+        public int TransferUsb(IntPtr device_handle, byte cmd, ReadOnlySpan<byte> input, out ReadOnlySpan<byte> output, int max = 2048 + 3)
+        {
+            var mem = new byte[max];
+            var stream = new MemoryStream(mem);
+
+            stream.WriteByte(cmd);
+            stream.WriteByte((byte)(input.Length >> 8));
+            stream.WriteByte((byte)input.Length);
+            stream.Write(input);
+
+            int ret = bulk_transfer(device_handle, 0x01, mem, (int)stream.Position, out var transferred, 0);
+            if (ret < 0)
+            {
+                output = ReadOnlySpan<byte>.Empty;
+                return ret;
+            }
+
+            if (transferred % 64 == 0)
+            {
+                ret = bulk_transfer(device_handle, 0x01, mem, 0, out transferred, 0);
+                if (ret < 0)
+                {
+                    output = ReadOnlySpan<byte>.Empty;
+                    return ret;
+                }
+            }
+
+            ret = bulk_transfer(device_handle, 0x81, mem, max, out transferred, 0);
+            if (ret < 0)
+            {
+                output = ReadOnlySpan<byte>.Empty;
+                return ret;
+            }
+
+            stream.Position = 1;
+            ushort len = (byte)stream.ReadByte();
+            len <<= 8;
+            len |= (byte)stream.ReadByte();
+
+            output = new ReadOnlySpan<byte>(mem, 3, len);
+            return len;
         }
 
         public int GetStringDescriptor(IntPtr device_handle, byte index, out string descriptor, int max = 1024)
         {
-            var mem = Marshal.AllocHGlobal(max);
+            var mem = new byte[max];
             var ret = get_string_descriptor_ascii(device_handle, index, mem, max);
             if (ret < 0)
             {
-                descriptor = null;
-                Marshal.FreeHGlobal(mem);
+                descriptor = string.Empty;
                 return ret;
             }
-            descriptor = Marshal.PtrToStringAnsi(mem, ret);
-            Marshal.FreeHGlobal(mem);
+            descriptor = Encoding.ASCII.GetString(mem, 0, ret);
             return ret;
         }
     }
