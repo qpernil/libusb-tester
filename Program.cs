@@ -19,11 +19,11 @@ namespace usblib_tester
                         //libusb.ref_device(device);
                         //libusb.unref_device(device);
                         Console.WriteLine(libusb.open(device, out var device_handle));
-                        Console.WriteLine(libusb.claim_interface(device_handle, 0));
                         Console.WriteLine(libusb.GetStringDescriptor(device_handle, descriptor.iManufacturer, out var manufacturer));
                         Console.WriteLine(libusb.GetStringDescriptor(device_handle, descriptor.iProduct, out var product));
                         Console.WriteLine(libusb.GetStringDescriptor(device_handle, descriptor.iSerialNumber, out var serial));
                         Console.WriteLine($"Manufacturer {manufacturer} Product {product} Serial {serial}");
+                        Console.WriteLine(libusb.claim_interface(device_handle, 0));
                         Console.WriteLine(libusb.TransferUsb(device_handle, 0x6d, ReadOnlySpan<byte>.Empty, out var pubkey));
                         Console.WriteLine(Convert.ToBase64String(pubkey));
                         Console.WriteLine(libusb.release_interface(device_handle, 0));

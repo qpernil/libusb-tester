@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -187,14 +187,13 @@ namespace usblib_tester
         public int TransferUsb(IntPtr device_handle, byte cmd, ReadOnlySpan<byte> input, out ReadOnlySpan<byte> output, int max = 2048 + 3)
         {
             var mem = new byte[max];
-            var stream = new MemoryStream(mem);
+            var len_span = new Span<byte>(mem, 1, 2);
 
-            stream.WriteByte(cmd);
-            stream.WriteByte((byte)(input.Length >> 8));
-            stream.WriteByte((byte)input.Length);
-            stream.Write(input);
+            mem[0] = cmd;
+            BinaryPrimitives.WriteUInt16BigEndian(len_span, (ushort)input.Length);
+            input.CopyTo(new Span<byte>(mem, 3, max - 3));
 
-            int ret = bulk_transfer(device_handle, 0x01, mem, (int)stream.Position, out var transferred, 0);
+            var ret = bulk_transfer(device_handle, 0x01, mem, 3 + input.Length, out var transferred, 0);
             if (ret < 0)
             {
                 output = ReadOnlySpan<byte>.Empty;
@@ -218,11 +217,7 @@ namespace usblib_tester
                 return ret;
             }
 
-            stream.Position = 1;
-            ushort len = (byte)stream.ReadByte();
-            len <<= 8;
-            len |= (byte)stream.ReadByte();
-
+            var len = BinaryPrimitives.ReadUInt16BigEndian(len_span);
             output = new ReadOnlySpan<byte>(mem, 3, len);
             return len;
         }
