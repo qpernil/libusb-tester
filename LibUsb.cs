@@ -171,32 +171,30 @@ namespace usblib_tester
             return transferred;
         }
 
-        public int ReadUsb(IntPtr device_handle, out ReadOnlySpan<byte> data, int max = 2048 + 3)
+        public int ReadUsb(IntPtr device_handle, out Span<byte> data, int max = 2048 + 3)
         {
             var mem = new byte[max];
             var ret = bulk_transfer(device_handle, 0x81, mem, max, out var transferred, 0);
             if (ret < 0)
             {
-                data = ReadOnlySpan<byte>.Empty;
+                data = Span<byte>.Empty;
                 return ret;
             }
-            data = new ReadOnlySpan<byte>(mem, 0, transferred);
+            data = mem.AsSpan(0, transferred);
             return transferred;
         }
 
-        public int TransferUsb(IntPtr device_handle, byte cmd, ReadOnlySpan<byte> input, out ReadOnlySpan<byte> output, int max = 2048 + 3)
+        public int TransferUsb(IntPtr device_handle, byte cmd, ReadOnlySpan<byte> input, out Span<byte> output, int max = 2048 + 3)
         {
             var mem = new byte[max];
-            var len_span = new Span<byte>(mem, 1, 2);
-
             mem[0] = cmd;
-            BinaryPrimitives.WriteUInt16BigEndian(len_span, (ushort)input.Length);
-            input.CopyTo(new Span<byte>(mem, 3, max - 3));
+            BinaryPrimitives.WriteUInt16BigEndian(mem.AsSpan(1, 2), (ushort)input.Length);
+            input.CopyTo(mem.AsSpan(3, max - 3));
 
             var ret = bulk_transfer(device_handle, 0x01, mem, 3 + input.Length, out var transferred, 0);
             if (ret < 0)
             {
-                output = ReadOnlySpan<byte>.Empty;
+                output = Span<byte>.Empty;
                 return ret;
             }
 
@@ -205,7 +203,7 @@ namespace usblib_tester
                 ret = bulk_transfer(device_handle, 0x01, mem, 0, out transferred, 0);
                 if (ret < 0)
                 {
-                    output = ReadOnlySpan<byte>.Empty;
+                    output = Span<byte>.Empty;
                     return ret;
                 }
             }
@@ -213,12 +211,12 @@ namespace usblib_tester
             ret = bulk_transfer(device_handle, 0x81, mem, max, out transferred, 0);
             if (ret < 0)
             {
-                output = ReadOnlySpan<byte>.Empty;
+                output = Span<byte>.Empty;
                 return ret;
             }
 
-            var len = BinaryPrimitives.ReadUInt16BigEndian(len_span);
-            output = new ReadOnlySpan<byte>(mem, 3, len);
+            var len = BinaryPrimitives.ReadUInt16BigEndian(mem.AsSpan(1, 2));
+            output = mem.AsSpan(3, len);
             return len;
         }
 
