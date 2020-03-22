@@ -66,7 +66,7 @@ namespace usblib_tester
         public delegate void libusb_exit_t(IntPtr ctx);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate long libusb_get_device_list_t(IntPtr ctx, out IntPtr device_list);
+        public delegate int libusb_get_device_list_t(IntPtr ctx, out IntPtr device_list);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void libusb_free_device_list_t(IntPtr device_list, int unref_devices);
