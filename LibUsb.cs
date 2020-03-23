@@ -98,9 +98,6 @@ namespace usblib_tester
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int libusb_control_transfer_t(IntPtr device_handle, byte request_type, byte request, ushort value, ushort index, byte[] data, ushort length, uint timeout);
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int libusb_get_string_descriptor_ascii_t(IntPtr device_handle, byte desc_index, byte[] data, int length);
-
         public libusb_init_t init;
         public libusb_exit_t exit;
         public libusb_get_device_list_t get_device_list;
@@ -114,7 +111,6 @@ namespace usblib_tester
         public libusb_release_interface_t release_interface;
         public libusb_bulk_transfer_t bulk_transfer;
         public libusb_control_transfer_t control_transfer;
-        public libusb_get_string_descriptor_ascii_t get_string_descriptor_ascii;
 
         private IntPtr libusb;
 
@@ -134,7 +130,6 @@ namespace usblib_tester
             release_interface = Marshal.GetDelegateForFunctionPointer<libusb_release_interface_t>(NativeLibrary.GetExport(libusb, "libusb_release_interface"));
             bulk_transfer = Marshal.GetDelegateForFunctionPointer<libusb_bulk_transfer_t>(NativeLibrary.GetExport(libusb, "libusb_bulk_transfer"));
             control_transfer = Marshal.GetDelegateForFunctionPointer<libusb_control_transfer_t>(NativeLibrary.GetExport(libusb, "libusb_control_transfer"));
-            get_string_descriptor_ascii = Marshal.GetDelegateForFunctionPointer<libusb_get_string_descriptor_ascii_t>(NativeLibrary.GetExport(libusb, "libusb_get_string_descriptor_ascii"));
         }
 
         public void Dispose()
@@ -200,7 +195,7 @@ namespace usblib_tester
 
             if (transferred % 64 == 0)
             {
-                ret = bulk_transfer(device_handle, 0x01, mem, 0, out transferred, 0);
+                ret = bulk_transfer(device_handle, 0x01, mem, 0, out _, 0);
                 if (ret < 0)
                 {
                     output = Span<byte>.Empty;
@@ -216,20 +211,20 @@ namespace usblib_tester
             }
 
             var len = BinaryPrimitives.ReadUInt16BigEndian(mem.AsSpan(1, 2));
-            output = mem.AsSpan(3, len);
+            output = mem.AsSpan(0, transferred).Slice(3, len);
             return len;
         }
 
-        public int GetStringDescriptor(IntPtr device_handle, byte index, out string descriptor, int max = 1024)
+        public int GetStringDescriptor(IntPtr device_handle, byte index, ushort langid, out string descriptor, int max = 1024)
         {
             var mem = new byte[max];
-            var ret = get_string_descriptor_ascii(device_handle, index, mem, max);
+            var ret = control_transfer(device_handle, 0x80, 0x06, (ushort)(0x300 | index), langid, mem, (ushort)max, 1000);
             if (ret < 0)
             {
                 descriptor = string.Empty;
                 return ret;
             }
-            descriptor = Encoding.ASCII.GetString(mem, 0, ret);
+            descriptor = Encoding.Unicode.GetString(mem, 2, ret - 2);
             return ret;
         }
     }
