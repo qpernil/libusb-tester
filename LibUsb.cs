@@ -27,6 +27,10 @@ namespace libusb
         {
             return Marshal.GetDelegateForFunctionPointer<T>(GetExport(name));
         }
+        public T GetExport<T>()
+        {
+            return GetExport<T>(typeof(T).Name);
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -144,20 +148,20 @@ namespace libusb
         public LibUsb(string libraryPath = "/usr/local/lib/libusb-1.0.dylib")
         {
             libusb = new SafeNativeLibrary(libraryPath);
-            init = libusb.GetExport<libusb_init>("libusb_init");
-            exit = libusb.GetExport<libusb_exit>("libusb_exit");
-            get_device_list = libusb.GetExport<libusb_get_device_list>("libusb_get_device_list");
-            free_device_list = libusb.GetExport<libusb_free_device_list>("libusb_free_device_list");
-            get_device_descriptor = libusb.GetExport<libusb_get_device_descriptor>("libusb_get_device_descriptor");
-            ref_device = libusb.GetExport<libusb_ref_device>("libusb_ref_device");
-            unref_device = libusb.GetExport<libusb_unref_device>("libusb_unref_device");
-            open = libusb.GetExport<libusb_open>("libusb_open");
-            close = libusb.GetExport<libusb_close>("libusb_close");
-            claim_interface = libusb.GetExport<libusb_claim_interface>("libusb_claim_interface");
-            release_interface = libusb.GetExport<libusb_release_interface>("libusb_release_interface");
-            interrupt_transfer = libusb.GetExport<libusb_interrupt_transfer>("libusb_interrupt_transfer");
-            bulk_transfer = libusb.GetExport<libusb_bulk_transfer>("libusb_bulk_transfer");
-            control_transfer = libusb.GetExport<libusb_control_transfer>("libusb_control_transfer");
+            init = libusb.GetExport<libusb_init>();
+            exit = libusb.GetExport<libusb_exit>();
+            get_device_list = libusb.GetExport<libusb_get_device_list>();
+            free_device_list = libusb.GetExport<libusb_free_device_list>();
+            get_device_descriptor = libusb.GetExport<libusb_get_device_descriptor>();
+            ref_device = libusb.GetExport<libusb_ref_device>();
+            unref_device = libusb.GetExport<libusb_unref_device>();
+            open = libusb.GetExport<libusb_open>();
+            close = libusb.GetExport<libusb_close>();
+            claim_interface = libusb.GetExport<libusb_claim_interface>();
+            release_interface = libusb.GetExport<libusb_release_interface>();
+            interrupt_transfer = libusb.GetExport<libusb_interrupt_transfer>();
+            bulk_transfer = libusb.GetExport<libusb_bulk_transfer>();
+            control_transfer = libusb.GetExport<libusb_control_transfer>();
         }
 
         public IEnumerable<IntPtr> GetUsbDevices(IntPtr ctx)
