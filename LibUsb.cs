@@ -93,6 +93,9 @@ namespace usblib_tester
         public delegate int libusb_release_interface_t(IntPtr device_handle, int interface_number);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int libusb_interrupt_transfer_t(IntPtr device_handle, byte endpoint, byte[] data, int length, out int actual_length, uint timeout);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int libusb_bulk_transfer_t(IntPtr device_handle, byte endpoint, byte[] data, int length, out int actual_length, uint timeout);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -109,6 +112,7 @@ namespace usblib_tester
         public libusb_close_t close;
         public libusb_claim_interface_t claim_interface;
         public libusb_release_interface_t release_interface;
+        public libusb_interrupt_transfer_t interrupt_transfer;
         public libusb_bulk_transfer_t bulk_transfer;
         public libusb_control_transfer_t control_transfer;
 
@@ -128,6 +132,7 @@ namespace usblib_tester
             close = Marshal.GetDelegateForFunctionPointer<libusb_close_t>(NativeLibrary.GetExport(libusb, "libusb_close"));
             claim_interface = Marshal.GetDelegateForFunctionPointer<libusb_claim_interface_t>(NativeLibrary.GetExport(libusb, "libusb_claim_interface"));
             release_interface = Marshal.GetDelegateForFunctionPointer<libusb_release_interface_t>(NativeLibrary.GetExport(libusb, "libusb_release_interface"));
+            interrupt_transfer = Marshal.GetDelegateForFunctionPointer<libusb_interrupt_transfer_t>(NativeLibrary.GetExport(libusb, "libusb_interrupt_transfer"));
             bulk_transfer = Marshal.GetDelegateForFunctionPointer<libusb_bulk_transfer_t>(NativeLibrary.GetExport(libusb, "libusb_bulk_transfer"));
             control_transfer = Marshal.GetDelegateForFunctionPointer<libusb_control_transfer_t>(NativeLibrary.GetExport(libusb, "libusb_control_transfer"));
         }
