@@ -7,7 +7,7 @@ namespace libusb
         static void Main(string[] args)
         {
             var libusb = new LibUsb("/Users/PNilsson/Firmware/YubiCrypt/yubi-ifx-common/sim/yubicrypt/build/libusb-1.0.dylib");
-            libusb.init(out var ctx);
+            Console.WriteLine(libusb.init(out var ctx));
             foreach (var device in libusb.GetUsbDevices(ctx))
             {
                 var descriptor = new device_descriptor();
