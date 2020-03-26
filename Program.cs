@@ -1,9 +1,6 @@
 ﻿using System;
-using System.IO;
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
 
 namespace libusb
@@ -17,10 +14,11 @@ namespace libusb
             var gen = GeneratorUtilities.GetKeyPairGenerator("ECDH");
             gen.Init(new ECKeyGenerationParameters(domain, new SecureRandom()));
             var pair = gen.GenerateKeyPair();
-            var agreement = AgreementUtilities.GetBasicAgreement("ECDH");
-            agreement.Init(pair.Private);
             var pub = (ECPublicKeyParameters)pair.Public;
             var q = pub.Q.GetEncoded();
+
+            var ecdh = AgreementUtilities.GetBasicAgreement("ECDH");
+            ecdh.Init(pair.Private);
 
             var libusb = new LibUsb("/Users/PNilsson/Firmware/YubiCrypt/yubi-ifx-common/sim/yubicrypt/build/libusb-1.0.dylib");
             Console.WriteLine(libusb.init(out var ctx));
@@ -40,13 +38,16 @@ namespace libusb
                     Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
                     Console.WriteLine(libusb.claim_interface(device_handle, 0));
                     Console.WriteLine(libusb.TransferUsb(device_handle, 0x6d, Span<byte>.Empty, out var pubkey));
-                    Console.WriteLine(Convert.ToBase64String(pubkey));
 
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, q, out var shared));
-                    Console.WriteLine(Convert.ToBase64String(shared));
+                    var shared = ecdh.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pubkey.ToArray()), domain)).ToByteArrayUnsigned();
+                    foreach (var b in shared)
+                        Console.Write($"{b:x2}");
+                    Console.WriteLine();
 
-                    var shared2 = agreement.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pubkey.ToArray()), domain)).ToByteArray();
-                    Console.WriteLine(Convert.ToBase64String(shared2));
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, q, out var shared2));
+                    foreach (var b in shared2)
+                        Console.Write($"{b:x2}");
+                    Console.WriteLine();
 
                     Console.WriteLine(libusb.release_interface(device_handle, 0));
                     libusb.close(device_handle);
