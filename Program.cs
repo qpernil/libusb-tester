@@ -1,12 +1,21 @@
 ﻿using System;
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
 
 namespace libusb
 {
-    class Program
+    static class Program
     {
+        static ECPoint DecodePoint(this ECCurve curve, ReadOnlySpan<byte> point)
+        {
+            var bytes = new byte[65];
+            bytes[0] = 4;
+            point.CopyTo(bytes.AsSpan(1));
+            return curve.DecodePoint(bytes);
+        }
+
         static void Main(string[] args)
         {
             var p256 = NistNamedCurves.GetByName("P-256");
@@ -39,12 +48,12 @@ namespace libusb
                     Console.WriteLine(libusb.claim_interface(device_handle, 0));
                     Console.WriteLine(libusb.TransferUsb(device_handle, 0x6d, Span<byte>.Empty, out var pubkey));
 
-                    var shared = ecdh.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pubkey.ToArray()), domain)).ToByteArrayUnsigned();
+                    var shared = ecdh.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pubkey), domain)).ToByteArrayUnsigned();
                     foreach (var b in shared)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, q, out var shared2));
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, q.AsSpan(1), out var shared2));
                     foreach (var b in shared2)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
