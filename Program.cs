@@ -35,7 +35,7 @@ namespace libusb
             {
                 var descriptor = new device_descriptor();
                 Console.WriteLine(libusb.get_device_descriptor(device, ref descriptor));
-                Console.WriteLine($"Vendor {descriptor.idVendor:x} Product {descriptor.idProduct:x}");
+                Console.WriteLine($"Vendor 0x{descriptor.idVendor:x} Product 0x{descriptor.idProduct:x}");
                 if (descriptor.idVendor == 0x1050 && descriptor.idProduct == 0x30)
                 {
                     //libusb.ref_device(device);
