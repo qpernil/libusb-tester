@@ -49,7 +49,7 @@ namespace libusb
         {
             var bytes = ArrayPool<byte>.Shared.Rent(2);
             BinaryPrimitives.WriteUInt16BigEndian(bytes, value);
-            s.Write(bytes);
+            s.Write(bytes, 0, 2);
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
@@ -57,7 +57,7 @@ namespace libusb
         {
             var bytes = ArrayPool<byte>.Shared.Rent(4);
             BinaryPrimitives.WriteUInt32BigEndian(bytes, value);
-            s.Write(bytes);
+            s.Write(bytes, 0, 4);
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
