@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
 using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math.EC;
@@ -62,11 +63,9 @@ namespace libusb
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
-        static byte[] x9_63_kdf(ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, int length)
+        static Span<byte> X963Kdf(IDigest digest, ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, int length)
         {
-            var digest = new Sha256Digest();
             var size = digest.GetDigestSize();
-            var offs = 0;
             var cnt = 0U;
             var ms = new MemoryStream();
             ms.Write(shsee);
@@ -75,15 +74,14 @@ namespace libusb
             var buf = ms.ToArray();
             var cspan = buf.AsSpan(buf.Length - 4);
             var ret = new byte[size * ((length + size - 1) / size)];
-            while (offs < length)
+            for (var offs = 0;  offs < length; offs += size)
             {
                 BinaryPrimitives.WriteUInt32BigEndian(cspan, ++cnt);
                 digest.Reset();
                 digest.BlockUpdate(buf, 0, buf.Length);
                 digest.DoFinal(ret, offs);
-                offs += size;
             }
-            return ret;
+            return ret.AsSpan(0, length);
         }
 
         static void Main(string[] args)
@@ -151,7 +149,7 @@ namespace libusb
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
-                    var shs_oce = x9_63_kdf(shsee, shsss, 5 * 32);
+                    var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 5 * 32);
                     Console.WriteLine("Shs.OCE");
                     foreach (var b in shs_oce)
                         Console.Write($"{b:x2}");
