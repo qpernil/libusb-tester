@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
 using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
@@ -61,6 +62,30 @@ namespace libusb
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
+        static byte[] x9_63_kdf(ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, int length)
+        {
+            var digest = new Sha256Digest();
+            var size = digest.GetDigestSize();
+            var offs = 0;
+            var cnt = 0U;
+            var ms = new MemoryStream();
+            ms.Write(shsee);
+            ms.Write(shsss);
+            ms.Write(cnt);
+            var buf = ms.ToArray();
+            var cspan = buf.AsSpan(buf.Length - 4);
+            var ret = new byte[size * ((length + size - 1) / size)];
+            while (offs < length)
+            {
+                BinaryPrimitives.WriteUInt32BigEndian(cspan, ++cnt);
+                digest.Reset();
+                digest.BlockUpdate(buf, 0, buf.Length);
+                digest.DoFinal(ret, offs);
+                offs += size;
+            }
+            return ret;
+        }
+
         static void Main(string[] args)
         {
             var p256 = NistNamedCurves.GetByName("P-256");
@@ -98,36 +123,37 @@ namespace libusb
                     Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
                     Console.WriteLine(libusb.claim_interface(device_handle, 0));
 
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6d, q.AsSpan(1), out var pubkey));
-                    Console.WriteLine("ShSss from SD");
-                    foreach (var b in pubkey.Slice(0, 32))
-                        Console.Write($"{b:x2}");
-                    Console.WriteLine();
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6d, q.AsSpan(1), out var pk_sd));
                     Console.WriteLine("PK.SD");
-                    foreach (var b in pubkey.Slice(32))
+                    foreach (var b in pk_sd)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
-                    var shared = ecdh.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pubkey.Slice(32)), domain)).ToByteArrayUnsigned();
-                    Console.WriteLine("Shss from OCE");
-                    foreach (var b in shared)
-                        Console.Write($"{b:x2}");
-                    Console.WriteLine();
+                    var shsss = ecdh.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
 
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, q2.AsSpan(1), out var shared2));
-                    Console.WriteLine("ShSee from SD");
-                    foreach (var b in shared2.Slice(0, 32))
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, q2.AsSpan(1), out var ret));
+                    var shs_sd = ret.Slice(0, 5 * 32);
+                    var epk_sd = ret.Slice(5 * 32);
+
+                    Console.WriteLine("ShS.SD");
+                    foreach (var b in shs_sd)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
                     Console.WriteLine("ePK.SD");
-                    foreach (var b in shared2.Slice(32))
+                    foreach (var b in epk_sd)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
-                    shared = ecdh2.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(shared2.Slice(32)), domain)).ToByteArrayUnsigned();
-                    Console.WriteLine("Shee from OCE");
-                    foreach (var b in shared)
+                    var shsee = ecdh2.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
+                    Console.WriteLine("ShSee");
+                    foreach (var b in shsee)
+                        Console.Write($"{b:x2}");
+                    Console.WriteLine();
+
+                    var shs_oce = x9_63_kdf(shsee, shsss, 5 * 32);
+                    Console.WriteLine("Shs.OCE");
+                    foreach (var b in shs_oce)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
