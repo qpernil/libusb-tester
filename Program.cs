@@ -121,7 +121,7 @@ namespace libusb
                     Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
                     Console.WriteLine(libusb.claim_interface(device_handle, 0));
 
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6d, q.AsSpan(1), out var pk_sd));
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, q.AsSpan(1), out var pk_sd));
                     Console.WriteLine("PK.SD");
                     foreach (var b in pk_sd)
                         Console.Write($"{b:x2}");
@@ -129,7 +129,7 @@ namespace libusb
 
                     var shsss = ecdh.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
 
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, q2.AsSpan(1), out var ret));
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6f, q2.AsSpan(1), out var ret));
                     var shs_sd = ret.Slice(0, 5 * 32);
                     var epk_sd = ret.Slice(5 * 32);
 
@@ -144,10 +144,6 @@ namespace libusb
                     Console.WriteLine();
 
                     var shsee = ecdh2.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
-                    Console.WriteLine("ShSee");
-                    foreach (var b in shsee)
-                        Console.Write($"{b:x2}");
-                    Console.WriteLine();
 
                     var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 5 * 32);
                     Console.WriteLine("Shs.OCE");
