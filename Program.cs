@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
+using System.Text;
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -121,17 +122,36 @@ namespace libusb
                     Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
                     Console.WriteLine(libusb.claim_interface(device_handle, 0));
 
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, q.AsSpan(1), out var pk_sd));
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6d, Span<byte>.Empty, out var pk_sd));
+
                     Console.WriteLine("PK.SD");
                     foreach (var b in pk_sd)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
-                    var shsss = ecdh.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
+                    var ms = new MemoryStream();
+                    new PutAuthKeyReq
+                    {
+                        key_id = 2,
+                        algorithm = 48,
+                        label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                        domains = 0xffff,
+                        capabilities2 = 0xffffffff,
+                        capabilities = 0xffffffff,
+                        delegated_caps2 = 0xffffffff,
+                        delegated_caps = 0xffffffff,
+                        key = q.AsSpan(1).ToArray()
+                    }.WriteTo(ms);
 
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6f, q2.AsSpan(1), out var ret));
-                    var shs_sd = ret.Slice(0, 5 * 32);
-                    var epk_sd = ret.Slice(5 * 32);
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, ms.ToArray(), out var ret));
+
+                    ms = new MemoryStream();
+                    ms.Write((ushort)2);
+                    ms.Write(q2.AsSpan(1));
+
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x03, ms.ToArray(), out ret));
+                    var shs_sd = ret.Slice(1, 5 * 32);
+                    var epk_sd = ret.Slice(1 + 5 * 32);
 
                     Console.WriteLine("ShS.SD");
                     foreach (var b in shs_sd)
@@ -143,6 +163,7 @@ namespace libusb
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
+                    var shsss = ecdh.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
                     var shsee = ecdh2.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
 
                     var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 5 * 32);
