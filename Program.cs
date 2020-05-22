@@ -6,6 +6,8 @@ using System.Text;
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
@@ -54,10 +56,15 @@ namespace libusb
     {
         public static ECPoint DecodePoint(this ECCurve curve, ReadOnlySpan<byte> point)
         {
-            var bytes = new byte[65];
+            var bytes = new byte[point.Length + 1];
             bytes[0] = 4;
             point.CopyTo(bytes.AsSpan(1));
             return curve.DecodePoint(bytes);
+        }
+
+        static void BlockUpdate(this IMac mac, ReadOnlySpan<byte> input)
+        {
+            mac.BlockUpdate(input.ToArray(), 0, input.Length);
         }
 
         public static void Write(this Stream s, ushort value)
@@ -106,15 +113,15 @@ namespace libusb
 
             var pair = gen.GenerateKeyPair();
             var pub = (ECPublicKeyParameters)pair.Public;
-            var q = pub.Q.GetEncoded();
-            var ecdh = AgreementUtilities.GetBasicAgreement("ECDH");
-            ecdh.Init(pair.Private);
+            var pk_oce = pub.Q.GetEncoded().AsMemory(1);
+            var sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
+            sk_oce.Init(pair.Private);
 
-            var pair2 = gen.GenerateKeyPair();
-            var pub2 = (ECPublicKeyParameters)pair2.Public;
-            var q2 = pub2.Q.GetEncoded();
-            var ecdh2 = AgreementUtilities.GetBasicAgreement("ECDH");
-            ecdh2.Init(pair2.Private);
+            pair = gen.GenerateKeyPair();
+            pub = (ECPublicKeyParameters)pair.Public;
+            var epk_oce = pub.Q.GetEncoded().AsMemory(1);
+            var esk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
+            esk_oce.Init(pair.Private);
 
             var libusb = new LibUsb("/Users/PNilsson/Firmware/YubiCrypt/yubi-ifx-common/sim/yubicrypt/build/libusb-1.0.dylib");
             Console.WriteLine(libusb.init(out var ctx));
@@ -152,7 +159,7 @@ namespace libusb
                         capabilities = 0xffffffff,
                         delegated_caps2 = 0xffffffff,
                         delegated_caps = 0xffffffff,
-                        key = q.AsMemory(1)
+                        key = pk_oce
                     }.WriteTo(ms);
                     
                     Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, ms.ToArray(), out var ret));
@@ -161,29 +168,37 @@ namespace libusb
                     new CreateSessionReq
                     {
                         key_id = 2,
-                        key = q2.AsMemory(1)
+                        key = epk_oce
                     }.WriteTo(ms);
 
                     Console.WriteLine(libusb.TransferUsb(device_handle, 0x03, ms.ToArray(), out ret));
-                    var shs_sd = ret.Slice(1, 5 * 32);
-                    var epk_sd = ret.Slice(1 + 5 * 32);
-
-                    Console.WriteLine("ShS.SD");
-                    foreach (var b in shs_sd)
-                        Console.Write($"{b:x2}");
-                    Console.WriteLine();
+                    var epk_sd = ret.Slice(1, 64);
+                    var receipt = ret.Slice(1 + 64);
 
                     Console.WriteLine("ePK.SD");
                     foreach (var b in epk_sd)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
-                    var shsss = ecdh.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
-                    var shsee = ecdh2.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
+                    Console.WriteLine("Receipt");
+                    foreach (var b in receipt)
+                        Console.Write($"{b:x2}");
+                    Console.WriteLine();
 
-                    var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 5 * 32);
-                    Console.WriteLine("Shs.OCE");
-                    foreach (var b in shs_oce)
+                    var shsss = sk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
+                    var shsee = esk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
+
+                    var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 3 * 16).ToArray();
+
+                    var cmac = new CMac(new AesEngine());
+                    cmac.Init(new KeyParameter(shs_oce, 0, 16));
+                    cmac.BlockUpdate(epk_sd);
+                    cmac.BlockUpdate(epk_oce.Span);
+                    var receipt_oce = new byte[16];
+                    cmac.DoFinal(receipt_oce, 0);
+
+                    Console.WriteLine("Receipt.OCE");
+                    foreach (var b in receipt_oce)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
