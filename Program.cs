@@ -172,15 +172,18 @@ namespace libusb
                     }.WriteTo(ms);
 
                     Console.WriteLine(libusb.TransferUsb(device_handle, 0x03, ms.ToArray(), out ret));
+                    var sess = ret[0];
                     var epk_sd = ret.Slice(1, 64);
                     var receipt = ret.Slice(1 + 64);
+
+                    Console.WriteLine("Session " + sess);
 
                     Console.WriteLine("ePK.SD");
                     foreach (var b in epk_sd)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
 
-                    Console.WriteLine("Receipt");
+                    Console.WriteLine("Receipt.SD");
                     foreach (var b in receipt)
                         Console.Write($"{b:x2}");
                     Console.WriteLine();
