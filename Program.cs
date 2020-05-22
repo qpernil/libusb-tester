@@ -161,8 +161,7 @@ namespace libusb
                         delegated_caps = 0xffffffff,
                         key = pk_oce
                     }.WriteTo(ms);
-                    
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, ms.ToArray(), out var ret));
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, ms.ToArray(), out _));
 
                     ms = new MemoryStream();
                     new CreateSessionReq
@@ -170,8 +169,7 @@ namespace libusb
                         key_id = 2,
                         key = epk_oce
                     }.WriteTo(ms);
-
-                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x03, ms.ToArray(), out ret));
+                    Console.WriteLine(libusb.TransferUsb(device_handle, 0x03, ms.ToArray(), out var ret));
                     var sess = ret[0];
                     var epk_sd = ret.Slice(1, 64);
                     var receipt = ret.Slice(1 + 64);
