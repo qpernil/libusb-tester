@@ -15,26 +15,38 @@ namespace libusb
     struct PutAuthKeyReq
     {
         public ushort key_id; // 0
-        public byte[] label; // 2
+        public Memory<byte> label; // 2
         public ushort domains; // 42
         public uint capabilities2; // 44
         public uint capabilities; // 48
         public byte algorithm; // 52
         public uint delegated_caps2; // 53
         public uint delegated_caps; // 57
-        public byte[] key; // 61
+        public Memory<byte> key; // 61
 
         public void WriteTo(Stream s)
         {
             s.Write(key_id);
-            s.Write(label);
+            s.Write(label.Span);
             s.Write(domains);
             s.Write(capabilities2);
             s.Write(capabilities);
             s.WriteByte(algorithm);
             s.Write(delegated_caps2);
             s.Write(delegated_caps);
-            s.Write(key);
+            s.Write(key.Span);
+        }
+    }
+
+    struct CreateSessionReq
+    {
+        public ushort key_id;
+        public Memory<byte> key;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(key.Span);
         }
     }
 
@@ -140,14 +152,17 @@ namespace libusb
                         capabilities = 0xffffffff,
                         delegated_caps2 = 0xffffffff,
                         delegated_caps = 0xffffffff,
-                        key = q.AsSpan(1).ToArray()
+                        key = q.AsMemory(1)
                     }.WriteTo(ms);
-
+                    
                     Console.WriteLine(libusb.TransferUsb(device_handle, 0x6e, ms.ToArray(), out var ret));
 
                     ms = new MemoryStream();
-                    ms.Write((ushort)2);
-                    ms.Write(q2.AsSpan(1));
+                    new CreateSessionReq
+                    {
+                        key_id = 2,
+                        key = q2.AsMemory(1)
+                    }.WriteTo(ms);
 
                     Console.WriteLine(libusb.TransferUsb(device_handle, 0x03, ms.ToArray(), out ret));
                     var shs_sd = ret.Slice(1, 5 * 32);
