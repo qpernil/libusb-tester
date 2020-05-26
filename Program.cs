@@ -152,7 +152,7 @@ namespace libusb
                     new PutAuthKeyReq
                     {
                         key_id = 2,
-                        algorithm = 48,
+                        algorithm = 49,
                         label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                         domains = 0xffff,
                         capabilities2 = 0xffffffff,
@@ -189,10 +189,14 @@ namespace libusb
                     var shsss = sk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
                     var shsee = esk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
 
-                    var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 3 * 16).ToArray();
+                    var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 4 * 16).ToArray();
+                    var receipt_key = new KeyParameter(shs_oce, 0, 16);
+                    var enc_key = new KeyParameter(shs_oce, 16, 16);
+                    var mac_key = new KeyParameter(shs_oce, 32, 16);
+                    var rmac_key = new KeyParameter(shs_oce, 48, 16);
 
                     var cmac = new CMac(new AesEngine());
-                    cmac.Init(new KeyParameter(shs_oce, 0, 16));
+                    cmac.Init(receipt_key);
                     cmac.BlockUpdate(epk_sd);
                     cmac.BlockUpdate(epk_oce.Span);
                     var receipt_oce = new byte[16];
