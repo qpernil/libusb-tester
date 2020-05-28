@@ -6,7 +6,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 
 namespace libusb
 {
-    class Scp03Session
+    class Scp03Session : ISession
     {
         static Span<byte> Scp03Cryptogram(KeyParameter key, byte type, ReadOnlySpan<byte> context, ushort L = 0x80)
         {
@@ -31,7 +31,7 @@ namespace libusb
             return result.AsSpan(0, L / 8);
         }
 
-        public int Transfer(byte cmd, ReadOnlySpan<byte> input, out Span<byte> output)
+        public int Transfer(byte cmd, IWriteable input, IReadable output)
         {
             throw new NotImplementedException();
         }
