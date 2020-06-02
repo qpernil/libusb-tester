@@ -33,7 +33,7 @@ namespace libusb
 
         public int Transfer(byte cmd, ReadOnlySpan<byte> input, out Span<byte> output)
         {
-            // TODO: Encrypt / Decrypt
+            // TODO: Encrypt / Decrypt if key_enc != null
 
             var ms = new MemoryStream();
             ms.Write(mac_chaining);
@@ -61,22 +61,21 @@ namespace libusb
                 key_id = key_id,
                 buf = host_chal
             };
-            Console.WriteLine(session.Transfer(0x03, create_req.ToBytes(), out var create_resp));
+            session.Transfer(0x03, create_req.ToBytes(), out var create_resp);
             session_id = create_resp[0];
             var card_chal = create_resp.Slice(1, 8);
-            var card_gram = create_resp.Slice(1 + 8);
+            var card_crypto = create_resp.Slice(1 + 8);
 
             var context = new byte[host_chal.Length + card_chal.Length];
             host_chal.CopyTo(context.AsSpan(0));
             card_chal.CopyTo(context.AsSpan(host_chal.Length));
 
-            key_enc = Scp03Cryptogram(enc_key, 4, context, 0x80);
             key_mac = Scp03Cryptogram(mac_key, 6, context, 0x80);
             key_rmac = Scp03Cryptogram(mac_key, 7, context, 0x80);
-            var card_gram2 = Scp03Cryptogram(key_mac, 0, context, 0x40).GetKey();
-            var host_gram = Scp03Cryptogram(key_mac, 1, context, 0x40).GetKey();
+            var card_crypto_host = Scp03Cryptogram(key_mac, 0, context, 0x40).GetKey();
+            var host_crypto = Scp03Cryptogram(key_mac, 1, context, 0x40).GetKey();
 
-            if (!card_gram.SequenceEqual(card_gram2))
+            if (!card_crypto.SequenceEqual(card_crypto_host))
             {
                 throw new IOException($"The card cryptogram was invalid");
             }
@@ -84,11 +83,12 @@ namespace libusb
             var auth_req = new AuthenticateSessionReq
             {
                 session_id = session_id,
-                host_crypto = host_gram,
+                host_crypto = host_crypto
             };
-            Console.WriteLine(Transfer(0x04, auth_req.ToBytes(), out _));
+            Transfer(0x04, auth_req.ToBytes(), out _);
 
-            authenticated = true;
+            // Only set this after having authenticated 
+            key_enc = Scp03Cryptogram(enc_key, 4, context, 0x80);
         }
 
         public void Dispose()
@@ -97,8 +97,7 @@ namespace libusb
 
         private readonly ISession session;
         private readonly byte session_id;
-        private readonly KeyParameter key_enc, key_mac, key_rmac;
+        private readonly KeyParameter key_mac, key_rmac, key_enc;
         private readonly byte[] mac_chaining = new byte[16];
-        private readonly bool authenticated = false;
     }
 }
