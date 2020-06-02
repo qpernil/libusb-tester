@@ -5,12 +5,13 @@ namespace libusb
 {
     public interface IWriteable
     {
-        public void WriteTo(Stream s);
+        byte Command { get; }
+        void WriteTo(Stream s);
     }
 
     public interface IReadable
     {
-        public void ReadFrom(Stream s);
+        void ReadFrom(Stream s);
     }
 
     public interface ISession : IDisposable

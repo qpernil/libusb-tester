@@ -46,7 +46,7 @@ namespace libusb
             cmac.BlockUpdate(ms.ToArray());
             cmac.DoFinal(mac_chaining, 0);
 
-            ms = new MemoryStream();
+            ms.SetLength(0);
             ms.Write(input);
             ms.Write(mac_chaining.AsSpan(0, 8));
 
@@ -61,7 +61,7 @@ namespace libusb
                 key_id = key_id,
                 buf = host_chal
             };
-            session.Transfer(0x03, create_req.ToBytes(), out var create_resp);
+            session.Transfer(create_req.Command, create_req.ToBytes(), out var create_resp);
             session_id = create_resp[0];
             var card_chal = create_resp.Slice(1, 8);
             var card_crypto = create_resp.Slice(1 + 8);
@@ -85,7 +85,7 @@ namespace libusb
                 session_id = session_id,
                 host_crypto = host_crypto
             };
-            Transfer(0x04, auth_req.ToBytes(), out _);
+            Transfer(auth_req.Command, auth_req.ToBytes(), out _);
 
             // Only set this after having authenticated 
             key_enc = Scp03Cryptogram(enc_key, 4, context, 0x80);

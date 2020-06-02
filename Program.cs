@@ -26,6 +26,8 @@ namespace libusb
         public uint delegated_caps; // 57
         public Memory<byte> key; // 61
 
+        public byte Command => 0x44;
+
         public void WriteTo(Stream s)
         {
             s.Write(key_id);
@@ -45,6 +47,8 @@ namespace libusb
         public ushort key_id;
         public Memory<byte> buf;
 
+        public byte Command => 0x03;
+
         public void WriteTo(Stream s)
         {
             s.Write(key_id);
@@ -56,6 +60,8 @@ namespace libusb
     {
         public byte session_id;
         public Memory<byte> host_crypto;
+
+        public byte Command => 0x04;
 
         public void WriteTo(Stream s)
         {
@@ -192,7 +198,7 @@ namespace libusb
                                     buf = epk_oce
                                 };
 
-                                Console.WriteLine(usb_session.Transfer(0x03, create_req.ToBytes(), out var create_resp));
+                                Console.WriteLine(usb_session.Transfer(create_req.Command, create_req.ToBytes(), out var create_resp));
 
                                 var sess = create_resp[0];
                                 var epk_sd = create_resp.Slice(1, 64);
