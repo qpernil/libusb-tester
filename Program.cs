@@ -52,6 +52,18 @@ namespace libusb
         }
     }
 
+    class AuthenticateSessionReq : IWriteable
+    {
+        public byte session_id;
+        public Memory<byte> host_crypto;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(session_id);
+            s.Write(host_crypto.Span);
+        }
+    }
+
     static class Program
     {
         public static ECPoint DecodePoint(this ECCurve curve, ReadOnlySpan<byte> point)
@@ -151,75 +163,73 @@ namespace libusb
 
                             using (var session = new Scp03Context("password").CreateSession(usb_session, 1))
                             {
-                                Console.WriteLine(session.Transfer(0x6d, ReadOnlySpan<byte>.Empty, out var pk_sd0));
+
+                                Console.WriteLine(usb_session.Transfer(0x6d, ReadOnlySpan<byte>.Empty, out var pk_sd));
+
+                                Console.WriteLine("PK.SD");
+                                foreach (var b in pk_sd)
+                                    Console.Write($"{b:x2}");
+                                Console.WriteLine();
+
+                                var putauth_req = new PutAuthKeyReq
+                                {
+                                    key_id = 2,
+                                    algorithm = 49,
+                                    label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                                    domains = 0xffff,
+                                    capabilities2 = 0xffffffff,
+                                    capabilities = 0xffffffff,
+                                    delegated_caps2 = 0xffffffff,
+                                    delegated_caps = 0xffffffff,
+                                    key = pk_oce
+                                };
+
+                                Console.WriteLine(usb_session.Transfer(0x6e, putauth_req.ToBytes(), out var putauth_resp));
+
+                                var create_req = new CreateSessionReq
+                                {
+                                    key_id = 2,
+                                    buf = epk_oce
+                                };
+
+                                Console.WriteLine(usb_session.Transfer(0x03, create_req.ToBytes(), out var create_resp));
+
+                                var sess = create_resp[0];
+                                var epk_sd = create_resp.Slice(1, 64);
+                                var receipt = create_resp.Slice(1 + 64);
+
+                                Console.WriteLine("Session " + sess);
+
+                                Console.WriteLine("ePK.SD");
+                                foreach (var b in epk_sd)
+                                    Console.Write($"{b:x2}");
+                                Console.WriteLine();
+
+                                Console.WriteLine("Receipt.SD");
+                                foreach (var b in receipt)
+                                    Console.Write($"{b:x2}");
+                                Console.WriteLine();
+
+                                var shsss = sk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
+                                var shsee = esk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
+
+                                var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 4 * 16).ToArray();
+                                var receipt_key = new KeyParameter(shs_oce, 0, 16);
+                                var enc_key = new KeyParameter(shs_oce, 16, 16);
+                                var mac_key = new KeyParameter(shs_oce, 32, 16);
+                                var rmac_key = new KeyParameter(shs_oce, 48, 16);
+
+                                var cmac = new CMac(new AesEngine());
+                                cmac.Init(receipt_key);
+                                cmac.BlockUpdate(epk_sd);
+                                cmac.BlockUpdate(epk_oce.Span);
+                                var receipt_oce = new byte[16];
+                                cmac.DoFinal(receipt_oce, 0);
+
+                                Console.WriteLine("Receipt.OCE");
+                                foreach (var b in receipt_oce)
+                                    Console.Write($"{b:x2}");
                             }
-
-                            Console.WriteLine(usb_session.Transfer(0x6d, ReadOnlySpan<byte>.Empty, out var pk_sd));
-
-
-                            Console.WriteLine("PK.SD");
-                            foreach (var b in pk_sd)
-                                Console.Write($"{b:x2}");
-                            Console.WriteLine();
-
-                            var putauth_req = new PutAuthKeyReq
-                            {
-                                key_id = 2,
-                                algorithm = 49,
-                                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
-                                domains = 0xffff,
-                                capabilities2 = 0xffffffff,
-                                capabilities = 0xffffffff,
-                                delegated_caps2 = 0xffffffff,
-                                delegated_caps = 0xffffffff,
-                                key = pk_oce
-                            };
-
-                            Console.WriteLine(usb_session.Transfer(0x6e, putauth_req.ToBytes(), out var putauth_resp));
-
-                            var create_req = new CreateSessionReq
-                            {
-                                key_id = 2,
-                                buf = epk_oce
-                            };
-
-                            Console.WriteLine(usb_session.Transfer(0x03, create_req.ToBytes(), out var create_resp));
-
-                            var sess = create_resp[0];
-                            var epk_sd = create_resp.Slice(1, 64);
-                            var receipt = create_resp.Slice(1 + 64);
-
-                            Console.WriteLine("Session " + sess);
-
-                            Console.WriteLine("ePK.SD");
-                            foreach (var b in epk_sd)
-                                Console.Write($"{b:x2}");
-                            Console.WriteLine();
-
-                            Console.WriteLine("Receipt.SD");
-                            foreach (var b in receipt)
-                                Console.Write($"{b:x2}");
-                            Console.WriteLine();
-
-                            var shsss = sk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
-                            var shsee = esk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
-
-                            var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 4 * 16).ToArray();
-                            var receipt_key = new KeyParameter(shs_oce, 0, 16);
-                            var enc_key = new KeyParameter(shs_oce, 16, 16);
-                            var mac_key = new KeyParameter(shs_oce, 32, 16);
-                            var rmac_key = new KeyParameter(shs_oce, 48, 16);
-
-                            var cmac = new CMac(new AesEngine());
-                            cmac.Init(receipt_key);
-                            cmac.BlockUpdate(epk_sd);
-                            cmac.BlockUpdate(epk_oce.Span);
-                            var receipt_oce = new byte[16];
-                            cmac.DoFinal(receipt_oce, 0);
-
-                            Console.WriteLine("Receipt.OCE");
-                            foreach (var b in receipt_oce)
-                                Console.Write($"{b:x2}");
                         }
                         Console.WriteLine();
                     }

@@ -37,7 +37,7 @@ namespace libusb
             return new UsbSession(libusb, device);
         }
 
-        readonly LibUsb libusb;
-        readonly IntPtr ctx;
+        private readonly LibUsb libusb;
+        private readonly IntPtr ctx;
     }
 }

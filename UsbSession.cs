@@ -113,7 +113,7 @@ namespace libusb
             return TransferUsb(cmd, input, out output);
         }
 
-        readonly LibUsb libusb;
-        readonly IntPtr device_handle;
+        private readonly LibUsb libusb;
+        private readonly IntPtr device_handle;
     }
 }

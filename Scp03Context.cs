@@ -33,7 +33,7 @@ namespace libusb
             return new Scp03Session(session, key_id, enc_key, mac_key, host_chal);
         }
 
-        public readonly System.Security.Cryptography.RandomNumberGenerator rand = System.Security.Cryptography.RandomNumberGenerator.Create();
-        public readonly KeyParameter enc_key, mac_key;
+        private readonly System.Security.Cryptography.RandomNumberGenerator rand = System.Security.Cryptography.RandomNumberGenerator.Create();
+        private readonly KeyParameter enc_key, mac_key;
     }
 }

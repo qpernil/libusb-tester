@@ -124,22 +124,21 @@ namespace libusb
 
     public class LibUsb
     {
-        public libusb_init init;
-        public libusb_exit exit;
-        public libusb_get_device_list get_device_list;
-        public libusb_free_device_list free_device_list;
-        public libusb_get_device_descriptor get_device_descriptor;
-        public libusb_ref_device ref_device;
-        public libusb_unref_device unref_device;
-        public libusb_open open;
-        public libusb_close close;
-        public libusb_claim_interface claim_interface;
-        public libusb_release_interface release_interface;
-        public libusb_interrupt_transfer interrupt_transfer;
-        public libusb_bulk_transfer bulk_transfer;
-        public libusb_control_transfer control_transfer;
-
-        private SafeNativeLibrary libusb;
+        public readonly libusb_init init;
+        public readonly libusb_exit exit;
+        public readonly libusb_get_device_list get_device_list;
+        public readonly libusb_free_device_list free_device_list;
+        public readonly libusb_get_device_descriptor get_device_descriptor;
+        public readonly libusb_ref_device ref_device;
+        public readonly libusb_unref_device unref_device;
+        public readonly libusb_open open;
+        public readonly libusb_close close;
+        public readonly libusb_claim_interface claim_interface;
+        public readonly libusb_release_interface release_interface;
+        public readonly libusb_interrupt_transfer interrupt_transfer;
+        public readonly libusb_bulk_transfer bulk_transfer;
+        public readonly libusb_control_transfer control_transfer;
+        private readonly SafeNativeLibrary libusb;
 
         public LibUsb(string libraryPath = "/usr/local/lib/libusb-1.0.dylib")
         {
