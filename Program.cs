@@ -52,24 +52,6 @@ namespace libusb
         }
     }
 
-    class GenericReq : IWriteable
-    {
-        public void WriteTo(Stream s)
-        {
-        }
-    }
-
-    class GenericResp : IReadable
-    {
-        public void ReadFrom(Stream s)
-        {
-            var ms = new MemoryStream();
-            s.CopyTo(ms);
-            bytes = ms.ToArray();
-        }
-        public Memory<byte> bytes;
-    }
-
     static class Program
     {
         public static ECPoint DecodePoint(this ECCurve curve, ReadOnlySpan<byte> point)
@@ -102,6 +84,13 @@ namespace libusb
             BinaryPrimitives.WriteUInt32BigEndian(bytes, value);
             s.Write(bytes, 0, 4);
             ArrayPool<byte>.Shared.Return(bytes);
+        }
+
+        public static byte[] ToBytes(this IWriteable w)
+        {
+            var s = new MemoryStream();
+            w.WriteTo(s);
+            return s.ToArray();
         }
 
         static Span<byte> X963Kdf(IDigest digest, ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, int length)
@@ -160,14 +149,16 @@ namespace libusb
                             Console.WriteLine(usb_session.GetStringDescriptor(descriptor.iSerialNumber, 0, out var serial));
                             Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
 
-                            var session = new Scp03Context("password").CreateSession(usb_session, 1);
+                            using (var session = new Scp03Context("password").CreateSession(usb_session, 1))
+                            {
+                                Console.WriteLine(session.Transfer(0x6d, ReadOnlySpan<byte>.Empty, out var pk_sd0));
+                            }
 
-                            var pk_sd = new GenericResp();
+                            Console.WriteLine(usb_session.Transfer(0x6d, ReadOnlySpan<byte>.Empty, out var pk_sd));
 
-                            Console.WriteLine(usb_session.Transfer(0x6d, new GenericReq(), pk_sd));
 
                             Console.WriteLine("PK.SD");
-                            foreach (var b in pk_sd.bytes.Span)
+                            foreach (var b in pk_sd)
                                 Console.Write($"{b:x2}");
                             Console.WriteLine();
 
@@ -183,22 +174,20 @@ namespace libusb
                                 delegated_caps = 0xffffffff,
                                 key = pk_oce
                             };
-                            var putauth_resp = new GenericResp();
 
-                            Console.WriteLine(usb_session.Transfer(0x6e, putauth_req, putauth_resp));
+                            Console.WriteLine(usb_session.Transfer(0x6e, putauth_req.ToBytes(), out var putauth_resp));
 
                             var create_req = new CreateSessionReq
                             {
                                 key_id = 2,
                                 buf = epk_oce
                             };
-                            var create_resp = new GenericResp();
 
-                            Console.WriteLine(usb_session.Transfer(0x03, create_req, create_resp));
+                            Console.WriteLine(usb_session.Transfer(0x03, create_req.ToBytes(), out var create_resp));
 
-                            var sess = create_resp.bytes.Span[0];
-                            var epk_sd = create_resp.bytes.Span.Slice(1, 64);
-                            var receipt = create_resp.bytes.Span.Slice(1 + 64);
+                            var sess = create_resp[0];
+                            var epk_sd = create_resp.Slice(1, 64);
+                            var receipt = create_resp.Slice(1 + 64);
 
                             Console.WriteLine("Session " + sess);
 
@@ -212,7 +201,7 @@ namespace libusb
                                 Console.Write($"{b:x2}");
                             Console.WriteLine();
 
-                            var shsss = sk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd.bytes.Span), domain)).ToByteArrayUnsigned();
+                            var shsss = sk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
                             var shsee = esk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
 
                             var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 4 * 16).ToArray();

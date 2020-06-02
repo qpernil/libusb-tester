@@ -6,7 +6,7 @@ using System.Text;
 
 namespace libusb
 {
-    public class UsbSession : ISession, IDisposable
+    public class UsbSession : ISession
     {
         public UsbSession(LibUsb libusb, IntPtr device)
         {
@@ -98,18 +98,19 @@ namespace libusb
                 return ret;
             }
 
+            if(transferred < 3 || mem[0] != (cmd | 0x80))
+            {
+                throw new IOException($"The {cmd:x} command returned {transferred} bytes and error {mem[3]}");
+            }
+
             var len = BinaryPrimitives.ReadUInt16BigEndian(mem.AsSpan(1, 2));
             output = mem.AsSpan(0, transferred).Slice(3, len);
             return len;
         }
 
-        public int Transfer(byte cmd, IWriteable input, IReadable output)
+        public int Transfer(byte cmd, ReadOnlySpan<byte> input, out Span<byte> output)
         {
-            var ms = new MemoryStream();
-            input.WriteTo(ms);
-            var ret = TransferUsb(cmd, ms.ToArray(), out var result);
-            output.ReadFrom(new MemoryStream(result.ToArray()));
-            return ret;
+            return TransferUsb(cmd, input, out output);
         }
 
         readonly LibUsb libusb;

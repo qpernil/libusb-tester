@@ -30,7 +30,7 @@ namespace libusb
         {
             var host_chal = new byte[8];
             rand.GetBytes(host_chal);
-            return new Scp03Session(enc_key, mac_key, host_chal, key_id);
+            return new Scp03Session(session, key_id, enc_key, mac_key, host_chal);
         }
 
         public readonly System.Security.Cryptography.RandomNumberGenerator rand = System.Security.Cryptography.RandomNumberGenerator.Create();

@@ -31,21 +31,27 @@ namespace libusb
             return result.AsSpan(0, L / 8);
         }
 
-        public int Transfer(byte cmd, IWriteable input, IReadable output)
+        public int Transfer(byte cmd, ReadOnlySpan<byte> input, out Span<byte> output)
         {
-            throw new NotImplementedException();
+            // TODO: Encrypt / Decrypt / Mac / Verify Mac 
+            return session.Transfer(cmd, input, out output);
         }
 
-        public Scp03Session(KeyParameter enc_key, KeyParameter mac_key, byte[] host_chal, ushort key_id)
+        public Scp03Session(ISession session, ushort key_id, KeyParameter enc_key, KeyParameter mac_key, byte[] host_chal)
         {
-            var ms = new MemoryStream();
-            new CreateSessionReq
+            this.session = session;
+            var req = new CreateSessionReq
             {
                 key_id = key_id,
                 buf = host_chal
-            }.WriteTo(ms);
+            };
         }
 
+        public void Dispose()
+        {
+        }
+
+        public readonly ISession session;
         public readonly KeyParameter key_enc, key_mac, key_rmac;
     }
 }

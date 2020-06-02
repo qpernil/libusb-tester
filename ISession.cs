@@ -13,8 +13,8 @@ namespace libusb
         public void ReadFrom(Stream s);
     }
 
-    public interface ISession
+    public interface ISession : IDisposable
     {
-        public int Transfer(byte cmd, IWriteable input, IReadable output);
+        int Transfer(byte cmd, ReadOnlySpan<byte> input, out Span<byte> output);
     }
 }
