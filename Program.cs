@@ -192,7 +192,6 @@ namespace libusb
 
                             using (var session = new Scp03Context("password").CreateSession(usb_session, 1))
                             {
-
                                 Console.WriteLine(usb_session.Transfer(0x6d, ReadOnlySpan<byte>.Empty, out var pk_sd));
 
                                 Console.WriteLine("PK.SD");
@@ -221,7 +220,7 @@ namespace libusb
                                     buf = epk_oce
                                 };
 
-                                Console.WriteLine(usb_session.Transfer(create_req.Command, create_req.AsSpan(), out var create_resp));
+                                Console.WriteLine(usb_session.Transfer(create_req, out var create_resp));
 
                                 var sess = create_resp[0];
                                 var epk_sd = create_resp.Slice(1, 64);

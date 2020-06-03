@@ -6,7 +6,7 @@ using System.Text;
 
 namespace libusb
 {
-    public class UsbSession : ISession
+    public class UsbSession : Session
     {
         public UsbSession(LibUsb libusb, IntPtr device)
         {
@@ -15,7 +15,7 @@ namespace libusb
             libusb.claim_interface(device_handle, 0);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             libusb.release_interface(device_handle, 0);
             libusb.close(device_handle);
@@ -108,7 +108,7 @@ namespace libusb
             return len;
         }
 
-        public int Transfer(byte cmd, ReadOnlySpan<byte> input, out Span<byte> output)
+        public override int Transfer(byte cmd, ReadOnlySpan<byte> input, out Span<byte> output)
         {
             return TransferUsb(cmd, input, out output);
         }
