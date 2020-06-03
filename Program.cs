@@ -80,12 +80,35 @@ namespace libusb
             return curve.DecodePoint(bytes);
         }
 
+        public static void BlockUpdate(this IDigest digest, ReadOnlySpan<byte> input)
+        {
+            var bytes = ArrayPool<byte>.Shared.Rent(input.Length);
+            input.CopyTo(bytes);
+            digest.BlockUpdate(bytes, 0, input.Length);
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+
         public static void BlockUpdate(this IMac mac, ReadOnlySpan<byte> input)
         {
             var bytes = ArrayPool<byte>.Shared.Rent(input.Length);
             input.CopyTo(bytes);
             mac.BlockUpdate(bytes, 0, input.Length);
             ArrayPool<byte>.Shared.Return(bytes);
+        }
+
+        public static void BlockUpdate(this IDigest digest, MemoryStream input)
+        {
+            digest.BlockUpdate(input.GetBuffer(), 0, (int)input.Length);
+        }
+
+        public static void BlockUpdate(this IMac mac, MemoryStream input)
+        {
+            mac.BlockUpdate(input.GetBuffer(), 0, (int)input.Length);
+        }
+
+        public static Span<byte> AsSpan(this MemoryStream s)
+        {
+            return s.GetBuffer().AsSpan(0, (int)s.Length);
         }
 
         public static void Write(this Stream s, ushort value)
@@ -104,11 +127,11 @@ namespace libusb
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
-        public static byte[] ToBytes(this IWriteable w)
+        public static Span<byte> AsSpan(this IWriteable w)
         {
             var s = new MemoryStream();
             w.WriteTo(s);
-            return s.ToArray();
+            return s.AsSpan();
         }
 
         static Span<byte> X963Kdf(IDigest digest, ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, int length)
@@ -119,14 +142,14 @@ namespace libusb
             ms.Write(shsee);
             ms.Write(shsss);
             ms.Write(cnt);
-            var buf = ms.ToArray();
-            var cspan = buf.AsSpan(buf.Length - 4);
+            var buf = ms.AsSpan();
+            var cspan = buf.Slice(buf.Length - 4);
             var ret = new byte[size * ((length + size - 1) / size)];
             for (var offs = 0;  offs < length; offs += size)
             {
                 BinaryPrimitives.WriteUInt32BigEndian(cspan, ++cnt);
                 digest.Reset();
-                digest.BlockUpdate(buf, 0, buf.Length);
+                digest.BlockUpdate(buf);
                 digest.DoFinal(ret, offs);
             }
             return ret.AsSpan(0, length);
@@ -190,7 +213,7 @@ namespace libusb
                                     key = pk_oce
                                 };
 
-                                Console.WriteLine(usb_session.Transfer(0x6e, putauth_req.ToBytes(), out var putauth_resp));
+                                Console.WriteLine(usb_session.Transfer(0x6e, putauth_req.AsSpan(), out var putauth_resp));
 
                                 var create_req = new CreateSessionReq
                                 {
@@ -198,7 +221,7 @@ namespace libusb
                                     buf = epk_oce
                                 };
 
-                                Console.WriteLine(usb_session.Transfer(create_req.Command, create_req.ToBytes(), out var create_resp));
+                                Console.WriteLine(usb_session.Transfer(create_req.Command, create_req.AsSpan(), out var create_resp));
 
                                 var sess = create_resp[0];
                                 var epk_sd = create_resp.Slice(1, 64);

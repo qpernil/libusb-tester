@@ -10,21 +10,21 @@ namespace libusb
     {
         static KeyParameter Scp03Cryptogram(KeyParameter key, byte type, ReadOnlySpan<byte> context, ushort L)
         {
-            var s = new MemoryStream();
+            var ms = new MemoryStream();
             //Label
             for (int i = 0; i < 11; i++)
-                s.WriteByte(0);
-            s.WriteByte(type);
+                ms.WriteByte(0);
+            ms.WriteByte(type);
             // Delimiter
-            s.WriteByte(0);
-            s.Write(L);
+            ms.WriteByte(0);
+            ms.Write(L);
             // i
-            s.WriteByte(1);
-            s.Write(context);
+            ms.WriteByte(1);
+            ms.Write(context);
 
             var cmac = new CMac(new AesEngine());
             cmac.Init(key);
-            cmac.BlockUpdate(s.ToArray());
+            cmac.BlockUpdate(ms);
             var result = new byte[cmac.GetMacSize()];
             cmac.DoFinal(result, 0);
 
@@ -43,14 +43,14 @@ namespace libusb
 
             var cmac = new CMac(new AesEngine());
             cmac.Init(key_mac);
-            cmac.BlockUpdate(ms.ToArray());
+            cmac.BlockUpdate(ms);
             cmac.DoFinal(mac_chaining, 0);
 
             ms.SetLength(0);
             ms.Write(input);
             ms.Write(mac_chaining.AsSpan(0, 8));
 
-            return session.Transfer(cmd, ms.ToArray(), out output);
+            return session.Transfer(cmd, ms.AsSpan(), out output);
         }
 
         public Scp03Session(ISession session, ushort key_id, KeyParameter enc_key, KeyParameter mac_key, byte[] host_chal)
@@ -61,7 +61,7 @@ namespace libusb
                 key_id = key_id,
                 buf = host_chal
             };
-            session.Transfer(create_req.Command, create_req.ToBytes(), out var create_resp);
+            session.Transfer(create_req.Command, create_req.AsSpan(), out var create_resp);
             session_id = create_resp[0];
             var card_chal = create_resp.Slice(1, 8);
             var card_crypto = create_resp.Slice(1 + 8);
@@ -85,7 +85,7 @@ namespace libusb
                 session_id = session_id,
                 host_crypto = host_crypto
             };
-            Transfer(auth_req.Command, auth_req.ToBytes(), out _);
+            Transfer(auth_req.Command, auth_req.AsSpan(), out _);
 
             // Only set this after having authenticated 
             key_enc = Scp03Cryptogram(enc_key, 4, context, 0x80);
