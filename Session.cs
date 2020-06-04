@@ -34,6 +34,6 @@ namespace libusb
             return ret.Slice(3, len);
         }
         public abstract Span<byte> Transfer(byte[] input, int length);
-        public virtual void Dispose() { }
+        public abstract void Dispose();
     }
 }

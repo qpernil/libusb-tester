@@ -2,15 +2,8 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
-using System.Text;
-using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Digests;
-using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Macs;
-using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math.EC;
-using Org.BouncyCastle.Security;
 
 namespace libusb
 {
@@ -84,7 +77,7 @@ namespace libusb
         }
     }
 
-    class UnwrapReq : IWriteable
+    class SessionReq : IWriteable
     {
         public byte session_id;
         public Memory<byte> encrypted;
@@ -162,146 +155,34 @@ namespace libusb
             return s.AsSpan();
         }
 
-        static Span<byte> X963Kdf(IDigest digest, ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, int length)
-        {
-            var size = digest.GetDigestSize();
-            var cnt = 0U;
-            var ms = new MemoryStream();
-            ms.Write(shsee);
-            ms.Write(shsss);
-            ms.Write(cnt);
-            var buf = ms.AsSpan();
-            var cspan = buf.Slice(buf.Length - 4);
-            var ret = new byte[size * ((length + size - 1) / size)];
-            for (var offs = 0;  offs < length; offs += size)
-            {
-                BinaryPrimitives.WriteUInt32BigEndian(cspan, ++cnt);
-                digest.Reset();
-                digest.BlockUpdate(buf);
-                digest.DoFinal(ret, offs);
-            }
-            return ret.AsSpan(0, length);
-        }
-
         static void Main(string[] args)
         {
-            var p256 = NistNamedCurves.GetByName("P-256");
-            var domain = new ECDomainParameters(p256.Curve, p256.G, p256.N);
-            var gen = GeneratorUtilities.GetKeyPairGenerator("ECDH");
-            gen.Init(new ECKeyGenerationParameters(domain, new SecureRandom()));
-
-            var pair = gen.GenerateKeyPair();
-            var pub = (ECPublicKeyParameters)pair.Public;
-            var pk_oce = pub.Q.GetEncoded().AsMemory(1);
-            var sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
-            sk_oce.Init(pair.Private);
-
-            pair = gen.GenerateKeyPair();
-            pub = (ECPublicKeyParameters)pair.Public;
-            var epk_oce = pub.Q.GetEncoded().AsMemory(1);
-            var esk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
-            esk_oce.Init(pair.Private);
-
             using (var usb_ctx = new UsbContext())
             {
                 foreach (var device in usb_ctx.GetDeviceList())
                 {
                     var descriptor = new device_descriptor();
-                    Console.WriteLine(usb_ctx.GetDeviceDescriptor(device, ref descriptor));
+                    usb_ctx.GetDeviceDescriptor(device, ref descriptor);
                     Console.WriteLine($"Vendor 0x{descriptor.idVendor:x} Product 0x{descriptor.idProduct:x}");
                     if (descriptor.idVendor == 0x1050 && descriptor.idProduct == 0x30)
                     {
                         using (var usb_session = usb_ctx.CreateSession(device))
                         {
-                            Console.WriteLine(usb_session.GetStringDescriptor(descriptor.iManufacturer, 0, out var manufacturer));
-                            Console.WriteLine(usb_session.GetStringDescriptor(descriptor.iProduct, 0, out var product));
-                            Console.WriteLine(usb_session.GetStringDescriptor(descriptor.iSerialNumber, 0, out var serial));
+                            usb_session.GetStringDescriptor(descriptor.iManufacturer, 0, out var manufacturer);
+                            usb_session.GetStringDescriptor(descriptor.iProduct, 0, out var product);
+                            usb_session.GetStringDescriptor(descriptor.iSerialNumber, 0, out var serial);
                             Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
 
-                            using (var session = new Scp03Context("password").CreateSession(usb_session, 1))
+                            using (var scp03_session = new Scp03Context("password").CreateSession(usb_session, 1))
                             {
-                                var pk_sd = session.SendCmd(0x6d);
-
-                                Console.WriteLine("PK.SD");
-                                foreach (var b in pk_sd)
-                                    Console.Write($"{b:x2}");
-                                Console.WriteLine();
-
-                                try
+                                using (var scp11_session = new Scp11Context(scp03_session, 2).CreateSession(usb_session, 2))
                                 {
-                                    var delete_req = new DeleteObjectReq
-                                    {
-                                        key_id = 2,
-                                        key_type = 2
-                                    };
-                                    var delete_resp = session.SendCmd(delete_req);
-
-                                } catch(IOException e)
-                                {
-                                    Console.WriteLine(e.Message);
+                                    var pk_sd1 = usb_session.SendCmd(0x6d);
+                                    var pk_sd2 = scp03_session.SendCmd(0x6d);
+                                    var pk_sd3 = scp11_session.SendCmd(0x6d);
                                 }
-
-                                var putauth_req = new PutAuthKeyReq
-                                {
-                                    key_id = 2,
-                                    algorithm = 49,
-                                    label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
-                                    domains = 0xffff,
-                                    capabilities2 = 0xffffffff,
-                                    capabilities = 0xffffffff,
-                                    delegated_caps2 = 0xffffffff,
-                                    delegated_caps = 0xffffffff,
-                                    key = pk_oce
-                                };
-
-                                var putauth_resp = session.SendCmd(putauth_req);
-
-                                var create_req = new CreateSessionReq
-                                {
-                                    key_id = 2,
-                                    buf = epk_oce
-                                };
-
-                                var create_resp = usb_session.SendCmd(create_req);
-
-                                var sess = create_resp[0];
-                                var epk_sd = create_resp.Slice(1, 64);
-                                var receipt = create_resp.Slice(1 + 64);
-
-                                Console.WriteLine("Session " + sess);
-
-                                Console.WriteLine("ePK.SD");
-                                foreach (var b in epk_sd)
-                                    Console.Write($"{b:x2}");
-                                Console.WriteLine();
-
-                                Console.WriteLine("Receipt.SD");
-                                foreach (var b in receipt)
-                                    Console.Write($"{b:x2}");
-                                Console.WriteLine();
-
-                                var shsss = sk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(pk_sd), domain)).ToByteArrayUnsigned();
-                                var shsee = esk_oce.CalculateAgreement(new ECPublicKeyParameters(domain.Curve.DecodePoint(epk_sd), domain)).ToByteArrayUnsigned();
-
-                                var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 4 * 16).ToArray();
-                                var receipt_key = new KeyParameter(shs_oce, 0, 16);
-                                var enc_key = new KeyParameter(shs_oce, 16, 16);
-                                var mac_key = new KeyParameter(shs_oce, 32, 16);
-                                var rmac_key = new KeyParameter(shs_oce, 48, 16);
-
-                                var cmac = new CMac(new AesEngine());
-                                cmac.Init(receipt_key);
-                                cmac.BlockUpdate(epk_sd);
-                                cmac.BlockUpdate(epk_oce.Span);
-                                var receipt_oce = new byte[16];
-                                cmac.DoFinal(receipt_oce, 0);
-
-                                Console.WriteLine("Receipt.OCE");
-                                foreach (var b in receipt_oce)
-                                    Console.Write($"{b:x2}");
                             }
                         }
-                        Console.WriteLine();
                     }
                 }
             }
