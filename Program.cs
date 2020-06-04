@@ -42,6 +42,20 @@ namespace libusb
         }
     }
 
+    class DeleteObjectReq : IWriteable
+    {
+        public ushort key_id;
+        public byte key_type;
+
+        public byte Command => 0x58;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte(key_type);
+        }
+    }
+
     class CreateSessionReq : IWriteable
     {
         public ushort key_id;
@@ -67,6 +81,20 @@ namespace libusb
         {
             s.WriteByte(session_id);
             s.Write(host_crypto.Span);
+        }
+    }
+
+    class UnwrapReq : IWriteable
+    {
+        public byte session_id;
+        public Memory<byte> encrypted;
+
+        public byte Command => 0x05;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(session_id);
+            s.Write(encrypted.Span);
         }
     }
 
@@ -192,12 +220,26 @@ namespace libusb
 
                             using (var session = new Scp03Context("password").CreateSession(usb_session, 1))
                             {
-                                Console.WriteLine(usb_session.Transfer(0x6d, ReadOnlySpan<byte>.Empty, out var pk_sd));
+                                var pk_sd = session.SendCmd(0x6d);
 
                                 Console.WriteLine("PK.SD");
                                 foreach (var b in pk_sd)
                                     Console.Write($"{b:x2}");
                                 Console.WriteLine();
+
+                                try
+                                {
+                                    var delete_req = new DeleteObjectReq
+                                    {
+                                        key_id = 2,
+                                        key_type = 2
+                                    };
+                                    var delete_resp = session.SendCmd(delete_req);
+
+                                } catch(IOException e)
+                                {
+                                    Console.WriteLine(e.Message);
+                                }
 
                                 var putauth_req = new PutAuthKeyReq
                                 {
@@ -212,7 +254,7 @@ namespace libusb
                                     key = pk_oce
                                 };
 
-                                Console.WriteLine(usb_session.Transfer(0x6e, putauth_req.AsSpan(), out var putauth_resp));
+                                var putauth_resp = session.SendCmd(putauth_req);
 
                                 var create_req = new CreateSessionReq
                                 {
@@ -220,7 +262,7 @@ namespace libusb
                                     buf = epk_oce
                                 };
 
-                                Console.WriteLine(usb_session.Transfer(create_req, out var create_resp));
+                                var create_resp = usb_session.SendCmd(create_req);
 
                                 var sess = create_resp[0];
                                 var epk_sd = create_resp.Slice(1, 64);

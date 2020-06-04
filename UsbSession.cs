@@ -36,81 +36,30 @@ namespace libusb
             return ret;
         }
 
-        public int WriteUsb(byte[] data)
+        public override Span<byte> Transfer(byte[] input, int length)
         {
-            var ret = libusb.bulk_transfer(device_handle, 1, data, data.Length, out var transferred, 0);
+            var ret = libusb.bulk_transfer(device_handle, 0x01, input, length, out var transferred, 0);
             if (ret < 0)
             {
-                return ret;
-            }
-            if (transferred % 64 == 0)
-            {
-                ret = libusb.bulk_transfer(device_handle, 1, data, 0, out _, 0);
-                if (ret < 0)
-                {
-                    return ret;
-                }
-            }
-            return transferred;
-        }
-
-        public int ReadUsb(out Span<byte> data, int max = 2048 + 3)
-        {
-            var mem = new byte[max];
-            var ret = libusb.bulk_transfer(device_handle, 0x81, mem, max, out var transferred, 0);
-            if (ret < 0)
-            {
-                data = Span<byte>.Empty;
-                return ret;
-            }
-            data = mem.AsSpan(0, transferred);
-            return transferred;
-        }
-
-        public int TransferUsb(byte cmd, ReadOnlySpan<byte> input, out Span<byte> output, int max = 2048 + 3)
-        {
-            var mem = new byte[max];
-            mem[0] = cmd;
-            BinaryPrimitives.WriteUInt16BigEndian(mem.AsSpan(1, 2), (ushort)input.Length);
-            input.CopyTo(mem.AsSpan(3, max - 3));
-
-            var ret = libusb.bulk_transfer(device_handle, 1, mem, 3 + input.Length, out var transferred, 0);
-            if (ret < 0)
-            {
-                output = Span<byte>.Empty;
-                return ret;
+                throw new IOException($"bulk_transfer(out) failed with error {ret}");
             }
 
             if (transferred % 64 == 0)
             {
-                ret = libusb.bulk_transfer(device_handle, 1, mem, 0, out _, 0);
+                ret = libusb.bulk_transfer(device_handle, 0x01, input, 0, out _, 0);
                 if (ret < 0)
                 {
-                    output = Span<byte>.Empty;
-                    return ret;
+                    throw new IOException($"bulk_transfer(zero-length packet) failed with error {ret}");
                 }
             }
 
-            ret = libusb.bulk_transfer(device_handle, 0x81, mem, max, out transferred, 0);
+            ret = libusb.bulk_transfer(device_handle, 0x81, input, input.Length, out transferred, 0);
             if (ret < 0)
             {
-                output = Span<byte>.Empty;
-                return ret;
+                throw new IOException($"bulk_transfer(in) failed with error {ret}");
             }
 
-            if(transferred < 3 || mem[0] != (cmd | 0x80))
-            {
-                throw new IOException($"The {cmd:x} command returned {transferred} bytes and error {mem[3]}");
-            }
-
-            var len = BinaryPrimitives.ReadUInt16BigEndian(mem.AsSpan(1, 2));
-            output = mem.AsSpan(0, transferred).Slice(3, len);
-            return len;
-        }
-
-        public override int Transfer(byte cmd, ReadOnlySpan<byte> input, out Span<byte> output)
-        {
-            return TransferUsb(cmd, input, out output);
+            return input.AsSpan(0, transferred);
         }
 
         private readonly LibUsb libusb;
