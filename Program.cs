@@ -14,6 +14,7 @@ namespace libusb
         SessionCommand = 0x05,
         CloseSession = 0x40,
         PutAuthKey = 0x44,
+        GetPseudoRandom = 0x51,
         DeleteObject = 0x58,
         GetScp11PubKey = 0x6d
     }
@@ -98,6 +99,18 @@ namespace libusb
         {
             s.WriteByte(session_id);
             s.Write(encrypted.Span);
+        }
+    }
+
+    class GetPseudoRandomReq : IWriteable
+    {
+        public ushort length;
+
+        public HsmCommand Command => HsmCommand.GetPseudoRandom;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(length);
         }
     }
 
@@ -187,9 +200,16 @@ namespace libusb
                             {
                                 using (var scp11_session = new Scp11Context(scp03_session, 2).CreateSession(usb_session, 2))
                                 {
-                                    var pk_sd1 = usb_session.SendCmd(HsmCommand.GetScp11PubKey);
-                                    var pk_sd2 = scp03_session.SendCmd(HsmCommand.GetScp11PubKey);
-                                    var pk_sd3 = scp11_session.SendCmd(HsmCommand.GetScp11PubKey);
+                                    var rand1 = scp03_session.SendCmd(new GetPseudoRandomReq { length = 64 });
+                                    Console.WriteLine("GetPseudoRandom over scp03_session");
+                                    foreach (var b in rand1)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+                                    var rand2 = scp11_session.SendCmd(new GetPseudoRandomReq { length = 64 });
+                                    Console.WriteLine("GetPseudoRandom over scp11_session");
+                                    foreach (var b in rand2)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
                                 }
                             }
                         }
