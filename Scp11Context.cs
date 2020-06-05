@@ -30,6 +30,7 @@ namespace libusb
 
             shsss = sk_oce.CalculateAgreement(DecodePoint(pk_sd.Span)).ToByteArrayUnsigned();
 
+            // Update the stored auth key since we don't persist the client static key
             if (key_id > 0)
             {
                 try
@@ -59,7 +60,6 @@ namespace libusb
                     delegated_caps = 0xffffffff,
                     key = pk_oce
                 };
-
                 session.SendCmd(putauth_req);
             }
         }
