@@ -6,7 +6,7 @@ namespace libusb
 {
     public interface IWriteable
     {
-        byte Command { get; }
+        HsmCommand Command { get; }
         void WriteTo(Stream s);
     }
 
@@ -16,18 +16,18 @@ namespace libusb
         {
             return SendCmd(input.Command, input.AsSpan());
         }
-        public Span<byte> SendCmd(byte cmd, ReadOnlySpan<byte> input = default, int max = 2048 + 3)
+        public Span<byte> SendCmd(HsmCommand cmd, ReadOnlySpan<byte> input = default, int max = 2048 + 3)
         {
             var mem = new byte[max];
-            mem[0] = cmd;
+            mem[0] = (byte)cmd;
             BinaryPrimitives.WriteUInt16BigEndian(mem.AsSpan(1), (ushort)input.Length);
             input.CopyTo(mem.AsSpan(3));
 
             var ret = Transfer(mem, input.Length + 3);
 
-            if (ret[0] != (cmd | 0x80))
+            if (ret[0] != ((byte)cmd | 0x80))
             {
-                throw new IOException($"The {cmd:x} command returned {ret.Length} bytes and error {ret[3]}");
+                throw new IOException($"The {cmd} command returned {ret.Length} bytes and error {ret[3]}");
             }
 
             var len = BinaryPrimitives.ReadUInt16BigEndian(ret.Slice(1));

@@ -7,6 +7,16 @@ using Org.BouncyCastle.Math.EC;
 
 namespace libusb
 {
+    public enum HsmCommand : byte
+    {
+        CreateSession = 0x03,
+        AuthenticateSession = 0x04,
+        SessionCommand = 0x05,
+        CloseSession = 0x40,
+        PutAuthKey = 0x44,
+        DeleteObject = 0x58,
+        GetScp11PubKey = 0x6d
+    }
     class PutAuthKeyReq : IWriteable
     {
         public ushort key_id; // 0
@@ -19,7 +29,7 @@ namespace libusb
         public uint delegated_caps; // 57
         public Memory<byte> key; // 61
 
-        public byte Command => 0x44;
+        public HsmCommand Command => HsmCommand.PutAuthKey;
 
         public void WriteTo(Stream s)
         {
@@ -40,7 +50,7 @@ namespace libusb
         public ushort key_id;
         public byte key_type;
 
-        public byte Command => 0x58;
+        public HsmCommand Command => HsmCommand.DeleteObject;
 
         public void WriteTo(Stream s)
         {
@@ -54,7 +64,7 @@ namespace libusb
         public ushort key_id;
         public Memory<byte> buf;
 
-        public byte Command => 0x03;
+        public HsmCommand Command => HsmCommand.CreateSession;
 
         public void WriteTo(Stream s)
         {
@@ -68,7 +78,7 @@ namespace libusb
         public byte session_id;
         public Memory<byte> host_crypto;
 
-        public byte Command => 0x04;
+        public HsmCommand Command => HsmCommand.AuthenticateSession;
 
         public void WriteTo(Stream s)
         {
@@ -77,12 +87,12 @@ namespace libusb
         }
     }
 
-    class SessionReq : IWriteable
+    class SessionCommandReq : IWriteable
     {
         public byte session_id;
         public Memory<byte> encrypted;
 
-        public byte Command => 0x05;
+        public HsmCommand Command => HsmCommand.SessionCommand;
 
         public void WriteTo(Stream s)
         {
@@ -177,9 +187,9 @@ namespace libusb
                             {
                                 using (var scp11_session = new Scp11Context(scp03_session, 2).CreateSession(usb_session, 2))
                                 {
-                                    var pk_sd1 = usb_session.SendCmd(0x6d);
-                                    var pk_sd2 = scp03_session.SendCmd(0x6d);
-                                    var pk_sd3 = scp11_session.SendCmd(0x6d);
+                                    var pk_sd1 = usb_session.SendCmd(HsmCommand.GetScp11PubKey);
+                                    var pk_sd2 = scp03_session.SendCmd(HsmCommand.GetScp11PubKey);
+                                    var pk_sd3 = scp11_session.SendCmd(HsmCommand.GetScp11PubKey);
                                 }
                             }
                         }

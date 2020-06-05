@@ -26,7 +26,7 @@ namespace libusb
             sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
             sk_oce.Init(pair.Private);
 
-            pk_sd = session.SendCmd(0x6d).ToArray();
+            pk_sd = session.SendCmd(HsmCommand.GetScp11PubKey).ToArray();
 
             shsss = sk_oce.CalculateAgreement(DecodePoint(pk_sd.Span)).ToByteArrayUnsigned();
 

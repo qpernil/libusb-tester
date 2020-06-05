@@ -18,7 +18,7 @@ namespace libusb
             engine.ProcessBlock(enc_ctr, 0, enc_ctr, 0);
             var parameters = new ParametersWithIV(key_enc, enc_ctr);
             cipher.Init(true, parameters);
-            var unwrap = new SessionReq
+            var unwrap = new SessionCommandReq
             {
                 session_id = session_id,
                 encrypted = cipher.DoFinal(input, 0, length)
@@ -35,7 +35,7 @@ namespace libusb
         }
 
         public override void Dispose() {
-            SendCmd(0x40);
+            SendCmd(HsmCommand.CloseSession);
         }
 
         protected readonly AesEngine engine = new AesEngine();
