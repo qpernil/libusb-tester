@@ -18,16 +18,16 @@ namespace libusb
             engine.ProcessBlock(enc_ctr, 0, enc_ctr, 0);
             var parameters = new ParametersWithIV(key_enc, enc_ctr);
             cipher.Init(true, parameters);
-            var unwrap = new SessionCommandReq
+            var session_req = new SessionCommandReq
             {
                 session_id = session_id,
                 encrypted = cipher.DoFinal(input, 0, length)
             };
-            var output = session.SendCmd(unwrap);
+            var output = session.SendCmd(session_req);
 
             if (output[0] != session_id)
             {
-                throw new IOException($"Invalid session in unwrap response");
+                throw new IOException($"Invalid session_id in session response");
             }
 
             cipher.Init(false, parameters);
