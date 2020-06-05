@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.IO;
 
 namespace libusb
@@ -23,7 +24,9 @@ namespace libusb
             BinaryPrimitives.WriteUInt16BigEndian(mem.AsSpan(1), (ushort)input.Length);
             input.CopyTo(mem.AsSpan(3));
 
+            var sw = Stopwatch.StartNew();
             var ret = Transfer(mem, input.Length + 3);
+            Console.WriteLine($"{cmd} {sw.Elapsed.TotalMilliseconds}ms");
 
             if (ret[0] != ((byte)cmd | 0x80))
             {

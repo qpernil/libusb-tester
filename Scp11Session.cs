@@ -56,6 +56,12 @@ namespace libusb
             var receipt = create_resp.Slice(1 + 64);
 
             var shsee = esk_oce.CalculateAgreement(context.DecodePoint(epk_sd)).ToByteArrayUnsigned();
+
+            if (shsee.Length != 32)
+            {
+                throw new IOException($"The shsee length was invalid");
+            }
+
             var shs_oce = X963Kdf(new Sha256Digest(), shsee, context.shsss.Span, 4 * 16).ToArray();
 
             var receipt_key = new KeyParameter(shs_oce, 0, 16);

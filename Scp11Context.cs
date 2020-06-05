@@ -30,6 +30,11 @@ namespace libusb
 
             shsss = sk_oce.CalculateAgreement(DecodePoint(pk_sd.Span)).ToByteArrayUnsigned();
 
+            if(shsss.Length != 32)
+            {
+                throw new IOException($"The shsss length was invalid");
+            }
+
             // Update the stored auth key since we don't persist the client static key
             if (key_id > 0)
             {
