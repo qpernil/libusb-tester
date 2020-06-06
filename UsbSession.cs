@@ -10,13 +10,19 @@ namespace libusb
         public UsbSession(LibUsb libusb, IntPtr device)
         {
             this.libusb = libusb;
-            libusb.open(device, out device_handle);
-            libusb.claim_interface(device_handle, 0);
+            var status = libusb.open(device, out device_handle);
+            if (status != 0)
+                throw new IOException($"libusb.open failed: {status}");
+            status = libusb.claim_interface(device_handle, 0);
+            if (status != 0)
+                throw new IOException($"libusb.claim_interface failed: {status}");
         }
 
         public override void Dispose()
         {
-            libusb.release_interface(device_handle, 0);
+            var status = libusb.release_interface(device_handle, 0);
+            if (status != 0)
+                throw new IOException($"libusb.release_interface failed: {status}");
             libusb.close(device_handle);
         }
 
