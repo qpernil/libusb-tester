@@ -17,9 +17,9 @@ namespace libusb
                     {
                         using (var usb_session = usb_ctx.CreateSession(device))
                         {
-                            usb_session.GetStringDescriptor(descriptor.iManufacturer, 0, out var manufacturer);
-                            usb_session.GetStringDescriptor(descriptor.iProduct, 0, out var product);
-                            usb_session.GetStringDescriptor(descriptor.iSerialNumber, 0, out var serial);
+                            var manufacturer = usb_session.GetStringDescriptor(descriptor.iManufacturer);
+                            var product = usb_session.GetStringDescriptor(descriptor.iProduct);
+                            var serial = usb_session.GetStringDescriptor(descriptor.iSerialNumber);
                             Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
 
                             using (var scp03_session = new Scp03Context("password").CreateSession(usb_session, 1))

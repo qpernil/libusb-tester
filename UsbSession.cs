@@ -26,19 +26,18 @@ namespace libusb
             libusb.close(device_handle);
         }
 
-        public int GetStringDescriptor(byte index, ushort langid, out string descriptor, int max = 1024)
+        public string GetStringDescriptor(byte index, ushort langid = 0, int max = 1024)
         {
             var mem = ArrayPool<byte>.Shared.Rent(max);
             var ret = libusb.control_transfer(device_handle, 0x80, 0x06, (ushort)(0x300 | index), langid, mem, (ushort)max, 1000);
             if (ret < 0)
             {
-                descriptor = string.Empty;
                 ArrayPool<byte>.Shared.Return(mem);
-                return ret;
+                throw new IOException($"control_transfer(out) failed with error {ret}");
             }
-            descriptor = Encoding.Unicode.GetString(mem, 2, ret - 2);
+            var descriptor = Encoding.Unicode.GetString(mem, 2, ret - 2);
             ArrayPool<byte>.Shared.Return(mem);
-            return ret;
+            return descriptor;
         }
 
         public override Span<byte> Transfer(byte[] input, int length)

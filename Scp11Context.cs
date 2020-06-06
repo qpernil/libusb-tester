@@ -23,6 +23,11 @@ namespace libusb
             var pubkey = (ECPublicKeyParameters)pair.Public;
             pk_oce = pubkey.Q.GetEncoded().AsMemory(1);
 
+            if (pk_oce.Length != 64)
+            {
+                throw new IOException($"The pk_oce length was invalid");
+            }
+
             sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
             sk_oce.Init(pair.Private);
 
