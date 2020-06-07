@@ -60,6 +60,11 @@ namespace libusb
             var epk_sd = create_resp.Slice(1, 64);
             var receipt = create_resp.Slice(1 + 64);
 
+            if (epk_sd.Length != 64)
+            {
+                throw new IOException($"The epk_sd length was invalid");
+            }
+
             var shsee = esk_oce.CalculateAgreement(context.DecodePoint(epk_sd)).ToByteArrayUnsigned();
 
             if (shsee.Length != 32)

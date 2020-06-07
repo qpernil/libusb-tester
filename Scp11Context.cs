@@ -33,6 +33,11 @@ namespace libusb
 
             pk_sd = session.SendCmd(HsmCommand.GetScp11PubKey).ToArray();
 
+            if (pk_sd.Length != 64)
+            {
+                throw new IOException($"The pk_sd length was invalid");
+            }
+
             shsss = sk_oce.CalculateAgreement(DecodePoint(pk_sd.Span)).ToByteArrayUnsigned();
 
             if(shsss.Length != 32)
