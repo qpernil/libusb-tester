@@ -3,6 +3,7 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
 
 namespace libusb
 {
@@ -29,11 +30,11 @@ namespace libusb
         public Scp03Session CreateSession(UsbSession session, ushort key_id)
         {
             var host_chal = new byte[8];
-            rand.GetBytes(host_chal);
+            rand.NextBytes(host_chal);
             return new Scp03Session(session, key_id, enc_key, mac_key, host_chal);
         }
 
-        private readonly System.Security.Cryptography.RandomNumberGenerator rand = System.Security.Cryptography.RandomNumberGenerator.Create();
+        private readonly SecureRandom rand = new SecureRandom();
         private readonly KeyParameter enc_key, mac_key;
     }
 }
