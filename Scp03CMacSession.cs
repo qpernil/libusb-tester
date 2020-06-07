@@ -12,7 +12,7 @@ namespace libusb
     {
         public override Span<byte> Transfer(byte[] input, int length)
         {
-            // Adjust encoded length in to include mac
+            // Adjust encoded length to include mac
             BinaryPrimitives.WriteUInt16BigEndian(input.AsSpan(1), (ushort)(length + 5));
 
             var ms = new MemoryStream();
