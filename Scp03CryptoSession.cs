@@ -27,7 +27,7 @@ namespace libusb
 
             if (output[0] != session_id)
             {
-                throw new IOException($"Invalid session_id in session response");
+                throw new IOException("Invalid session_id in session response");
             }
 
             cipher.Init(false, parameters);

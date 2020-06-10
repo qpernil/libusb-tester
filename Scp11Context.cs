@@ -25,7 +25,7 @@ namespace libusb
 
             if (pk_oce.Length != 64)
             {
-                throw new IOException($"The pk_oce length was invalid");
+                throw new IOException($"The pk_oce length was invalid: {pk_oce.Length}");
             }
 
             sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
@@ -35,14 +35,14 @@ namespace libusb
 
             if (pk_sd.Length != 64)
             {
-                throw new IOException($"The pk_sd length was invalid");
+                throw new IOException($"The pk_sd length was invalid: {pk_sd.Length}");
             }
 
-            shsss = sk_oce.CalculateAgreement(DecodePoint(pk_sd.Span)).ToByteArrayUnsigned();
+            shsss = sk_oce.CalculateAgreement(DecodePoint(pk_sd.Span)).ToByteArrayFixed();
 
             if(shsss.Length != 32)
             {
-                throw new IOException($"The shsss length was invalid");
+                throw new IOException($"The shsss length was invalid: {shsss.Length}");
             }
 
             // Update the stored auth key since we don't persist the client static key

@@ -55,7 +55,7 @@ namespace libusb
 
             if (!card_crypto.SequenceEqual(card_crypto_host))
             {
-                throw new IOException($"The card cryptogram was invalid");
+                throw new IOException("The card cryptogram was invalid");
             }
 
             this.session = new Scp03CMacSession(session, key_mac, key_rmac, new byte[16]);

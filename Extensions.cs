@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
 
 namespace libusb
@@ -16,6 +17,18 @@ namespace libusb
             point.CopyTo(bytes.AsSpan(1));
             return curve.DecodePoint(bytes);
         }
+
+        public static byte[] ToByteArrayFixed(this BigInteger num, int size = 32)
+        {
+            var ret = num.ToByteArrayUnsigned();
+            if(ret.Length < size)
+            {
+                var bytes = new byte[size];
+                ret.CopyTo(bytes, size - ret.Length);
+                return bytes;
+            }
+            return ret;
+        } 
 
         public static void BlockUpdate(this IDigest digest, ReadOnlySpan<byte> input)
         {

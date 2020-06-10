@@ -42,7 +42,7 @@ namespace libusb
 
             if (epk_oce.Length != 64)
             {
-                throw new IOException($"The epk_oce length was invalid");
+                throw new IOException($"The epk_oce length was invalid: {epk_oce.Length}");
             }
 
             var esk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
@@ -62,14 +62,14 @@ namespace libusb
 
             if (epk_sd.Length != 64)
             {
-                throw new IOException($"The epk_sd length was invalid");
+                throw new IOException($"The epk_sd length was invalid: {epk_sd.Length}");
             }
 
-            var shsee = esk_oce.CalculateAgreement(context.DecodePoint(epk_sd)).ToByteArrayUnsigned();
+            var shsee = esk_oce.CalculateAgreement(context.DecodePoint(epk_sd)).ToByteArrayFixed();
 
             if (shsee.Length != 32)
             {
-                throw new IOException($"The shsee length was invalid");
+                throw new IOException($"The shsee length was invalid: {shsee.Length}");
             }
 
             var shs_oce = X963Kdf(new Sha256Digest(), shsee, context.shsss.Span, 4 * 16).ToArray();
@@ -88,7 +88,7 @@ namespace libusb
 
             if (!receipt.SequenceEqual(receipt_oce))
             {
-                throw new IOException($"The card receipt was invalid");
+                throw new IOException("The card receipt was invalid");
             }
 
             this.session = new Scp03CMacSession(session, key_mac, key_rmac, receipt_oce);

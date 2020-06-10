@@ -45,7 +45,7 @@ namespace libusb
 
                 if (!mac.SequenceEqual(mac_host))
                 {
-                    throw new IOException($"The cmac was invalid");
+                    throw new IOException("The cmac was invalid");
                 }
 
                 // Adjust endcocded length to not include mac 
