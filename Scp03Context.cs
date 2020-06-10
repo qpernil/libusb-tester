@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
@@ -16,18 +17,29 @@ namespace libusb
             return (KeyParameter)pbkdf2.GenerateDerivedMacParameters(keySize);
         }
 
-        public Scp03Context(string password) : this(Pkcs5Pbkdf2Hmac(password))
+        public Scp03Context(string password, Session session = null) : this(Pkcs5Pbkdf2Hmac(password), session)
         {
         }
 
-        public Scp03Context(KeyParameter key)
+        public Scp03Context(KeyParameter key, Session session = null)
         {
             var bytes = key.GetKey();
             enc_key = new KeyParameter(bytes, 0, 16);
             mac_key = new KeyParameter(bytes, 16, 16);
+            if (session != null)
+            {
+                var info = new byte[9 + bytes.Length];
+                info[0] = 7; // INFO_DEFAULT_KEY
+                // Delegated capabilities
+                for (int i = 0; i < 8; i++)
+                    info[i + 1] = 0xff;
+                // Pubkey
+                bytes.AsSpan().CopyTo(info.AsSpan(9));
+                session.SendCmd(HsmCommand.SetInformation, info);
+            }
         }
 
-        public Scp03Session CreateSession(UsbSession session, ushort key_id)
+        public Scp03Session CreateSession(Session session, ushort key_id)
         {
             var host_chal = new byte[8];
             rand.NextBytes(host_chal);
