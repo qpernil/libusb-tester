@@ -54,18 +54,18 @@ namespace libusb
             var epk_sd = context.DecodePoint(create_resp.Slice(1, 64));
             var receipt = create_resp.Slice(1 + 64);
 
-            var shsss = context.sk_oce.CalculateAgreement(context.pk_sd).ToByteArrayFixed();
-
-            if (shsss.Length != 32)
-            {
-                throw new IOException($"The shsss length was invalid: {shsss.Length}");
-            }
-
             var shsee = esk_oce.CalculateAgreement(epk_sd).ToByteArrayFixed();
 
             if (shsee.Length != 32)
             {
                 throw new IOException($"The shsee length was invalid: {shsee.Length}");
+            }
+
+            var shsss = context.sk_oce.CalculateAgreement(context.pk_sd).ToByteArrayFixed();
+
+            if (shsss.Length != 32)
+            {
+                throw new IOException($"The shsss length was invalid: {shsss.Length}");
             }
 
             var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 4 * 16).ToArray();
