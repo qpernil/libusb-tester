@@ -79,15 +79,13 @@ namespace libusb
             }
             else
             {
-                var info = new byte[9 + pk_oce.Length];
-                info[0] = 7; // INFO_DEFAULT_KEY
-                // Delegated capabilities
-                for (int i = 0; i < 8; i++)
-                    info[i + 1] = 0xff;
-                // Pubkey
-                pk_oce.Span.CopyTo(info.AsSpan(9));
-
-                session.SendCmd(HsmCommand.SetInformation, info);
+                var req = new SetDefaltKeyReq
+                {
+                    delegated_caps2 = 0xffffffff,
+                    delegated_caps = 0xffffffff,
+                    buf = pk_oce
+                };
+                session.SendCmd(req);
             }
         }
 

@@ -112,4 +112,21 @@ namespace libusb
             s.Write(length);
         }
     }
+
+    class SetDefaltKeyReq : IWriteable
+    {
+        public uint delegated_caps2;
+        public uint delegated_caps;
+        public Memory<byte> buf;
+
+        public HsmCommand Command => HsmCommand.SetInformation;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(7);
+            s.Write(delegated_caps2);
+            s.Write(delegated_caps);
+            s.Write(buf.Span);
+        }
+    }
 }

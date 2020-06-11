@@ -28,14 +28,13 @@ namespace libusb
             mac_key = new KeyParameter(bytes, 16, 16);
             if (session != null)
             {
-                var info = new byte[9 + bytes.Length];
-                info[0] = 7; // INFO_DEFAULT_KEY
-                // Delegated capabilities
-                for (int i = 0; i < 8; i++)
-                    info[i + 1] = 0xff;
-                // Pubkey
-                bytes.AsSpan().CopyTo(info.AsSpan(9));
-                session.SendCmd(HsmCommand.SetInformation, info);
+                var req = new SetDefaltKeyReq
+                {
+                    delegated_caps2 = 0xffffffff,
+                    delegated_caps = 0xffffffff,
+                    buf = bytes
+                };
+                session.SendCmd(req);
             }
         }
 
