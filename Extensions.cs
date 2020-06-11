@@ -10,6 +10,11 @@ namespace libusb
 {
     public static class Extensions
     {
+        public static Memory<byte> EncodePoint(this ECPoint point)
+        {
+            return point.GetEncoded().AsMemory(1);
+        }
+
         public static ECPoint DecodePoint(this ECCurve curve, ReadOnlySpan<byte> point)
         {
             var bytes = new byte[point.Length + 1];

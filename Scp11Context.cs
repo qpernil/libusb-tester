@@ -55,7 +55,7 @@ namespace libusb
                     capabilities = 0xffffffff,
                     delegated_caps2 = 0xffffffff,
                     delegated_caps = 0xffffffff,
-                    key = pk_oce.Q.GetEncoded().AsMemory(1)
+                    key = pk_oce.Q.EncodePoint()
                 };
                 session.SendCmd(putauth_req);
             }
@@ -65,7 +65,7 @@ namespace libusb
                 {
                     delegated_caps2 = 0xffffffff,
                     delegated_caps = 0xffffffff,
-                    buf = pk_oce.Q.GetEncoded().AsMemory(1)
+                    buf = pk_oce.Q.EncodePoint()
                 };
                 session.SendCmd(req);
             }
