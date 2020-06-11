@@ -3,30 +3,27 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Math.EC;
 
 namespace libusb
 {
     public static class Extensions
     {
-        public static Memory<byte> EncodePoint(this ECPoint point)
+        public static Span<byte> AsSpan(this ECPublicKeyParameters pub)
         {
-            return point.GetEncoded().AsMemory(1);
+            return pub.Q.GetEncoded().AsSpan(1);
         }
 
-        public static ECPoint DecodePoint(this ECCurve curve, ReadOnlySpan<byte> point)
+        public static Memory<byte> AsMemory(this ECPublicKeyParameters pub)
         {
-            var bytes = new byte[point.Length + 1];
-            bytes[0] = 4;
-            point.CopyTo(bytes.AsSpan(1));
-            return curve.DecodePoint(bytes);
+            return pub.Q.GetEncoded().AsMemory(1);
         }
 
         public static byte[] ToByteArrayFixed(this BigInteger num, int size = 32)
         {
             var ret = num.ToByteArrayUnsigned();
-            if(ret.Length < size)
+            if(ret.Length != size)
             {
                 var bytes = new byte[size];
                 ret.CopyTo(bytes, size - ret.Length);

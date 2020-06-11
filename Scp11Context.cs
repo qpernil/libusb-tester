@@ -55,7 +55,7 @@ namespace libusb
                     capabilities = 0xffffffff,
                     delegated_caps2 = 0xffffffff,
                     delegated_caps = 0xffffffff,
-                    key = pk_oce.Q.EncodePoint()
+                    key = pk_oce.AsMemory()
                 };
                 session.SendCmd(putauth_req);
             }
@@ -65,7 +65,7 @@ namespace libusb
                 {
                     delegated_caps2 = 0xffffffff,
                     delegated_caps = 0xffffffff,
-                    buf = pk_oce.Q.EncodePoint()
+                    buf = pk_oce.AsMemory()
                 };
                 session.SendCmd(req);
             }
@@ -73,7 +73,10 @@ namespace libusb
 
         public ECPublicKeyParameters DecodePoint(ReadOnlySpan<byte> point)
         {
-            return new ECPublicKeyParameters(domain.Curve.DecodePoint(point), domain);
+            var bytes = new byte[point.Length + 1];
+            bytes[0] = 4;
+            point.CopyTo(bytes.AsSpan(1));
+            return new ECPublicKeyParameters(domain.Curve.DecodePoint(bytes), domain);
         }
 
         public Scp11Session CreateSession(Session session, ushort key_id)

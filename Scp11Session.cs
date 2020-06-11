@@ -45,7 +45,7 @@ namespace libusb
             var create_req = new CreateSessionReq
             {
                 key_id = key_id,
-                buf = epk_oce.Q.EncodePoint()
+                buf = epk_oce.AsMemory()
             };
 
             var create_resp = session.SendCmd(create_req);
@@ -55,18 +55,7 @@ namespace libusb
             var receipt = create_resp.Slice(1 + 64);
 
             var shsee = esk_oce.CalculateAgreement(epk_sd).ToByteArrayFixed();
-
-            if (shsee.Length != 32)
-            {
-                throw new IOException($"The shsee length was invalid: {shsee.Length}");
-            }
-
             var shsss = context.sk_oce.CalculateAgreement(context.pk_sd).ToByteArrayFixed();
-
-            if (shsss.Length != 32)
-            {
-                throw new IOException($"The shsss length was invalid: {shsss.Length}");
-            }
 
             var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 4 * 16).ToArray();
 
@@ -77,8 +66,8 @@ namespace libusb
 
             var cmac = new CMac(new AesEngine());
             cmac.Init(receipt_key);
-            cmac.BlockUpdate(epk_sd.Q.EncodePoint().Span);
-            cmac.BlockUpdate(epk_oce.Q.EncodePoint().Span);
+            cmac.BlockUpdate(epk_sd.AsSpan());
+            cmac.BlockUpdate(epk_oce.AsSpan());
             var receipt_oce = new byte[16];
             cmac.DoFinal(receipt_oce, 0);
 
