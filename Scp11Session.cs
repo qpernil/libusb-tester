@@ -37,13 +37,7 @@ namespace libusb
         {
             var pair = context.generator.GenerateKeyPair();
 
-            var pubkey = (ECPublicKeyParameters)pair.Public;
-            var epk_oce = pubkey.Q.GetEncoded().AsMemory(1);
-
-            if (epk_oce.Length != 64)
-            {
-                throw new IOException($"The epk_oce length was invalid: {epk_oce.Length}");
-            }
+            var epk_oce = (ECPublicKeyParameters)pair.Public;
 
             var esk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
             esk_oce.Init(pair.Private);
@@ -51,28 +45,30 @@ namespace libusb
             var create_req = new CreateSessionReq
             {
                 key_id = key_id,
-                buf = epk_oce
+                buf = epk_oce.Q.GetEncoded().AsMemory(1)
             };
 
             var create_resp = session.SendCmd(create_req);
 
             session_id = create_resp[0];
-            var epk_sd = create_resp.Slice(1, 64);
+            var epk_sd = context.DecodePoint(create_resp.Slice(1, 64));
             var receipt = create_resp.Slice(1 + 64);
 
-            if (epk_sd.Length != 64)
+            var shsss = context.sk_oce.CalculateAgreement(context.pk_sd).ToByteArrayFixed();
+
+            if (shsss.Length != 32)
             {
-                throw new IOException($"The epk_sd length was invalid: {epk_sd.Length}");
+                throw new IOException($"The shsss length was invalid: {shsss.Length}");
             }
 
-            var shsee = esk_oce.CalculateAgreement(context.DecodePoint(epk_sd)).ToByteArrayFixed();
+            var shsee = esk_oce.CalculateAgreement(epk_sd).ToByteArrayFixed();
 
             if (shsee.Length != 32)
             {
                 throw new IOException($"The shsee length was invalid: {shsee.Length}");
             }
 
-            var shs_oce = X963Kdf(new Sha256Digest(), shsee, context.shsss.Span, 4 * 16).ToArray();
+            var shs_oce = X963Kdf(new Sha256Digest(), shsee, shsss, 4 * 16).ToArray();
 
             var receipt_key = new KeyParameter(shs_oce, 0, 16);
             key_enc = new KeyParameter(shs_oce, 16, 16);
@@ -81,8 +77,8 @@ namespace libusb
 
             var cmac = new CMac(new AesEngine());
             cmac.Init(receipt_key);
-            cmac.BlockUpdate(epk_sd);
-            cmac.BlockUpdate(epk_oce.Span);
+            cmac.BlockUpdate(epk_sd.Q.GetEncoded().AsSpan(1));
+            cmac.BlockUpdate(epk_oce.Q.GetEncoded().AsSpan(1));
             var receipt_oce = new byte[16];
             cmac.DoFinal(receipt_oce, 0);
 

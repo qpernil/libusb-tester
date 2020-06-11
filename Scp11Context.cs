@@ -20,30 +20,12 @@ namespace libusb
 
             var pair = generator.GenerateKeyPair();
 
-            var pubkey = (ECPublicKeyParameters)pair.Public;
-            pk_oce = pubkey.Q.GetEncoded().AsMemory(1);
-
-            if (pk_oce.Length != 64)
-            {
-                throw new IOException($"The pk_oce length was invalid: {pk_oce.Length}");
-            }
+            pk_oce = (ECPublicKeyParameters)pair.Public;
 
             sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
             sk_oce.Init(pair.Private);
 
-            pk_sd = session.SendCmd(HsmCommand.GetScp11PubKey).ToArray();
-
-            if (pk_sd.Length != 64)
-            {
-                throw new IOException($"The pk_sd length was invalid: {pk_sd.Length}");
-            }
-
-            shsss = sk_oce.CalculateAgreement(DecodePoint(pk_sd.Span)).ToByteArrayFixed();
-
-            if(shsss.Length != 32)
-            {
-                throw new IOException($"The shsss length was invalid: {shsss.Length}");
-            }
+            pk_sd = DecodePoint(session.SendCmd(HsmCommand.GetScp11PubKey));
 
             // Update the stored auth key since we don't persist the client static key
             if (key_id > 0)
@@ -73,7 +55,7 @@ namespace libusb
                     capabilities = 0xffffffff,
                     delegated_caps2 = 0xffffffff,
                     delegated_caps = 0xffffffff,
-                    key = pk_oce
+                    key = pk_oce.Q.GetEncoded().AsMemory(1)
                 };
                 session.SendCmd(putauth_req);
             }
@@ -83,7 +65,7 @@ namespace libusb
                 {
                     delegated_caps2 = 0xffffffff,
                     delegated_caps = 0xffffffff,
-                    buf = pk_oce
+                    buf = pk_oce.Q.GetEncoded().AsMemory(1)
                 };
                 session.SendCmd(req);
             }
@@ -102,6 +84,6 @@ namespace libusb
         internal readonly ECDomainParameters domain;
         internal readonly IAsymmetricCipherKeyPairGenerator generator;
         internal readonly IBasicAgreement sk_oce;
-        internal readonly Memory<byte> pk_oce, pk_sd, shsss;
+        internal readonly ECPublicKeyParameters pk_oce, pk_sd;
     }
 }
