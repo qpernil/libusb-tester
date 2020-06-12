@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Text;
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 
@@ -10,6 +12,43 @@ namespace libusb
 {
     public class Scp11Context
     {
+        public static Span<byte> X963Kdf(IDigest digest, ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, int length)
+        {
+            var size = digest.GetDigestSize();
+            var cnt = 0U;
+            var ms = new MemoryStream();
+            ms.Write(shsee);
+            ms.Write(shsss);
+            ms.Write(cnt);
+            var buf = ms.AsSpan();
+            var cspan = buf.Slice(buf.Length - 4);
+            var ret = new byte[size * ((length + size - 1) / size)];
+            for (var offs = 0; offs < length; offs += size)
+            {
+                BinaryPrimitives.WriteUInt32BigEndian(cspan, ++cnt);
+                digest.Reset();
+                digest.BlockUpdate(buf);
+                digest.DoFinal(ret, offs);
+            }
+            return ret.AsSpan(0, length);
+        }
+
+        public Span<byte> CalculateShs(IBasicAgreement esk_oce, ECPublicKeyParameters epk_sd, int length)
+        {
+            var shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
+            var shsee = esk_oce.CalculateAgreement(epk_sd).ToByteArrayFixed();
+
+            return X963Kdf(new Sha256Digest(), shsee, shsss, length);
+        }
+
+        public ECPublicKeyParameters DecodePoint(ReadOnlySpan<byte> point)
+        {
+            var bytes = new byte[point.Length + 1];
+            bytes[0] = 4;
+            point.CopyTo(bytes.AsSpan(1));
+            return new ECPublicKeyParameters(domain.Curve.DecodePoint(bytes), domain);
+        }
+
         public Scp11Context(Session session, ushort key_id = 0)
         {
             var p256 = NistNamedCurves.GetByName("P-256");
@@ -71,22 +110,15 @@ namespace libusb
             }
         }
 
-        public ECPublicKeyParameters DecodePoint(ReadOnlySpan<byte> point)
-        {
-            var bytes = new byte[point.Length + 1];
-            bytes[0] = 4;
-            point.CopyTo(bytes.AsSpan(1));
-            return new ECPublicKeyParameters(domain.Curve.DecodePoint(bytes), domain);
-        }
-
         public Scp11Session CreateSession(Session session, ushort key_id)
         {
             return new Scp11Session(this, session, key_id);
         }
 
-        internal readonly ECDomainParameters domain;
-        internal readonly IAsymmetricCipherKeyPairGenerator generator;
-        internal readonly IBasicAgreement sk_oce;
-        internal readonly ECPublicKeyParameters pk_oce, pk_sd;
+        public readonly ECDomainParameters domain;
+        public readonly IAsymmetricCipherKeyPairGenerator generator;
+        public readonly ECPublicKeyParameters pk_oce, pk_sd;
+
+        private readonly IBasicAgreement sk_oce;
     }
 }

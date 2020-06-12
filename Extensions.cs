@@ -30,7 +30,7 @@ namespace libusb
                 return bytes;
             }
             return ret;
-        } 
+        }
 
         public static void BlockUpdate(this IDigest digest, ReadOnlySpan<byte> input)
         {
@@ -48,9 +48,10 @@ namespace libusb
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
-        public static void BlockUpdate(this IDigest digest, MemoryStream input)
+        public static void BlockUpdate(this IMac mac, ECPublicKeyParameters input)
         {
-            digest.BlockUpdate(input.GetBuffer(), 0, (int)input.Length);
+            var bytes = input.Q.GetEncoded();
+            mac.BlockUpdate(bytes, 1, bytes.Length - 1);
         }
 
         public static void BlockUpdate(this IMac mac, MemoryStream input)
