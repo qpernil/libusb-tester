@@ -38,7 +38,7 @@ namespace libusb
             var shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
             var shsee = esk_oce.CalculateAgreement(epk_sd).ToByteArrayFixed();
 
-            return X963Kdf(new Sha256Digest(), shsee, shsss, length);
+            return X963Kdf(digest, shsee, shsss, length);
         }
 
         public ECPublicKeyParameters DecodePoint(ReadOnlySpan<byte> point)
@@ -119,6 +119,7 @@ namespace libusb
         public readonly IAsymmetricCipherKeyPairGenerator generator;
         public readonly ECPublicKeyParameters pk_oce, pk_sd;
 
+        private readonly IDigest digest = new Sha256Digest();
         private readonly IBasicAgreement sk_oce;
     }
 }
