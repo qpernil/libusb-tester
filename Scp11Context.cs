@@ -123,7 +123,7 @@ namespace libusb
                             var mech = factories.MechanismFactory.Create(CKM.CKM_ECDH1_DERIVE,
                                 factories.MechanismParamsFactory.CreateCkEcdh1DeriveParams((ulong)CKD.CKD_NULL, null, pk_sd.Q.GetEncoded()));
 
-                            var obj = s.DeriveKey(mech, keys[0], new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_DATA),
+                            var obj = s.DeriveKey(mech, keys[0], new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_SECRET_KEY),
                                                                                         factories.ObjectAttributeFactory.Create(CKA.CKA_EXTRACTABLE, true) });
 
                             var v = s.GetAttributeValue(obj, new List<CKA> { CKA.CKA_VALUE });
