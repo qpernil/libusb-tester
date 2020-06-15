@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Net.Pkcs11Interop.Common;
+using Net.Pkcs11Interop.HighLevelAPI;
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -35,7 +38,6 @@ namespace libusb
 
         public Span<byte> CalculateShs(IBasicAgreement esk_oce, ECPublicKeyParameters epk_sd, int length)
         {
-            var shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
             var shsee = esk_oce.CalculateAgreement(epk_sd).ToByteArrayFixed();
 
             return X963Kdf(digest, shsee, shsss, length);
@@ -49,7 +51,50 @@ namespace libusb
             return new ECPublicKeyParameters(domain.Curve.DecodePoint(bytes), domain);
         }
 
-        public Scp11Context(Session session, ushort key_id = 0)
+        public void PutAuthKey(Session session, ushort key_id)
+        {
+            try
+            {
+                var delete_req = new DeleteObjectReq
+                {
+                    key_id = key_id,
+                    key_type = 2
+                };
+                session.SendCmd(delete_req);
+
+            }
+            catch (IOException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            var putauth_req = new PutAuthKeyReq
+            {
+                key_id = key_id,
+                algorithm = 49,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities2 = 0xffffffff,
+                capabilities = 0xffffffff,
+                delegated_caps2 = 0xffffffff,
+                delegated_caps = 0xffffffff,
+                key = pk_oce.AsMemory()
+            };
+            session.SendCmd(putauth_req);
+        }
+
+        public void SetDefaultKey(Session session)
+        {
+            var req = new SetDefaltKeyReq
+            {
+                delegated_caps2 = 0xffffffff,
+                delegated_caps = 0xffffffff,
+                buf = pk_oce.AsMemory()
+            };
+            session.SendCmd(req);
+        }
+
+        public Scp11Context(Session session)
         {
             var p256 = NistNamedCurves.GetByName("P-256");
             domain = new ECDomainParameters(p256.Curve, p256.G, p256.N);
@@ -57,57 +102,54 @@ namespace libusb
             generator = GeneratorUtilities.GetKeyPairGenerator("ECDH");
             generator.Init(new ECKeyGenerationParameters(domain, new SecureRandom()));
 
-            var pair = generator.GenerateKeyPair();
-
-            pk_oce = (ECPublicKeyParameters)pair.Public;
-
-            sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
-            sk_oce.Init(pair.Private);
-
             pk_sd = DecodePoint(session.SendCmd(HsmCommand.GetScp11PubKey));
 
-            // Update the stored auth key since we don't persist the client static key
-            if (key_id > 0)
+            var factories = new Pkcs11InteropFactories();
+            using (var lib = factories.Pkcs11LibraryFactory.LoadPkcs11Library(factories, "/usr/local/lib/libykcs11.dylib", AppType.SingleThreaded))
             {
-                try
+                foreach (var slot in lib.GetSlotList(SlotsType.WithTokenPresent))
                 {
-                    var delete_req = new DeleteObjectReq
+                    using (var s = slot.OpenSession(SessionType.ReadWrite))
                     {
-                        key_id = key_id,
-                        key_type = 2
-                    };
-                    session.SendCmd(delete_req);
+                        s.Login(CKU.CKU_USER, "123456");
 
-                }
-                catch (IOException e)
-                {
-                    Console.WriteLine(e.Message);
-                }
+                        var keys = s.FindAllObjects(new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_PRIVATE_KEY),
+                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_MODULUS_BITS, 256) });
 
-                var putauth_req = new PutAuthKeyReq
-                {
-                    key_id = key_id,
-                    algorithm = 49,
-                    label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
-                    domains = 0xffff,
-                    capabilities2 = 0xffffffff,
-                    capabilities = 0xffffffff,
-                    delegated_caps2 = 0xffffffff,
-                    delegated_caps = 0xffffffff,
-                    key = pk_oce.AsMemory()
-                };
-                session.SendCmd(putauth_req);
+                        if (keys.Count > 0)
+                        {
+                            pk_oce = DecodePoint(s.GetAttributeValue(keys[0], new List<CKA> { CKA.CKA_EC_POINT })[0].GetValueAsByteArray().AsSpan(3));
+
+                            var mech = factories.MechanismFactory.Create(CKM.CKM_ECDH1_DERIVE,
+                                factories.MechanismParamsFactory.CreateCkEcdh1DeriveParams((ulong)CKD.CKD_NULL, null, pk_sd.Q.GetEncoded()));
+
+                            var obj = s.DeriveKey(mech, keys[0], new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_DATA),
+                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_EXTRACTABLE, true) });
+
+                            var v = s.GetAttributeValue(obj, new List<CKA> { CKA.CKA_VALUE });
+                            shsss = v[0].GetValueAsByteArray();
+
+                            break;
+                        }
+
+                        s.Logout();
+                    }
+                }
             }
-            else
+
+            if(shsss == null)
             {
-                var req = new SetDefaltKeyReq
-                {
-                    delegated_caps2 = 0xffffffff,
-                    delegated_caps = 0xffffffff,
-                    buf = pk_oce.AsMemory()
-                };
-                session.SendCmd(req);
+                var pair = generator.GenerateKeyPair();
+
+                pk_oce = (ECPublicKeyParameters)pair.Public;
+
+                sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
+                sk_oce.Init(pair.Private);
+
+                shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
             }
+
+            SetDefaultKey(session);
         }
 
         public Scp11Session CreateSession(Session session, ushort key_id)
@@ -121,5 +163,6 @@ namespace libusb
 
         private readonly IDigest digest = new Sha256Digest();
         private readonly IBasicAgreement sk_oce;
+        private readonly byte[] shsss;
     }
 }
