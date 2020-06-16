@@ -20,9 +20,7 @@ namespace libusb
 
         public override void Dispose()
         {
-            var status = libusb.release_interface(device_handle, 0);
-            if (status != 0)
-                throw new IOException($"libusb.release_interface failed: {status}");
+            libusb.release_interface(device_handle, 0);
             libusb.close(device_handle);
         }
 

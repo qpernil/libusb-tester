@@ -25,8 +25,9 @@ namespace libusb
             input.CopyTo(mem.AsSpan(3));
 
             var sw = Stopwatch.StartNew();
+            Console.WriteLine($"{GetType().Name}.{cmd}...");
             var ret = Transfer(mem, input.Length + 3);
-            Console.WriteLine($"{cmd} {sw.Elapsed.TotalMilliseconds}ms");
+            Console.WriteLine($"{GetType().Name}.{cmd} {sw.Elapsed.TotalMilliseconds}ms.");
 
             if (ret[0] != ((byte)cmd | 0x80))
             {

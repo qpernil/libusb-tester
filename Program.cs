@@ -34,7 +34,7 @@ namespace libusb
                                 foreach (var b in rand1)
                                     Console.Write($"{b:x2}");
                                 Console.WriteLine();
-                                using (var scp11_session = new Scp11Context(usb_session).CreateSession(usb_session, 1))
+                                using (var scp11_session = new Scp11Context(usb_session).SetDefaultKey(usb_session).CreateSession(usb_session, 1))
                                 {
                                     var info2 = scp11_session.SendCmd(HsmCommand.DeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp11_session");

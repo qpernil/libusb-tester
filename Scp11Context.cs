@@ -51,7 +51,7 @@ namespace libusb
             return new ECPublicKeyParameters(domain.Curve.DecodePoint(bytes), domain);
         }
 
-        public void PutAuthKey(Session session, ushort key_id)
+        public Scp11Context PutAuthKey(Session session, ushort key_id)
         {
             try
             {
@@ -81,9 +81,10 @@ namespace libusb
                 key = pk_oce.AsMemory()
             };
             session.SendCmd(putauth_req);
+            return this;
         }
 
-        public void SetDefaultKey(Session session)
+        public Scp11Context SetDefaultKey(Session session)
         {
             var req = new SetDefaltKeyReq
             {
@@ -92,6 +93,7 @@ namespace libusb
                 buf = pk_oce.AsMemory()
             };
             session.SendCmd(req);
+            return this;
         }
 
         public Scp11Context(Session session)
@@ -148,8 +150,6 @@ namespace libusb
 
                 shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
             }
-
-            SetDefaultKey(session);
         }
 
         public Scp11Session CreateSession(Session session, ushort key_id)

@@ -36,6 +36,7 @@ namespace libusb
 
         public override void Dispose() {
             SendCmd(HsmCommand.CloseSession);
+            session.Dispose();
         }
 
         private readonly AesEngine engine = new AesEngine();
