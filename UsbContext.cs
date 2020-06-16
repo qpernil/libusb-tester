@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace libusb
@@ -9,7 +10,9 @@ namespace libusb
         public UsbContext()
         {
             libusb = new LibUsb("/Users/PNilsson/Firmware/YubiCrypt/yubi-ifx-common/sim/yubicrypt/build/libusb-1.0.dylib");
-            libusb.init(out ctx);
+            var status = libusb.init(out ctx);
+            if (status != 0)
+                throw new IOException($"libusb.init failed: {status}");
         }
 
         public void Dispose()
