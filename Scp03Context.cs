@@ -35,7 +35,8 @@ namespace libusb
             return new Scp03Session(session, key_id, enc_key, mac_key, host_chal);
         }
 
-        protected override Memory<byte> AuthKey => key_bytes;
+        protected override Memory<byte> Key => key_bytes;
+        protected override byte Algorithm => 38;
 
         private readonly SecureRandom rand = new SecureRandom();
         private readonly KeyParameter enc_key, mac_key;

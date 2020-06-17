@@ -78,11 +78,12 @@ namespace libusb
                                 factories.MechanismParamsFactory.CreateCkEcdh1DeriveParams((ulong)CKD.CKD_NULL, null, pk_sd.Q.GetEncoded()));
 
                             var obj = s.DeriveKey(mech, keys[0], new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_SECRET_KEY),
-                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_EXTRACTABLE, true) });
+                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_KEY_TYPE, CKK.CKK_GENERIC_SECRET) });
 
                             var v = s.GetAttributeValue(obj, new List<CKA> { CKA.CKA_VALUE });
                             shsss = v[0].GetValueAsByteArray();
 
+                            s.Logout();
                             break;
                         }
 
@@ -109,7 +110,8 @@ namespace libusb
             return new Scp11Session(this, session, key_id);
         }
 
-        protected override Memory<byte> AuthKey => pk_oce.AsMemory();
+        protected override Memory<byte> Key => pk_oce.AsMemory();
+        protected override byte Algorithm => 49;
 
         public readonly ECDomainParameters domain;
         public readonly IAsymmetricCipherKeyPairGenerator generator;

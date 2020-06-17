@@ -30,11 +30,11 @@ namespace libusb
                 domains = 0xffff,
                 capabilities2 = 0xffffffff,
                 capabilities = 0xffffffff,
+                algorithm = Algorithm,
                 delegated_caps2 = 0xffffffff,
                 delegated_caps = 0xffffffff,
-                key = AuthKey
+                key = Key
             };
-            putauth_req.algorithm = (byte)(putauth_req.key.Length == 64 ? 49 : 38);
             session.SendCmd(putauth_req);
             return this;
         }
@@ -45,7 +45,7 @@ namespace libusb
             {
                 delegated_caps2 = 0xffffffff,
                 delegated_caps = 0xffffffff,
-                buf = AuthKey
+                buf = Key
             };
             session.SendCmd(req);
             return this;
@@ -53,6 +53,7 @@ namespace libusb
 
         public abstract Session CreateSession(Session session, ushort key_id);
 
-        protected abstract Memory<byte> AuthKey { get; }
+        protected abstract Memory<byte> Key { get; }
+        protected abstract byte Algorithm { get; }
     }
 }
