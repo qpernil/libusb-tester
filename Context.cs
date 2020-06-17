@@ -26,7 +26,6 @@ namespace libusb
             var putauth_req = new PutAuthKeyReq
             {
                 key_id = key_id,
-                algorithm = 49,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
                 capabilities2 = 0xffffffff,
@@ -35,6 +34,7 @@ namespace libusb
                 delegated_caps = 0xffffffff,
                 key = AuthKey
             };
+            putauth_req.algorithm = (byte)(putauth_req.key.Length == 64 ? 49 : 38);
             session.SendCmd(putauth_req);
             return this;
         }
