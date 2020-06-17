@@ -12,6 +12,8 @@ namespace libusb
         SetInformation = 0x09,
         CloseSession = 0x40,
         PutAuthKey = 0x44,
+        ListObjects = 0x48,
+        GetObjectInfo = 0x4e,
         GetPseudoRandom = 0x51,
         DeleteObject = 0x58,
         GetScp11PubKey = 0x6d
@@ -127,6 +129,20 @@ namespace libusb
             s.Write(delegated_caps2);
             s.Write(delegated_caps);
             s.Write(buf.Span);
+        }
+    }
+
+    class GetObjectInfoReq : IWriteable
+    {
+        public ushort key_id;
+        public byte key_type;
+
+        public HsmCommand Command => HsmCommand.GetObjectInfo;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte(key_type);
         }
     }
 }
