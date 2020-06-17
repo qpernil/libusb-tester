@@ -8,7 +8,7 @@ using Org.BouncyCastle.Security;
 
 namespace libusb
 {
-    class Scp03Context
+    class Scp03Context : Context
     {
         private static KeyParameter Pkcs5Pbkdf2Hmac(string password, string salt = "Yubico", int iterationCount = 10000, int keySize = 256)
         {
@@ -17,35 +17,28 @@ namespace libusb
             return (KeyParameter)pbkdf2.GenerateDerivedMacParameters(keySize);
         }
 
-        public Scp03Context(string password, Session session = null) : this(Pkcs5Pbkdf2Hmac(password), session)
+        public Scp03Context(string password) : this(Pkcs5Pbkdf2Hmac(password))
         {
         }
 
-        public Scp03Context(KeyParameter key, Session session = null)
+        public Scp03Context(KeyParameter key)
         {
-            var bytes = key.GetKey();
-            enc_key = new KeyParameter(bytes, 0, 16);
-            mac_key = new KeyParameter(bytes, 16, 16);
-            if (session != null)
-            {
-                var req = new SetDefaltKeyReq
-                {
-                    delegated_caps2 = 0xffffffff,
-                    delegated_caps = 0xffffffff,
-                    buf = bytes
-                };
-                session.SendCmd(req);
-            }
+            key_bytes = key.GetKey();
+            enc_key = new KeyParameter(key_bytes, 0, 16);
+            mac_key = new KeyParameter(key_bytes, 16, 16);
         }
 
-        public Scp03Session CreateSession(Session session, ushort key_id)
+        public override Session CreateSession(Session session, ushort key_id)
         {
             var host_chal = new byte[8];
             rand.NextBytes(host_chal);
             return new Scp03Session(session, key_id, enc_key, mac_key, host_chal);
         }
 
+        protected override Memory<byte> AuthKey => key_bytes;
+
         private readonly SecureRandom rand = new SecureRandom();
         private readonly KeyParameter enc_key, mac_key;
+        private readonly byte[] key_bytes;
     }
 }

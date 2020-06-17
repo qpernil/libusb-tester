@@ -2,7 +2,6 @@
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Net.Pkcs11Interop.Common;
 using Net.Pkcs11Interop.HighLevelAPI;
 using Org.BouncyCastle.Asn1.Nist;
@@ -13,7 +12,7 @@ using Org.BouncyCastle.Security;
 
 namespace libusb
 {
-    public class Scp11Context
+    public class Scp11Context : Context
     {
         public static Span<byte> X963Kdf(IDigest digest, ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, int length)
         {
@@ -36,11 +35,9 @@ namespace libusb
             return ret.AsSpan(0, length);
         }
 
-        public Span<byte> CalculateShs(IBasicAgreement esk_oce, ECPublicKeyParameters epk_sd, int length)
+        public Span<byte> CalculateShs(ReadOnlySpan<byte> shsee, int length)
         {
-            var shsee = esk_oce.CalculateAgreement(epk_sd).ToByteArrayFixed();
-
-            return X963Kdf(digest, shsee, shsss, length);
+            return X963Kdf(new Sha256Digest(), shsee, shsss, length);
         }
 
         public ECPublicKeyParameters DecodePoint(ReadOnlySpan<byte> point)
@@ -49,51 +46,6 @@ namespace libusb
             bytes[0] = 4;
             point.CopyTo(bytes.AsSpan(1));
             return new ECPublicKeyParameters(domain.Curve.DecodePoint(bytes), domain);
-        }
-
-        public Scp11Context PutAuthKey(Session session, ushort key_id)
-        {
-            try
-            {
-                var delete_req = new DeleteObjectReq
-                {
-                    key_id = key_id,
-                    key_type = 2
-                };
-                session.SendCmd(delete_req);
-
-            }
-            catch (IOException e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            var putauth_req = new PutAuthKeyReq
-            {
-                key_id = key_id,
-                algorithm = 49,
-                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
-                domains = 0xffff,
-                capabilities2 = 0xffffffff,
-                capabilities = 0xffffffff,
-                delegated_caps2 = 0xffffffff,
-                delegated_caps = 0xffffffff,
-                key = pk_oce.AsMemory()
-            };
-            session.SendCmd(putauth_req);
-            return this;
-        }
-
-        public Scp11Context SetDefaultKey(Session session)
-        {
-            var req = new SetDefaltKeyReq
-            {
-                delegated_caps2 = 0xffffffff,
-                delegated_caps = 0xffffffff,
-                buf = pk_oce.AsMemory()
-            };
-            session.SendCmd(req);
-            return this;
         }
 
         public Scp11Context(Session session)
@@ -152,16 +104,17 @@ namespace libusb
             }
         }
 
-        public Scp11Session CreateSession(Session session, ushort key_id)
+        public override Session CreateSession(Session session, ushort key_id)
         {
             return new Scp11Session(this, session, key_id);
         }
+
+        protected override Memory<byte> AuthKey => pk_oce.AsMemory();
 
         public readonly ECDomainParameters domain;
         public readonly IAsymmetricCipherKeyPairGenerator generator;
         public readonly ECPublicKeyParameters pk_oce, pk_sd;
 
-        private readonly IDigest digest = new Sha256Digest();
         private readonly IBasicAgreement sk_oce;
         private readonly byte[] shsss;
     }

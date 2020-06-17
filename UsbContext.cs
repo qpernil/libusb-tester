@@ -23,6 +23,8 @@ namespace libusb
         public IEnumerable<IntPtr> GetDeviceList()
         {
             var ret = libusb.get_device_list(ctx, out var device_list);
+            if (ret < 0)
+                throw new IOException($"libusb.get_device_list failed: {ret}");
             for (int i = 0; i < ret; i++)
             {
                 yield return Marshal.ReadIntPtr(device_list, i * IntPtr.Size);
@@ -30,9 +32,13 @@ namespace libusb
             libusb.free_device_list(device_list, 1);
         }
 
-        public int GetDeviceDescriptor(IntPtr device, ref device_descriptor descriptor)
+        public int GetDeviceDescriptor(IntPtr device, out device_descriptor descriptor)
         {
-            return libusb.get_device_descriptor(device, ref descriptor);
+            descriptor = new device_descriptor();
+            var status = libusb.get_device_descriptor(device, ref descriptor);
+            if (status != 0)
+                throw new IOException($"libusb.get_device_descriptor failed: {status}");
+            return status;
         }
 
         public UsbSession CreateSession(IntPtr device)

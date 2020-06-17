@@ -29,7 +29,8 @@ namespace libusb
             var epk_sd = resp.Slice(1, 64);
             var receipt = resp.Slice(1 + 64);
 
-            var shs_oce = context.CalculateShs(esk_oce, context.DecodePoint(epk_sd), 4 * 16).ToArray();
+            var shsee = esk_oce.CalculateAgreement(context.DecodePoint(epk_sd)).ToByteArrayFixed();
+            var shs_oce = context.CalculateShs(shsee, 4 * 16).ToArray();
 
             var receipt_key = new KeyParameter(shs_oce, 0, 16);
             key_enc = new KeyParameter(shs_oce, 16, 16);

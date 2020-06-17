@@ -10,8 +10,7 @@ namespace libusb
             {
                 foreach (var device in usb_ctx.GetDeviceList())
                 {
-                    var descriptor = new device_descriptor();
-                    usb_ctx.GetDeviceDescriptor(device, ref descriptor);
+                    usb_ctx.GetDeviceDescriptor(device, out var descriptor);
                     Console.WriteLine($"Vendor 0x{descriptor.idVendor:x} Product 0x{descriptor.idProduct:x}");
                     if (descriptor.idVendor == 0x1050 && descriptor.idProduct == 0x30)
                     {
@@ -22,7 +21,7 @@ namespace libusb
                             var serial = usb_session.GetStringDescriptor(descriptor.iSerialNumber);
                             Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
 
-                            using (var scp03_session = new Scp03Context("password", usb_session).CreateSession(usb_session, 1))
+                            using (var scp03_session = new Scp03Context("password").SetDefaultKey(usb_session).CreateSession(usb_session, 1))
                             {
                                 var info = scp03_session.SendCmd(HsmCommand.DeviceInfo);
                                 Console.WriteLine("DeviceInfo over scp03_session");
