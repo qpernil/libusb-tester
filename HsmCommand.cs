@@ -132,6 +132,19 @@ namespace libusb
         }
     }
 
+    class SetSerialReq : IWriteable
+    {
+        public uint serial;
+
+        public HsmCommand Command => HsmCommand.SetInformation;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(1);
+            s.Write(serial);
+        }
+    }
+
     class GetObjectInfoReq : IWriteable
     {
         public ushort key_id;
