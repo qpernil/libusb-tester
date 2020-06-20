@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using Net.Pkcs11Interop.Common;
 using Net.Pkcs11Interop.HighLevelAPI;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -72,7 +74,10 @@ namespace libusb
 
                         if (keys.Count > 0)
                         {
-                            pk_oce = DecodePoint(s.GetAttributeValue(keys[0], new List<CKA> { CKA.CKA_EC_POINT })[0].GetValueAsByteArray().AsSpan(3));
+                            var bytes = s.GetAttributeValue(keys[0], new List<CKA> { CKA.CKA_EC_POINT })[0].GetValueAsByteArray();
+                            var octets = (Asn1OctetString)Asn1Object.FromByteArray(bytes);
+                            X9ECPoint point = new X9ECPoint(domain.Curve, octets);
+                            pk_oce = new ECPublicKeyParameters(point.Point, domain);
 
                             var mech = factories.MechanismFactory.Create(CKM.CKM_ECDH1_DERIVE,
                                 factories.MechanismParamsFactory.CreateCkEcdh1DeriveParams((ulong)CKD.CKD_NULL, null, pk_sd.Q.GetEncoded()));
