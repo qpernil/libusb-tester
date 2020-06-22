@@ -5,6 +5,7 @@ namespace libusb
 {
     public enum HsmCommand : byte
     {
+        Echo = 0x01,
         CreateSession = 0x03,
         AuthenticateSession = 0x04,
         SessionCommand = 0x05,
@@ -16,7 +17,30 @@ namespace libusb
         GetObjectInfo = 0x4e,
         GetPseudoRandom = 0x51,
         DeleteObject = 0x58,
-        GetScp11PubKey = 0x6d
+        GetScp11PubKey = 0x6d,
+        Error = 0x7f
+    }
+
+    public enum HsmError : byte
+    {
+        OK = 0x00,
+        INVALID_COMMAND = 0x01,
+        INVALID_DATA = 0x02,
+        INVALID_SESSION = 0x03,
+        AUTHENTICATION_FAILED = 0x04,
+        SESSIONS_FULL = 0x05,
+        SESSION_FAILED = 0x06,
+        STORAGE_FAILED = 0x07,
+        WRONG_LENGTH = 0x08,
+        INSUFFICIENT_PERMISSIONS = 0x09,
+        LOG_FULL = 0x0A,
+        OBJECT_NOT_FOUND = 0x0B,
+        INVALID_ID = 0x0C,
+        SSH_CA_CONSTRAINT_VIOLATION = 0x0E,
+        INVALID_OTP = 0x0F,
+        DEMO_MODE = 0x10,
+        OBJECT_EXISTS = 0x11,
+        COMMAND_UNEXECUTED = 0xFF
     }
 
     class PutAuthKeyReq : IWriteable

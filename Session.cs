@@ -31,7 +31,7 @@ namespace libusb
 
             if (ret[0] != ((byte)cmd | 0x80))
             {
-                throw new IOException($"The {cmd} command returned {ret.Length} bytes and error {ret[3]}");
+                throw new IOException($"The {cmd} command returned {ret.Length} bytes: {(HsmError)ret[3]}");
             }
 
             var len = BinaryPrimitives.ReadUInt16BigEndian(ret.Slice(1));
