@@ -10,6 +10,7 @@ namespace libusb
         AuthenticateSession = 0x04,
         SessionCommand = 0x05,
         DeviceInfo = 0x06,
+        Reset = 0x08,
         SetInformation = 0x09,
         CloseSession = 0x40,
         PutAuthKey = 0x44,
