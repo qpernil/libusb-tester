@@ -21,10 +21,12 @@ namespace libusb
                             var serial = usb_session.GetStringDescriptor(descriptor.iSerialNumber);
                             Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
 
+                            //usb_session.SendCmd(HsmCommand.Bsl);
                             //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
 
                             using (var scp03_session = new Scp03Context("password")/*.SetDefaultKey(usb_session)*/.CreateSession(usb_session, 1))
                             {
+                                //scp03_session.SendCmd(HsmCommand.Reset);
                                 var info = scp03_session.SendCmd(HsmCommand.DeviceInfo);
                                 Console.WriteLine("DeviceInfo over scp03_session");
                                 foreach (var b in info)
