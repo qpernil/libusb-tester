@@ -58,7 +58,7 @@ namespace libusb
             generator = GeneratorUtilities.GetKeyPairGenerator("ECDH");
             generator.Init(new ECKeyGenerationParameters(domain, new SecureRandom()));
 
-            pk_sd = DecodePoint(session.SendCmd(HsmCommand.GetScp11PubKey));
+            pk_sd = DecodePoint(session.SendCmd(HsmCommand.GetDevicePubKey));
 
             var factories = new Pkcs11InteropFactories();
             using (var lib = factories.Pkcs11LibraryFactory.LoadPkcs11Library(factories, "/usr/local/lib/libykcs11.dylib", AppType.SingleThreaded))
