@@ -9,7 +9,7 @@ namespace libusb
         CreateSession = 0x03,
         AuthenticateSession = 0x04,
         SessionCommand = 0x05,
-        DeviceInfo = 0x06,
+        GetDeviceInfo = 0x06,
         Bsl = 0x07,
         Reset = 0x08,
         SetInformation = 0x09,

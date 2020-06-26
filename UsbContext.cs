@@ -9,7 +9,7 @@ namespace libusb
     {
         public UsbContext()
         {
-            libusb = new LibUsb("/Users/PNilsson/Firmware/YubiCrypt/yubi-ifx-common/sim/yubicrypt/build/libusb-1.0.dylib");
+            libusb = new LibUsb(/*"/Users/PNilsson/Firmware/YubiCrypt/yubi-ifx-common/sim/yubicrypt/build/libusb-1.0.dylib"*/);
             var status = libusb.init(out ctx);
             if (status != 0)
                 throw new IOException($"libusb.init failed: {status}");

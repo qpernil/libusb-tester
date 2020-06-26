@@ -27,7 +27,7 @@ namespace libusb
                             using (var scp03_session = new Scp03Context("password")/*.SetDefaultKey(usb_session)*/.CreateSession(usb_session, 1))
                             {
                                 //scp03_session.SendCmd(HsmCommand.Reset);
-                                var info = scp03_session.SendCmd(HsmCommand.DeviceInfo);
+                                var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                 Console.WriteLine("DeviceInfo over scp03_session");
                                 foreach (var b in info)
                                     Console.Write($"{b:x2}");
@@ -37,10 +37,10 @@ namespace libusb
                                 foreach (var b in rand1)
                                     Console.Write($"{b:x2}");
                                 Console.WriteLine();
-                                var context = new Scp11Context(usb_session)/*.PutAuthKey(scp03_session, 2)*/;
+                                var context = new Scp11Context(usb_session).PutAuthKey(scp03_session, 2);
                                 using (var scp11_session = context.CreateSession(usb_session, 2))
                                 {
-                                    var info2 = scp11_session.SendCmd(HsmCommand.DeviceInfo);
+                                    var info2 = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp11_session");
                                     foreach (var b in info2)
                                         Console.Write($"{b:x2}");
@@ -53,7 +53,7 @@ namespace libusb
                                 }
                                 using (var scp11_session = context.CreateSession(usb_session, 2))
                                 {
-                                    var info2 = scp11_session.SendCmd(HsmCommand.DeviceInfo);
+                                    var info2 = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp11_session");
                                     foreach (var b in info2)
                                         Console.Write($"{b:x2}");
