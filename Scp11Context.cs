@@ -70,6 +70,7 @@ namespace libusb
                         s.Login(CKU.CKU_USER, "123456");
 
                         var keys = s.FindAllObjects(new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_PRIVATE_KEY),
+                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_KEY_TYPE, CKK.CKK_EC),
                                                                                 factories.ObjectAttributeFactory.Create(CKA.CKA_MODULUS_BITS, 256) });
 
                         if (keys.Count > 0)
