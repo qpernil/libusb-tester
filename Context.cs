@@ -64,7 +64,7 @@ namespace libusb
         }
 
         public abstract Session CreateSession(Session session, ushort key_id);
-        public abstract Context GenerateKey();
+        public abstract Context GenerateKeyPair();
 
         protected abstract Memory<byte> Key { get; }
         protected abstract byte Algorithm { get; }

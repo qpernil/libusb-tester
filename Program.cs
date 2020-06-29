@@ -37,7 +37,7 @@ namespace libusb
                                 foreach (var b in rand1)
                                     Console.Write($"{b:x2}");
                                 Console.WriteLine();
-                                var context = new Scp11Context(usb_session).PutAuthKey(scp03_session, 2);
+                                var context = new Pkcs11Scp11Context(usb_session).PutAuthKey(scp03_session, 2);
                                 using (var scp11_session = context.CreateSession(usb_session, 2))
                                 {
                                     var info2 = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
@@ -50,7 +50,7 @@ namespace libusb
                                     foreach (var b in rand2)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-                                    context.GenerateKey().ChangeAuthKey(scp11_session, 2);
+                                    context.GenerateKeyPair().ChangeAuthKey(scp11_session, 2);
                                 }
                                 using (var scp11_session = context.CreateSession(usb_session, 2))
                                 {

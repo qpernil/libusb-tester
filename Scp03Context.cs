@@ -35,7 +35,7 @@ namespace libusb
             return new Scp03Session(session, key_id, enc_key, mac_key, host_chal);
         }
 
-        public override Context GenerateKey()
+        public override Context GenerateKeyPair()
         {
             return this;
         }
