@@ -39,6 +39,18 @@ namespace libusb
             return this;
         }
 
+        public Context ChangeAuthKey(Session session, ushort key_id)
+        {
+            var req = new ChangeAuthKeyReq
+            {
+                key_id = key_id,
+                key_type = Algorithm,
+                key = Key
+            };
+            session.SendCmd(req);
+            return this;
+        }
+
         public Context SetDefaultKey(Session session)
         {
             var req = new SetDefaltKeyReq
@@ -52,6 +64,7 @@ namespace libusb
         }
 
         public abstract Session CreateSession(Session session, ushort key_id);
+        public abstract Context GenerateKey();
 
         protected abstract Memory<byte> Key { get; }
         protected abstract byte Algorithm { get; }

@@ -20,6 +20,7 @@ namespace libusb
         GetObjectInfo = 0x4e,
         GetPseudoRandom = 0x51,
         DeleteObject = 0x58,
+        ChangeAuthKey = 0x6c,
         Error = 0x7f
     }
 
@@ -69,6 +70,22 @@ namespace libusb
             s.WriteByte(algorithm);
             s.Write(delegated_caps2);
             s.Write(delegated_caps);
+            s.Write(key.Span);
+        }
+    }
+
+    class ChangeAuthKeyReq : IWriteable
+    {
+        public ushort key_id;
+        public byte key_type;
+        public Memory<byte> key;
+
+        public HsmCommand Command => HsmCommand.ChangeAuthKey;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte(key_type);
             s.Write(key.Span);
         }
     }

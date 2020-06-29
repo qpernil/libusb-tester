@@ -100,14 +100,7 @@ namespace libusb
 
             if(shsss == null)
             {
-                var pair = generator.GenerateKeyPair();
-
-                pk_oce = (ECPublicKeyParameters)pair.Public;
-
-                sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
-                sk_oce.Init(pair.Private);
-
-                shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
+                GenerateKey();
             }
         }
 
@@ -116,14 +109,29 @@ namespace libusb
             return new Scp11Session(this, session, key_id);
         }
 
+        public override Context GenerateKey()
+        {
+            var pair = generator.GenerateKeyPair();
+
+            pk_oce = (ECPublicKeyParameters)pair.Public;
+
+            sk_oce = AgreementUtilities.GetBasicAgreement("ECDH");
+            sk_oce.Init(pair.Private);
+
+            shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
+
+            return this;
+        }
+
         protected override Memory<byte> Key => pk_oce.AsMemory();
         protected override byte Algorithm => 49;
 
         public readonly ECDomainParameters domain;
         public readonly IAsymmetricCipherKeyPairGenerator generator;
-        public readonly ECPublicKeyParameters pk_oce, pk_sd;
+        public readonly ECPublicKeyParameters pk_sd;
 
-        private readonly IBasicAgreement sk_oce;
-        private readonly byte[] shsss;
+        public ECPublicKeyParameters pk_oce;
+        private IBasicAgreement sk_oce;
+        private byte[] shsss;
     }
 }
