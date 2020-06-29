@@ -24,7 +24,7 @@ namespace libusb
                             //usb_session.SendCmd(HsmCommand.Bsl);
                             //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
 
-                            using (var scp03_session = new Scp03Context("password")/*.SetDefaultKey(usb_session)*/.CreateSession(usb_session, 1))
+                            using (var scp03_session = new Scp03Context("password").CreateSession(usb_session, 1))
                             {
                                 //scp03_session.SendCmd(HsmCommand.Reset);
                                 var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
@@ -37,7 +37,9 @@ namespace libusb
                                 foreach (var b in rand1)
                                     Console.Write($"{b:x2}");
                                 Console.WriteLine();
-                                var context = new Pkcs11Scp11Context(usb_session).PutAuthKey(scp03_session, 2);
+                                var context = new Scp11Context(usb_session);
+                                context.GenerateKeyPair();
+                                context.PutAuthKey(scp03_session, 2);
                                 using (var scp11_session = context.CreateSession(usb_session, 2))
                                 {
                                     var info2 = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
@@ -50,7 +52,8 @@ namespace libusb
                                     foreach (var b in rand2)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-                                    context.GenerateKeyPair().ChangeAuthKey(scp11_session, 2);
+                                    context.GenerateKeyPair();
+                                    context.ChangeAuthKey(scp11_session, 2);
                                 }
                                 using (var scp11_session = context.CreateSession(usb_session, 2))
                                 {

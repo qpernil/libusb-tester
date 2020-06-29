@@ -28,16 +28,11 @@ namespace libusb
             mac_key = new KeyParameter(key_bytes, 16, 16);
         }
 
-        public override Session CreateSession(Session session, ushort key_id)
+        public Scp03Session CreateSession(Session session, ushort key_id)
         {
             var host_chal = new byte[8];
             rand.NextBytes(host_chal);
             return new Scp03Session(session, key_id, enc_key, mac_key, host_chal);
-        }
-
-        public override Context GenerateKeyPair()
-        {
-            return this;
         }
 
         protected override Memory<byte> Key => key_bytes;

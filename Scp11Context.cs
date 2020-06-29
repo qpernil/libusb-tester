@@ -56,7 +56,7 @@ namespace libusb
             pk_sd = DecodePoint(session.SendCmd(HsmCommand.GetDevicePubKey));
         }
 
-        public override Context GenerateKeyPair()
+        public void GenerateKeyPair()
         {
             var pair = generator.GenerateKeyPair();
 
@@ -66,11 +66,9 @@ namespace libusb
             sk_oce.Init(pair.Private);
 
             shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
-
-            return this;
         }
 
-        public override Session CreateSession(Session session, ushort key_id)
+        public Scp11Session CreateSession(Session session, ushort key_id)
         {
             return new Scp11Session(this, session, key_id);
         }

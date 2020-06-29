@@ -6,7 +6,7 @@ namespace libusb
 {
     public abstract class Context
     {
-        public Context PutAuthKey(Session session, ushort key_id)
+        public void PutAuthKey(Session session, ushort key_id)
         {
             try
             {
@@ -36,10 +36,9 @@ namespace libusb
                 key = Key
             };
             session.SendCmd(putauth_req);
-            return this;
         }
 
-        public Context ChangeAuthKey(Session session, ushort key_id)
+        public void ChangeAuthKey(Session session, ushort key_id)
         {
             var req = new ChangeAuthKeyReq
             {
@@ -48,10 +47,9 @@ namespace libusb
                 key = Key
             };
             session.SendCmd(req);
-            return this;
         }
 
-        public Context SetDefaultKey(Session session)
+        public void SetDefaultKey(Session session)
         {
             var req = new SetDefaltKeyReq
             {
@@ -60,11 +58,7 @@ namespace libusb
                 buf = Key
             };
             session.SendCmd(req);
-            return this;
         }
-
-        public abstract Session CreateSession(Session session, ushort key_id);
-        public abstract Context GenerateKeyPair();
 
         protected abstract Memory<byte> Key { get; }
         protected abstract byte Algorithm { get; }
