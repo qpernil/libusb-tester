@@ -34,7 +34,7 @@ namespace libusb
                 throw new IOException($"The {cmd} command returned {ret.Length} bytes: {(HsmError)ret[3]}");
             }
 
-            var len = BinaryPrimitives.ReadUInt16BigEndian(ret.Slice(1));
+            var len = BinaryPrimitives.ReadUInt16BigEndian(ret.Slice(1, 2));
             return ret.Slice(3, len);
         }
         public abstract Span<byte> Transfer(byte[] input, int length);
