@@ -43,12 +43,12 @@ namespace libusb
                                 using (var scp11_session = context.CreateSession(usb_session, 2))
                                 {
                                     var info2 = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
-                                    Console.WriteLine("DeviceInfo over scp11_session");
+                                    Console.WriteLine("DeviceInfo over first scp11_session");
                                     foreach (var b in info2)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     var rand2 = scp11_session.SendCmd(new GetPseudoRandomReq { length = 64 });
-                                    Console.WriteLine("GetPseudoRandom over scp11_session");
+                                    Console.WriteLine("GetPseudoRandom over first scp11_session");
                                     foreach (var b in rand2)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
@@ -58,12 +58,12 @@ namespace libusb
                                 using (var scp11_session = context.CreateSession(usb_session, 2))
                                 {
                                     var info2 = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
-                                    Console.WriteLine("DeviceInfo over scp11_session");
+                                    Console.WriteLine("DeviceInfo over second scp11_session");
                                     foreach (var b in info2)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     var rand2 = scp11_session.SendCmd(new GetPseudoRandomReq { length = 64 });
-                                    Console.WriteLine("GetPseudoRandom over scp11_session");
+                                    Console.WriteLine("GetPseudoRandom over second scp11_session");
                                     foreach (var b in rand2)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();

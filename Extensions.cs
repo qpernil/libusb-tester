@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
+using System.Text;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
@@ -78,6 +79,11 @@ namespace libusb
             BinaryPrimitives.WriteUInt32BigEndian(bytes, value);
             s.Write(bytes, 0, 4);
             ArrayPool<byte>.Shared.Return(bytes);
+        }
+
+        public static void Write(this Stream s, string value)
+        {
+            s.Write(Encoding.UTF8.GetBytes(value));
         }
 
         public static Span<byte> AsSpan(this IWriteable w)

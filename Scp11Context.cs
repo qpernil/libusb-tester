@@ -19,8 +19,9 @@ namespace libusb
             ms.Write(shsee);
             ms.Write(shsss);
             ms.Write(cnt);
+            //ms.Write("Yubico");
             var buf = ms.AsSpan();
-            var cspan = buf.Slice(buf.Length - 4);
+            var cspan = buf.Slice(shsee.Length + shsss.Length);
             var ret = new byte[size * ((length + size - 1) / size)];
             for (var offs = 0; offs < length; offs += size)
             {
