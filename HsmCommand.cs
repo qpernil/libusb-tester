@@ -19,6 +19,7 @@ namespace libusb
         ListObjects = 0x48,
         GetObjectInfo = 0x4e,
         GetPseudoRandom = 0x51,
+        GetPubKey = 0x54,
         DeleteObject = 0x58,
         ChangeAuthKey = 0x6c,
         Error = 0x7f
@@ -77,7 +78,7 @@ namespace libusb
     class ChangeAuthKeyReq : IWriteable
     {
         public ushort key_id;
-        public byte key_type;
+        public byte algorithm;
         public Memory<byte> key;
 
         public HsmCommand Command => HsmCommand.ChangeAuthKey;
@@ -85,7 +86,7 @@ namespace libusb
         public void WriteTo(Stream s)
         {
             s.Write(key_id);
-            s.WriteByte(key_type);
+            s.WriteByte(algorithm);
             s.Write(key.Span);
         }
     }
@@ -199,6 +200,18 @@ namespace libusb
         {
             s.Write(key_id);
             s.WriteByte(key_type);
+        }
+    }
+
+    class GetPubKeyReq : IWriteable
+    {
+        public ushort key_id;
+
+        public HsmCommand Command => HsmCommand.GetPubKey;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
         }
     }
 }

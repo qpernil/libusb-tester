@@ -40,10 +40,7 @@ namespace libusb
 
         public ECPublicKeyParameters DecodePoint(ReadOnlySpan<byte> point)
         {
-            var bytes = new byte[point.Length + 1];
-            bytes[0] = 4;
-            point.CopyTo(bytes.AsSpan(1));
-            return new ECPublicKeyParameters(domain.Curve.DecodePoint(bytes), domain);
+            return new ECPublicKeyParameters(domain.Curve.DecodePoint(point.ToArray()), domain);
         }
 
         public Scp11Context(Session session)
@@ -54,7 +51,12 @@ namespace libusb
             generator = GeneratorUtilities.GetKeyPairGenerator("ECDH");
             generator.Init(new ECKeyGenerationParameters(domain, new SecureRandom()));
 
-            pk_sd = DecodePoint(session.SendCmd(HsmCommand.GetDevicePubKey));
+
+            var bytes = session.SendCmd(HsmCommand.GetDevicePubKey);
+            if(bytes[0] != 49)
+                throw new IOException($"Unknown device pubkey algorithm: {bytes[0]}");
+            bytes[0] = 0x04;
+            pk_sd = DecodePoint(bytes);
         }
 
         public void GenerateKeyPair()
@@ -74,7 +76,7 @@ namespace libusb
             return new Scp11Session(this, session, key_id);
         }
 
-        protected override Memory<byte> Key => pk_oce.AsMemory();
+        protected override byte[] Key => pk_oce.Q.GetEncoded();
         protected override byte Algorithm => 49;
 
         public readonly ECDomainParameters domain;

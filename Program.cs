@@ -39,6 +39,7 @@ namespace libusb
                                 Console.WriteLine();
                                 var context = new Scp11Context(usb_session);
                                 context.GenerateKeyPair();
+                                //context.SetDefaultKey(usb_session);
                                 context.PutAuthKey(scp03_session, 2);
                                 using (var scp11_session = context.CreateSession(usb_session, 2))
                                 {

@@ -11,16 +11,6 @@ namespace libusb
 {
     public static class Extensions
     {
-        public static Span<byte> AsSpan(this ECPublicKeyParameters pub)
-        {
-            return pub.Q.GetEncoded().AsSpan(1);
-        }
-
-        public static Memory<byte> AsMemory(this ECPublicKeyParameters pub)
-        {
-            return pub.Q.GetEncoded().AsMemory(1);
-        }
-
         public static byte[] ToByteArrayFixed(this BigInteger num, int size = 32)
         {
             var ret = num.ToByteArrayUnsigned();
@@ -49,12 +39,6 @@ namespace libusb
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
-        public static void BlockUpdate(this IMac mac, ECPublicKeyParameters input)
-        {
-            var bytes = input.Q.GetEncoded();
-            mac.BlockUpdate(bytes, 1, bytes.Length - 1);
-        }
-
         public static void BlockUpdate(this IMac mac, MemoryStream input)
         {
             mac.BlockUpdate(input.GetBuffer(), 0, (int)input.Length);
@@ -63,6 +47,13 @@ namespace libusb
         public static Span<byte> AsSpan(this MemoryStream s)
         {
             return s.GetBuffer().AsSpan(0, (int)s.Length);
+        }
+
+        public static Span<byte> AsSpan(this IWriteable w)
+        {
+            var s = new MemoryStream();
+            w.WriteTo(s);
+            return s.AsSpan();
         }
 
         public static void Write(this Stream s, ushort value)
@@ -84,13 +75,6 @@ namespace libusb
         public static void Write(this Stream s, string value)
         {
             s.Write(Encoding.UTF8.GetBytes(value));
-        }
-
-        public static Span<byte> AsSpan(this IWriteable w)
-        {
-            var s = new MemoryStream();
-            w.WriteTo(s);
-            return s.AsSpan();
         }
     }
 }
