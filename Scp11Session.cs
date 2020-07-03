@@ -26,10 +26,10 @@ namespace libusb
             var resp = session.SendCmd(req);
 
             session_id = resp[0];
-            var epk_sd = resp.Slice(1, 65);
+            var epk_sd = context.DecodePoint(resp.Slice(1, 65));
             var receipt = resp.Slice(1 + 65);
 
-            var shsee = esk_oce.CalculateAgreement(context.DecodePoint(epk_sd)).ToByteArrayFixed();
+            var shsee = esk_oce.CalculateAgreement(epk_sd).ToByteArrayFixed();
             var shs_oce = context.CalculateShs(shsee, 4 * 16).ToArray();
 
             var receipt_key = new KeyParameter(shs_oce, 0, 16);
@@ -39,7 +39,7 @@ namespace libusb
 
             var cmac = new CMac(new AesEngine());
             cmac.Init(receipt_key);
-            cmac.BlockUpdate(epk_sd);
+            cmac.BlockUpdate(epk_sd.Q.GetEncoded());
             cmac.BlockUpdate(epk_oce.Q.GetEncoded());
             var receipt_oce = new byte[16];
             cmac.DoFinal(receipt_oce, 0);

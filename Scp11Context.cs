@@ -46,7 +46,6 @@ namespace libusb
             generator = GeneratorUtilities.GetKeyPairGenerator("ECDH");
             generator.Init(new ECKeyGenerationParameters(domain, new SecureRandom()));
 
-
             var bytes = session.SendCmd(HsmCommand.GetDevicePubKey);
             if(bytes[0] != 49)
                 throw new IOException($"Unknown device pubkey algorithm: {bytes[0]}");
