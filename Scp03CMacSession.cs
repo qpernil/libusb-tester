@@ -15,12 +15,9 @@ namespace libusb
             // Adjust encoded length to include mac
             BinaryPrimitives.WriteUInt16BigEndian(input.AsSpan(1), (ushort)(length + 5));
 
-            var ms = new MemoryStream();
-            ms.Write(mac_chaining);
-            ms.Write(input, 0, length);
-
             cmac.Init(key_mac);
-            cmac.BlockUpdate(ms);
+            cmac.BlockUpdate(mac_chaining);
+            cmac.BlockUpdate(input, 0 , length);
             cmac.DoFinal(mac_chaining, 0);
 
             mac_chaining.AsSpan(0, 8).CopyTo(input.AsSpan(length));
@@ -32,13 +29,10 @@ namespace libusb
                 var message = output.Slice(0, output.Length - 8);
                 var mac = output.Slice(output.Length - 8);
 
-                ms.SetLength(0);
-                ms.Write(mac_chaining);
-                ms.Write(message);
-
                 var bytes = new byte[16];
                 cmac.Init(key_rmac);
-                cmac.BlockUpdate(ms);
+                cmac.BlockUpdate(mac_chaining);
+                cmac.BlockUpdate(message);
                 cmac.DoFinal(bytes, 0);
 
                 var mac_host = bytes.AsSpan(0, 8);

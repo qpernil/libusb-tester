@@ -31,6 +31,32 @@ namespace libusb
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
+        public static void BlockUpdate(this IDigest digest, ushort value)
+        {
+            var bytes = ArrayPool<byte>.Shared.Rent(2);
+            BinaryPrimitives.WriteUInt16BigEndian(bytes, value);
+            digest.BlockUpdate(bytes, 0, 2);
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+
+        public static void BlockUpdate(this IDigest digest, uint value)
+        {
+            var bytes = ArrayPool<byte>.Shared.Rent(4);
+            BinaryPrimitives.WriteUInt32BigEndian(bytes, value);
+            digest.BlockUpdate(bytes, 0, 4);
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+
+        public static void BlockUpdate(this IDigest digest, MemoryStream input)
+        {
+            digest.BlockUpdate(input.GetBuffer(), 0, (int)input.Length);
+        }
+
+        public static void BlockUpdate(this IDigest digest, string value)
+        {
+            digest.BlockUpdate(Encoding.UTF8.GetBytes(value));
+        }
+
         public static void BlockUpdate(this IMac mac, ReadOnlySpan<byte> input)
         {
             var bytes = ArrayPool<byte>.Shared.Rent(input.Length);
@@ -39,9 +65,30 @@ namespace libusb
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
+        public static void BlockUpdate(this IMac mac, ushort value)
+        {
+            var bytes = ArrayPool<byte>.Shared.Rent(2);
+            BinaryPrimitives.WriteUInt16BigEndian(bytes, value);
+            mac.BlockUpdate(bytes, 0, 2);
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+
+        public static void BlockUpdate(this IMac mac, uint value)
+        {
+            var bytes = ArrayPool<byte>.Shared.Rent(4);
+            BinaryPrimitives.WriteUInt32BigEndian(bytes, value);
+            mac.BlockUpdate(bytes, 0, 4);
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+
         public static void BlockUpdate(this IMac mac, MemoryStream input)
         {
             mac.BlockUpdate(input.GetBuffer(), 0, (int)input.Length);
+        }
+
+        public static void BlockUpdate(this IMac mac, string value)
+        {
+            mac.BlockUpdate(Encoding.UTF8.GetBytes(value));
         }
 
         public static Span<byte> AsSpan(this MemoryStream s)

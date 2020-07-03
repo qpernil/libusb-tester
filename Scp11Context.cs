@@ -15,19 +15,14 @@ namespace libusb
         {
             var size = digest.GetDigestSize();
             var cnt = 0U;
-            var ms = new MemoryStream();
-            ms.Write(shsee);
-            ms.Write(shsss);
-            ms.Write(cnt);
-            //ms.Write("Yubico");
-            var buf = ms.AsSpan();
-            var cspan = buf.Slice(shsee.Length + shsss.Length);
             var ret = new byte[size * ((length + size - 1) / size)];
             for (var offs = 0; offs < length; offs += size)
             {
-                BinaryPrimitives.WriteUInt32BigEndian(cspan, ++cnt);
                 digest.Reset();
-                digest.BlockUpdate(buf);
+                digest.BlockUpdate(shsee);
+                digest.BlockUpdate(shsss);
+                digest.BlockUpdate(++cnt);
+                //digest.BlockUpdate("Yubico");
                 digest.DoFinal(ret, offs);
             }
             return ret.AsSpan(0, length);
