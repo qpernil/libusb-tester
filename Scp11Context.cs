@@ -11,7 +11,7 @@ namespace libusb
 {
     public class Scp11Context : Context
     {
-        public static Span<byte> X963Kdf(IDigest digest, ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, int length)
+        public static Span<byte> X963Kdf(IDigest digest, ReadOnlySpan<byte> shsee, ReadOnlySpan<byte> shsss, ReadOnlySpan<byte> shared, int length)
         {
             var size = digest.GetDigestSize();
             var cnt = 0U;
@@ -22,7 +22,7 @@ namespace libusb
                 digest.BlockUpdate(shsee);
                 digest.BlockUpdate(shsss);
                 digest.BlockUpdate(++cnt);
-                //digest.BlockUpdate("Yubico");
+                digest.BlockUpdate(shared);
                 digest.DoFinal(ret, offs);
             }
             return ret.AsSpan(0, length);
@@ -30,7 +30,7 @@ namespace libusb
 
         public Span<byte> CalculateShs(ReadOnlySpan<byte> shsee, int length)
         {
-            return X963Kdf(new Sha256Digest(), shsee, shsss, length);
+            return X963Kdf(new Sha256Digest(), shsee, shsss, new byte[] { 0x3c, 0x88, 0x10 }, length);
         }
 
         public ECPublicKeyParameters DecodePoint(ReadOnlySpan<byte> point)
