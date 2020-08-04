@@ -35,7 +35,9 @@ namespace libusb
                                 factories.MechanismParamsFactory.CreateCkEcdh1DeriveParams((ulong)CKD.CKD_NULL, null, pk_sd.Q.GetEncoded()));
 
                             var obj = s.DeriveKey(mech, keys[0], new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_SECRET_KEY),
-                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_KEY_TYPE, CKK.CKK_GENERIC_SECRET) });
+                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_KEY_TYPE, CKK.CKK_GENERIC_SECRET),
+                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_EXTRACTABLE, true),
+                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_TOKEN, false)});
 
                             var v = s.GetAttributeValue(obj, new List<CKA> { CKA.CKA_VALUE });
                             shsss = v[0].GetValueAsByteArray();
