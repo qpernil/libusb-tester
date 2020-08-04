@@ -13,9 +13,9 @@ namespace libusb
 
     public abstract class Session : IDisposable
     {
-        public Span<byte> SendCmd(IWriteable input)
+        public Span<byte> SendCmd(IWriteable input, int max = 2048 + 3)
         {
-            return SendCmd(input.Command, input.AsSpan());
+            return SendCmd(input.Command, input.AsSpan(), max);
         }
         public Span<byte> SendCmd(HsmCommand cmd, ReadOnlySpan<byte> input = default, int max = 2048 + 3)
         {
