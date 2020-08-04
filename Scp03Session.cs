@@ -41,7 +41,7 @@ namespace libusb
             var create_resp = session.SendCmd(create_req);
             session_id = create_resp[0];
             var card_chal = create_resp.Slice(1, 8);
-            var card_crypto = create_resp.Slice(1 + 8);
+            var card_crypto = create_resp.Slice(1 + 8, 8);
 
             var context = new byte[host_chal.Length + card_chal.Length];
             host_chal.CopyTo(context.AsSpan(0));

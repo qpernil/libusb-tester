@@ -27,7 +27,7 @@ namespace libusb
 
             session_id = resp[0];
             var epk_sd = context.DecodePoint(resp.Slice(1, 65));
-            var receipt = resp.Slice(1 + 65);
+            var receipt = resp.Slice(1 + 65, 16);
 
             var shsee = esk_oce.CalculateAgreement(epk_sd).ToByteArrayFixed();
             var shs_oce = context.CalculateShs(shsee, 4 * 16).ToArray();
