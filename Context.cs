@@ -33,7 +33,7 @@ namespace libusb
                 algorithm = Algorithm,
                 delegated_caps2 = 0xffffffff,
                 delegated_caps = 0xffffffff,
-                key = Key.AsMemory(1)
+                key = Key
             };
             session.SendCmd(putauth_req);
         }
@@ -44,7 +44,7 @@ namespace libusb
             {
                 key_id = key_id,
                 algorithm = Algorithm,
-                key = Key.AsMemory(1)
+                key = Key
             };
             session.SendCmd(req);
         }
@@ -55,7 +55,7 @@ namespace libusb
             {
                 delegated_caps2 = 0xffffffff,
                 delegated_caps = 0xffffffff,
-                buf = Key.AsMemory(1)
+                buf = Key
             };
             foreach (var b in req.buf.Span)
                 Console.Write($"{b:x2}");
@@ -64,7 +64,7 @@ namespace libusb
             session.SendCmd(req);
         }
 
-        protected abstract byte[] Key { get; }
+        protected abstract Memory<byte> Key { get; }
         protected abstract byte Algorithm { get; }
     }
 }

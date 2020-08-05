@@ -69,7 +69,7 @@ namespace libusb
             return new Scp11Session(this, session, key_id);
         }
 
-        protected override byte[] Key => pk_oce.Q.GetEncoded();
+        protected override Memory<byte> Key => pk_oce.Q.GetEncoded().AsMemory(1);
         protected override byte Algorithm => 49;
 
         public readonly ECDomainParameters domain;

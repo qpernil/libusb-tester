@@ -23,9 +23,10 @@ namespace libusb
 
         public Scp03Context(KeyParameter key)
         {
-            Key = key.GetKey();
-            enc_key = new KeyParameter(Key, 0, 16);
-            mac_key = new KeyParameter(Key, 16, 16);
+            var bytes = key.GetKey();
+            enc_key = new KeyParameter(bytes, 0, 16);
+            mac_key = new KeyParameter(bytes, 16, 16);
+            Key = bytes;
         }
 
         public Scp03Session CreateSession(Session session, ushort key_id)
@@ -35,7 +36,7 @@ namespace libusb
             return new Scp03Session(session, key_id, enc_key, mac_key, host_chal);
         }
 
-        protected override byte[] Key { get; }
+        protected override Memory<byte> Key { get; }
         protected override byte Algorithm => 38;
 
         private readonly SecureRandom rand = new SecureRandom();
