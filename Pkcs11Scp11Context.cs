@@ -42,6 +42,8 @@ namespace libusb
                             var v = s.GetAttributeValue(obj, new List<CKA> { CKA.CKA_VALUE });
                             shsss = v[0].GetValueAsByteArray();
 
+                            s.DestroyObject(obj);
+
                             break;
                         }
                     }
