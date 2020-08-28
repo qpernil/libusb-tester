@@ -4,6 +4,7 @@ using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 
 namespace libusb
@@ -50,11 +51,27 @@ namespace libusb
                 throw new IOException($"Unknown device pubkey algorithm: {bytes[0]}");
             bytes[0] = 0x04;
             pk_sd = DecodePoint(bytes);
+
+            Console.WriteLine("PK.SD");
+            Console.Write("{");
+            foreach (var b in bytes)
+                Console.Write($"0x{b:x2},");
+            Console.WriteLine("}");
         }
 
-        public void GenerateKeyPair()
+        public void GenerateKeyPair(long priv = 0)
         {
-            var pair = generator.GenerateKeyPair();
+            AsymmetricCipherKeyPair pair;
+            if(priv == 0)
+            {
+                pair = generator.GenerateKeyPair();
+            }
+            else
+            {
+                var sk = new ECPrivateKeyParameters(BigInteger.ValueOf(priv), domain);
+                var pk = new ECPublicKeyParameters(domain.G.Multiply(sk.D), domain);
+                pair = new AsymmetricCipherKeyPair(pk, sk);
+            }
 
             pk_oce = (ECPublicKeyParameters)pair.Public;
 
