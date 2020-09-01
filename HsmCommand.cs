@@ -13,7 +13,7 @@ namespace libusb
         Bsl = 0x07,
         Reset = 0x08,
         SetInformation = 0x09,
-        GetDevicePubKey = 0x10,
+        GetDevicePubKey = 0x0a,
         CloseSession = 0x40,
         PutAuthKey = 0x44,
         ListObjects = 0x48,
