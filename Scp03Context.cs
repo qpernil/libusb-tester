@@ -10,7 +10,7 @@ namespace libusb
 {
     class Scp03Context : Context
     {
-        private static KeyParameter Pkcs5Pbkdf2Hmac(string password, string salt = "Yubico", int iterationCount = 10000, int keySize = 256)
+        public static KeyParameter Pkcs5Pbkdf2Hmac(string password, string salt = "Yubico", int iterationCount = 10000, int keySize = 256)
         {
             var pbkdf2 = new Pkcs5S2ParametersGenerator(new Sha256Digest());
             pbkdf2.Init(PbeParametersGenerator.Pkcs5PasswordToBytes(password.ToCharArray()), Encoding.UTF8.GetBytes(salt), iterationCount);
