@@ -1,6 +1,7 @@
 ﻿using System;
+using libusb;
 
-namespace libusb
+namespace libusb_tester
 {
     static class Program
     {
@@ -10,7 +11,7 @@ namespace libusb
             {
                 foreach (var device in usb_ctx.GetDeviceList())
                 {
-                    usb_ctx.GetDeviceDescriptor(device, out var descriptor);
+                    var descriptor = usb_ctx.GetDeviceDescriptor(device);
                     Console.WriteLine($"Vendor 0x{descriptor.idVendor:x} Product 0x{descriptor.idProduct:x} Device 0x{descriptor.bcdDevice:x} Usb 0x{descriptor.bcdUSB:x}");
                     if (descriptor.idVendor == 0x1050 && descriptor.idProduct == 0x30)
                     {

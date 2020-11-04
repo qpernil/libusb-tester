@@ -8,7 +8,7 @@ using Org.BouncyCastle.Security;
 
 namespace libusb
 {
-    class Scp03Context : Context
+    public class Scp03Context : Context
     {
         public static KeyParameter Pkcs5Pbkdf2Hmac(string password, string salt = "Yubico", int iterationCount = 10000, int keySize = 256)
         {

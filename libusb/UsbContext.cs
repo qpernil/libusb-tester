@@ -32,13 +32,13 @@ namespace libusb
             libusb.free_device_list(device_list, 1);
         }
 
-        public int GetDeviceDescriptor(IntPtr device, out device_descriptor descriptor)
+        public device_descriptor GetDeviceDescriptor(IntPtr device)
         {
-            descriptor = new device_descriptor();
+            var descriptor = new device_descriptor();
             var status = libusb.get_device_descriptor(device, ref descriptor);
             if (status != 0)
                 throw new IOException($"libusb.get_device_descriptor failed: {status}");
-            return status;
+            return descriptor;
         }
 
         public UsbSession CreateSession(IntPtr device)

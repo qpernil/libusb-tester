@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using libusb;
 using Net.Pkcs11Interop.Common;
 using Net.Pkcs11Interop.HighLevelAPI;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto.Parameters;
 
-namespace libusb
+namespace libusb_tester
 {
     public class Pkcs11Scp11Context : Scp11Context
     {

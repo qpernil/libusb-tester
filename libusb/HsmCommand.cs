@@ -47,7 +47,7 @@ namespace libusb
         COMMAND_UNEXECUTED = 0xFF
     }
 
-    class PutAuthKeyReq : IWriteable
+    public class PutAuthKeyReq : IWriteable
     {
         public ushort key_id; // 0
         public Memory<byte> label; // 2
@@ -75,7 +75,7 @@ namespace libusb
         }
     }
 
-    class ChangeAuthKeyReq : IWriteable
+    public class ChangeAuthKeyReq : IWriteable
     {
         public ushort key_id;
         public byte algorithm;
@@ -91,7 +91,7 @@ namespace libusb
         }
     }
 
-    class DeleteObjectReq : IWriteable
+    public class DeleteObjectReq : IWriteable
     {
         public ushort key_id;
         public byte key_type;
@@ -105,7 +105,7 @@ namespace libusb
         }
     }
 
-    class CreateSessionReq : IWriteable
+    public class CreateSessionReq : IWriteable
     {
         public ushort key_id;
         public Memory<byte> buf;
@@ -119,7 +119,7 @@ namespace libusb
         }
     }
 
-    class AuthenticateSessionReq : IWriteable
+    public class AuthenticateSessionReq : IWriteable
     {
         public byte session_id;
         public Memory<byte> host_crypto;
@@ -133,7 +133,7 @@ namespace libusb
         }
     }
 
-    class SessionCommandReq : IWriteable
+    public class SessionCommandReq : IWriteable
     {
         public byte session_id;
         public Memory<byte> encrypted;
@@ -147,7 +147,7 @@ namespace libusb
         }
     }
 
-    class GetPseudoRandomReq : IWriteable
+    public class GetPseudoRandomReq : IWriteable
     {
         public ushort length;
 
@@ -159,7 +159,7 @@ namespace libusb
         }
     }
 
-    class SetDefaltKeyReq : IWriteable
+    public class SetDefaltKeyReq : IWriteable
     {
         public uint delegated_caps2;
         public uint delegated_caps;
@@ -176,7 +176,7 @@ namespace libusb
         }
     }
 
-    class SetSerialReq : IWriteable
+    public class SetSerialReq : IWriteable
     {
         public uint serial;
 
@@ -189,7 +189,7 @@ namespace libusb
         }
     }
 
-    class GetObjectInfoReq : IWriteable
+    public class GetObjectInfoReq : IWriteable
     {
         public ushort key_id;
         public byte key_type;
@@ -203,7 +203,7 @@ namespace libusb
         }
     }
 
-    class GetPubKeyReq : IWriteable
+    public class GetPubKeyReq : IWriteable
     {
         public ushort key_id;
 
