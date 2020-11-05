@@ -53,10 +53,9 @@ namespace libusb
             pk_sd = DecodePoint(bytes);
 
             Console.WriteLine("PK.SD");
-            Console.Write("{");
             foreach (var b in bytes)
-                Console.Write($"0x{b:x2},");
-            Console.WriteLine("}");
+                Console.Write($"{b:x2}");
+            Console.WriteLine();
         }
 
         public void GenerateKeyPair(long priv = 0)
