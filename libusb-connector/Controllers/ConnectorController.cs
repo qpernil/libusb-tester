@@ -9,24 +9,16 @@ namespace libusb_connector.Controllers
 {
     public class DeviceInfo
     {
-        public DeviceInfo(IntPtr idx, device_descriptor descriptor)
+        public DeviceInfo(IntPtr id, device_descriptor descriptor)
         {
-            Index = idx.ToInt64();
+            Id = id.ToInt64();
             Vendor = descriptor.idVendor;
             Product = descriptor.idProduct;
         }
 
-        public long Index { get; }
+        public long Id { get; }
         public ushort Vendor { get; }
         public ushort Product { get; }
-    }
-
-    public static class Extensions
-    {
-        public static bool IsYubiHsm(this device_descriptor d)
-        {
-            return d.idVendor == 0x1050 && d.idProduct == 0x30;
-        }
     }
 
     [ApiController]

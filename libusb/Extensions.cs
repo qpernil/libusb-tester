@@ -4,7 +4,6 @@ using System.Buffers.Binary;
 using System.IO;
 using System.Text;
 using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 
 namespace libusb
@@ -122,6 +121,11 @@ namespace libusb
         public static void Write(this Stream s, string value)
         {
             s.Write(Encoding.UTF8.GetBytes(value));
+        }
+
+        public static bool IsYubiHsm(this device_descriptor d)
+        {
+            return d.idVendor == 0x1050 && d.idProduct == 0x30;
         }
     }
 }
