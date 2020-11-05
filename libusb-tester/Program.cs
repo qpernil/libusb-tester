@@ -12,7 +12,7 @@ namespace libusb_tester
                 foreach (var device in usb_ctx.GetDeviceList())
                 {
                     var descriptor = usb_ctx.GetDeviceDescriptor(device);
-                    Console.WriteLine($"Vendor 0x{descriptor.idVendor:x} Product 0x{descriptor.idProduct:x} Device 0x{descriptor.bcdDevice:x} Usb 0x{descriptor.bcdUSB:x}");
+                    Console.WriteLine($"Id {device} Vendor 0x{descriptor.idVendor:x} Product 0x{descriptor.idProduct:x} Device 0x{descriptor.bcdDevice:x} Usb 0x{descriptor.bcdUSB:x}");
                     if (descriptor.IsYubiHsm())
                     {
                         using (var usb_session = usb_ctx.CreateSession(device))
