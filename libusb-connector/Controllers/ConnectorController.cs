@@ -44,17 +44,17 @@ namespace libusb_connector.Controllers
             return _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d));
         }
 
-        private ulong GetSerial(DeviceInfo info)
+        private long GetSerial(DeviceInfo info)
         {
             using (var session = _usb.CreateSession(info.id))
             {
-                return ulong.Parse(session.GetStringDescriptor(info.descriptor.iSerialNumber));
+                return long.Parse(session.GetStringDescriptor(info.descriptor.iSerialNumber));
             }
         }
 
         [HttpGet]
         [Route("serials")]
-        public IEnumerable<ulong> Serials()
+        public IEnumerable<long> Serials()
         {
             return _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d)).Where(i => i.IsYubiHsm).Select(GetSerial);
         }
@@ -71,7 +71,8 @@ namespace libusb_connector.Controllers
         public byte[] Api([FromBody] byte[] data)
         {
             var device = _usb.GetDeviceList().Where(d => _usb.GetDeviceDescriptor(d).IsYubiHsm()).First();
-            using(var session = _usb.CreateSession(device)) {
+            using(var session = _usb.CreateSession(device))
+            {
                 return session.SendCmd(data).ToArray();
             }
         }
