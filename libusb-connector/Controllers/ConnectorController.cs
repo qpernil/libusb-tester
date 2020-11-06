@@ -9,16 +9,19 @@ namespace libusb_connector.Controllers
 {
     public class DeviceInfo
     {
-        public DeviceInfo(IntPtr id, device_descriptor descriptor)
+        public DeviceInfo(UsbContext usb, IntPtr id)
         {
-            Id = id.ToInt64();
-            Vendor = descriptor.idVendor;
-            Product = descriptor.idProduct;
+            this.id = id;
+            this.descriptor = usb.GetDeviceDescriptor(id);
         }
 
-        public long Id { get; }
-        public ushort Vendor { get; }
-        public ushort Product { get; }
+        internal IntPtr id;
+        internal device_descriptor descriptor;
+
+        public long Id => id.ToInt64();
+        public bool IsYubiHsm => descriptor.IsYubiHsm();
+        public ushort Vendor => descriptor.idVendor;
+        public ushort Product => descriptor.idProduct;
     }
 
     [ApiController]
@@ -38,7 +41,22 @@ namespace libusb_connector.Controllers
         [Route("devices")]
         public IEnumerable<DeviceInfo> Devices()
         {
-            return _usb.GetDeviceList().Select(i => new DeviceInfo(i, _usb.GetDeviceDescriptor(i)));
+            return _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d));
+        }
+
+        private ulong GetSerial(DeviceInfo info)
+        {
+            using (var session = _usb.CreateSession(info.id))
+            {
+                return ulong.Parse(session.GetStringDescriptor(info.descriptor.iSerialNumber));
+            }
+        }
+
+        [HttpGet]
+        [Route("serials")]
+        public IEnumerable<ulong> Serials()
+        {
+            return _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d)).Where(i => i.IsYubiHsm).Select(GetSerial);
         }
 
         [HttpGet]
