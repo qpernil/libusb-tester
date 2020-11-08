@@ -44,17 +44,17 @@ namespace libusb_connector.Controllers
             return _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d));
         }
 
-        private long GetSerial(DeviceInfo info)
+        private string GetSerial(DeviceInfo info)
         {
             using (var session = _usb.CreateSession(info.id))
             {
-                return long.Parse(session.GetStringDescriptor(info.descriptor.iSerialNumber));
+                return session.GetStringDescriptor(info.descriptor.iSerialNumber);
             }
         }
 
         [HttpGet]
         [Route("serials")]
-        public IEnumerable<long> Serials()
+        public IEnumerable<string> Serials()
         {
             return _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d)).Where(i => i.IsYubiHsm).Select(GetSerial);
         }
