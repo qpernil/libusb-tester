@@ -15,7 +15,7 @@ namespace libusb_connector
         public async override Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context)
         {
             var ms = new MemoryStream(2048 + 3);
-            await context.HttpContext.Request.Body.CopyToAsync(ms);
+            await context.HttpContext.Request.Body.CopyToAsync(ms, context.HttpContext.RequestAborted);
             return InputFormatterResult.Success(ms.ToArray());
         }
     }
