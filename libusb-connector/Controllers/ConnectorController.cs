@@ -9,10 +9,10 @@ namespace libusb_connector.Controllers
 {
     public class DeviceInfo
     {
-        public DeviceInfo(UsbContext usb, IntPtr id)
+        public DeviceInfo(IntPtr id, device_descriptor descriptor)
         {
             this.id = id;
-            this.descriptor = usb.GetDeviceDescriptor(id);
+            this.descriptor = descriptor;
         }
 
         internal IntPtr id;
@@ -31,6 +31,8 @@ namespace libusb_connector.Controllers
         private readonly ILogger<ConnectorController> _logger;
         private readonly UsbContext _usb;
 
+        private IEnumerable<DeviceInfo> GetDeviceList() => _usb.GetDeviceList().Select(d => new DeviceInfo(d, _usb.GetDeviceDescriptor(d)));
+
         public ConnectorController(ILogger<ConnectorController> logger, UsbContext usb)
         {
             _logger = logger;
@@ -41,7 +43,7 @@ namespace libusb_connector.Controllers
         [Route("devices")]
         public IEnumerable<DeviceInfo> Devices()
         {
-            return _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d));
+            return GetDeviceList();
         }
 
         private string GetSerial(DeviceInfo info)
@@ -56,14 +58,14 @@ namespace libusb_connector.Controllers
         [Route("serials")]
         public IEnumerable<string> Serials()
         {
-            return _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d)).Where(i => i.IsYubiHsm).Select(GetSerial);
+            return GetDeviceList().Where(i => i.IsYubiHsm).Select(GetSerial);
         }
 
         [HttpGet]
         [Route("status")]
         public string Status()
         {
-            string serial = _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d)).Where(i => i.IsYubiHsm).Select(GetSerial).FirstOrDefault() ?? "*";
+            string serial = GetDeviceList().Where(i => i.IsYubiHsm).Select(GetSerial).FirstOrDefault() ?? "*";
             string status = serial == "*" ? "NO_DEVICE" : "OK";
             return $"status={status}\nserial={serial}\nversion=2.2.0\npid=77297\naddress=localhost\nport=12345\n";
         }
@@ -72,8 +74,8 @@ namespace libusb_connector.Controllers
         [Route("api")]
         public byte[] Api([FromBody] byte[] data)
         {
-            var device = _usb.GetDeviceList().Where(d => _usb.GetDeviceDescriptor(d).IsYubiHsm()).First();
-            using(var session = _usb.CreateSession(device))
+            var device = GetDeviceList().Where(i => i.IsYubiHsm).First();
+            using(var session = _usb.CreateSession(device.id))
             {
                 return session.SendCmd(data).ToArray();
             }
