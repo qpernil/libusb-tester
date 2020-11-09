@@ -63,7 +63,9 @@ namespace libusb_connector.Controllers
         [Route("status")]
         public string Status()
         {
-            return "status=OK\nserial=*\nversion=2.2.0\npid=77297\naddress=localhost\nport=12345\n";
+            string serial = _usb.GetDeviceList().Select(d => new DeviceInfo(_usb, d)).Where(i => i.IsYubiHsm).Select(GetSerial).FirstOrDefault() ?? "*";
+            string status = serial == "*" ? "NO_DEVICE" : "OK";
+            return $"status={status}\nserial={serial}\nversion=2.2.0\npid=77297\naddress=localhost\nport=12345\n";
         }
 
         [HttpPost]
