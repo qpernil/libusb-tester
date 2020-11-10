@@ -108,6 +108,9 @@ namespace libusb
     public delegate void libusb_close(IntPtr device_handle);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int libusb_reset_device(IntPtr device_handle);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_claim_interface(IntPtr device_handle, int interface_number);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -133,6 +136,7 @@ namespace libusb
         public readonly libusb_unref_device unref_device;
         public readonly libusb_open open;
         public readonly libusb_close close;
+        public readonly libusb_reset_device reset_device;
         public readonly libusb_claim_interface claim_interface;
         public readonly libusb_release_interface release_interface;
         public readonly libusb_interrupt_transfer interrupt_transfer;
@@ -152,6 +156,7 @@ namespace libusb
             unref_device = libusb.GetExport<libusb_unref_device>();
             open = libusb.GetExport<libusb_open>();
             close = libusb.GetExport<libusb_close>();
+            reset_device = libusb.GetExport<libusb_reset_device>();
             claim_interface = libusb.GetExport<libusb_claim_interface>();
             release_interface = libusb.GetExport<libusb_release_interface>();
             interrupt_transfer = libusb.GetExport<libusb_interrupt_transfer>();

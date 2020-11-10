@@ -19,6 +19,12 @@ namespace libusb
                 libusb.close(device_handle);
                 throw new IOException($"libusb.claim_interface failed: {status}");
             }
+            status = libusb.reset_device(device_handle);
+            if (status != 0)
+            {
+                libusb.close(device_handle);
+                throw new IOException($"libusb.reset_device failed: {status}");
+            }
         }
 
         public override void Dispose()
