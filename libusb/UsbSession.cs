@@ -7,23 +7,26 @@ namespace libusb
 {
     public class UsbSession : Session
     {
-        public UsbSession(LibUsb libusb, IntPtr device)
+        public UsbSession(LibUsb libusb, IntPtr device, bool reset)
         {
             this.libusb = libusb;
             var status = libusb.open(device, out device_handle);
             if (status != 0)
                 throw new IOException($"libusb.open failed: {status}");
+            if (reset)
+            {
+                status = libusb.reset_device(device_handle);
+                if (status != 0)
+                {
+                    libusb.close(device_handle);
+                    throw new IOException($"libusb.reset_device failed: {status}");
+                }
+            }
             status = libusb.claim_interface(device_handle, 0);
             if (status != 0)
             {
                 libusb.close(device_handle);
                 throw new IOException($"libusb.claim_interface failed: {status}");
-            }
-            status = libusb.reset_device(device_handle);
-            if (status != 0)
-            {
-                libusb.close(device_handle);
-                throw new IOException($"libusb.reset_device failed: {status}");
             }
         }
 

@@ -41,9 +41,9 @@ namespace libusb
             return descriptor;
         }
 
-        public UsbSession CreateSession(IntPtr device)
+        public UsbSession CreateSession(IntPtr device, bool reset = false)
         {
-            return new UsbSession(libusb, device);
+            return new UsbSession(libusb, device, reset);
         }
 
         private readonly LibUsb libusb;
