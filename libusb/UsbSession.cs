@@ -1,31 +1,17 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
-using System.Text;
 
 namespace libusb
 {
     public class UsbSession : Session
     {
-        public UsbSession(LibUsb libusb, IntPtr device, bool reset)
+        public UsbSession(LibUsb libusb, IntPtr device_handle)
         {
             this.libusb = libusb;
-            var status = libusb.open(device, out device_handle);
-            if (status != 0)
-                throw new IOException($"libusb.open failed: {status}");
-            if (reset)
-            {
-                status = libusb.reset_device(device_handle);
-                if (status != 0)
-                {
-                    libusb.close(device_handle);
-                    throw new IOException($"libusb.reset_device failed: {status}");
-                }
-            }
-            status = libusb.claim_interface(device_handle, 0);
+            this.device_handle = device_handle;
+            var status = libusb.claim_interface(device_handle, 0);
             if (status != 0)
             {
-                libusb.close(device_handle);
                 throw new IOException($"libusb.claim_interface failed: {status}");
             }
         }
@@ -33,21 +19,6 @@ namespace libusb
         public override void Dispose()
         {
             libusb.release_interface(device_handle, 0);
-            libusb.close(device_handle);
-        }
-
-        public string GetStringDescriptor(byte index, ushort langid = 0, int max = 1024)
-        {
-            var mem = ArrayPool<byte>.Shared.Rent(max);
-            var ret = libusb.control_transfer(device_handle, 0x80, 0x06, (ushort)(0x300 | index), langid, mem, (ushort)max, 1000);
-            if (ret < 0)
-            {
-                ArrayPool<byte>.Shared.Return(mem);
-                throw new IOException($"control_transfer(out) failed with error {ret}");
-            }
-            var descriptor = Encoding.Unicode.GetString(mem, 2, ret - 2);
-            ArrayPool<byte>.Shared.Return(mem);
-            return descriptor;
         }
 
         public override Span<byte> Transfer(byte[] input, int length)

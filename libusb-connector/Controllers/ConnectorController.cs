@@ -48,9 +48,9 @@ namespace libusb_connector.Controllers
 
         private string GetSerial(DeviceInfo info)
         {
-            using (var session = _usb.CreateSession(info.id))
+            using (var device = _usb.Open(info.id))
             {
-                return session.GetStringDescriptor(info.descriptor.iSerialNumber);
+                return device.GetStringDescriptor(info.descriptor.iSerialNumber);
             }
         }
 
@@ -69,15 +69,18 @@ namespace libusb_connector.Controllers
             string status = serial == "*" ? "NO_DEVICE" : "OK";
             return $"status={status}\nserial={serial}\nversion=2.2.0\npid=77297\naddress=localhost\nport=12345\n";
         }
-
+        
         [HttpPost]
         [Route("api")]
         public byte[] Api([FromBody] byte[] data)
         {
-            var device = GetDeviceList().Where(i => i.IsYubiHsm).First();
-            using(var session = _usb.CreateSession(device.id))
+            var info = GetDeviceList().Where(i => i.IsYubiHsm).First();
+            using(var device = _usb.Open(info.id))
             {
-                return session.SendCmd(data).ToArray();
+                using (var session = device.Claim())
+                {
+                    return session.SendCmd(data).ToArray();
+                }
             }
         }
     }
