@@ -8,7 +8,7 @@ namespace libusb
     {
         public SafeNativeLibrary(string libraryPath) : base(true)
         {
-            handle = NativeLibrary.Load(libraryPath);
+            handle = NativeLibrary.Load(libraryPath, GetType().Assembly, DllImportSearchPath.LegacyBehavior);
         }
         protected override bool ReleaseHandle()
         {
@@ -144,19 +144,9 @@ namespace libusb
         public readonly libusb_control_transfer control_transfer;
         private readonly SafeNativeLibrary libusb;
 
-        public static string GetLibraryPath()
+        public LibUsb()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                return "libusb-1.0.dylib";
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                return "libusb-1.0.so.0";
-            else
-                return "libusb-1.0";
-        }
-
-        public LibUsb(string libraryPath = null)
-        {
-            libusb = new SafeNativeLibrary(libraryPath ?? GetLibraryPath());
+            libusb = new SafeNativeLibrary("libusb-1.0");
             init = libusb.GetExport<libusb_init>();
             exit = libusb.GetExport<libusb_exit>();
             get_device_list = libusb.GetExport<libusb_get_device_list>();
