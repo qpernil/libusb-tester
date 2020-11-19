@@ -144,9 +144,19 @@ namespace libusb
         public readonly libusb_control_transfer control_transfer;
         private readonly SafeNativeLibrary libusb;
 
-        public LibUsb(string libraryPath = "/usr/local/lib/libusb-1.0.dylib")
+        public static string GetLibraryPath()
         {
-            libusb = new SafeNativeLibrary(libraryPath);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                return "libusb-1.0.dylib";
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return "libusb-1.0.so.0";
+            else
+                return "libusb-1.0";
+        }
+
+        public LibUsb(string libraryPath = null)
+        {
+            libusb = new SafeNativeLibrary(libraryPath ?? GetLibraryPath());
             init = libusb.GetExport<libusb_init>();
             exit = libusb.GetExport<libusb_exit>();
             get_device_list = libusb.GetExport<libusb_get_device_list>();
