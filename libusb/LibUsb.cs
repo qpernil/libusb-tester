@@ -150,7 +150,7 @@ namespace libusb
 
         public string StrError(int code)
         {
-            return Marshal.PtrToStringUTF8(strerror(code));
+            return $"{Marshal.PtrToStringUTF8(strerror(code))} ({code})";
         }
 
         public LibUsb()
