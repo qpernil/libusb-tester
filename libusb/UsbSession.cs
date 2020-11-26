@@ -13,7 +13,7 @@ namespace libusb
             var status = libusb.claim_interface(device_handle, 0);
             if (status != 0)
             {
-                throw new IOException($"libusb.claim_interface failed: {libusb.StrError(status)}");
+                throw new IOException($"libusb.claim_interface: {libusb.StrError(status)}");
             }
         }
 
@@ -27,7 +27,7 @@ namespace libusb
             var ret = libusb.bulk_transfer(device_handle, 0x01, input, length, out var transferred, 0);
             if (ret < 0)
             {
-                throw new IOException($"bulk_transfer(out) failed with error {libusb.StrError(ret)}");
+                throw new IOException($"bulk_transfer(out): {libusb.StrError(ret)}");
             }
 
             if (transferred % 64 == 0)
@@ -35,14 +35,14 @@ namespace libusb
                 ret = libusb.bulk_transfer(device_handle, 0x01, input, 0, out _, 0);
                 if (ret < 0)
                 {
-                    throw new IOException($"bulk_transfer(zero-length packet) failed with error {libusb.StrError(ret)}");
+                    throw new IOException($"bulk_transfer(zero-length packet): {libusb.StrError(ret)}");
                 }
             }
 
             ret = libusb.bulk_transfer(device_handle, 0x81, input, input.Length, out transferred, 0);
             if (ret < 0)
             {
-                throw new IOException($"bulk_transfer(in) failed with error {libusb.StrError(ret)}");
+                throw new IOException($"bulk_transfer(in): {libusb.StrError(ret)}");
             }
 
             return input.AsSpan(0, transferred);
