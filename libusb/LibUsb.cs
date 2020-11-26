@@ -87,6 +87,9 @@ namespace libusb
     public delegate void libusb_exit(IntPtr ctx);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate IntPtr libusb_strerror(int code);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_get_device_list(IntPtr ctx, out IntPtr device_list);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -99,7 +102,7 @@ namespace libusb
     public delegate IntPtr libusb_ref_device(IntPtr device);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate IntPtr libusb_unref_device(IntPtr device);
+    public delegate void libusb_unref_device(IntPtr device);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_open(IntPtr device, out IntPtr device_handle);
@@ -129,6 +132,7 @@ namespace libusb
     {
         public readonly libusb_init init;
         public readonly libusb_exit exit;
+        public readonly libusb_strerror strerror;
         public readonly libusb_get_device_list get_device_list;
         public readonly libusb_free_device_list free_device_list;
         public readonly libusb_get_device_descriptor get_device_descriptor;
@@ -144,11 +148,17 @@ namespace libusb
         public readonly libusb_control_transfer control_transfer;
         private readonly SafeNativeLibrary libusb;
 
+        public string StrError(int code)
+        {
+            return Marshal.PtrToStringUTF8(strerror(code));
+        }
+
         public LibUsb()
         {
             libusb = new SafeNativeLibrary("libusb-1.0");
             init = libusb.GetExport<libusb_init>();
             exit = libusb.GetExport<libusb_exit>();
+            strerror = libusb.GetExport<libusb_strerror>();
             get_device_list = libusb.GetExport<libusb_get_device_list>();
             free_device_list = libusb.GetExport<libusb_free_device_list>();
             get_device_descriptor = libusb.GetExport<libusb_get_device_descriptor>();

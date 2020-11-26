@@ -12,7 +12,7 @@ namespace libusb
             libusb = new LibUsb();
             var status = libusb.init(out ctx);
             if (status != 0)
-                throw new IOException($"libusb.init failed: {status}");
+                throw new IOException($"libusb.init failed: {libusb.StrError(status)}");
         }
 
         public void Dispose()
@@ -24,7 +24,7 @@ namespace libusb
         {
             var ret = libusb.get_device_list(ctx, out var device_list);
             if (ret < 0)
-                throw new IOException($"libusb.get_device_list failed: {ret}");
+                throw new IOException($"libusb.get_device_list failed: {libusb.StrError(ret)}");
             for (int i = 0; i < ret; i++)
             {
                 yield return Marshal.ReadIntPtr(device_list, i * IntPtr.Size);
@@ -37,7 +37,7 @@ namespace libusb
             var descriptor = new device_descriptor();
             var status = libusb.get_device_descriptor(device, ref descriptor);
             if (status != 0)
-                throw new IOException($"libusb.get_device_descriptor failed: {status}");
+                throw new IOException($"libusb.get_device_descriptor failed: {libusb.StrError(status)}");
             return descriptor;
         }
 

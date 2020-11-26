@@ -13,7 +13,7 @@ namespace libusb
             var status = libusb.open(device, out device_handle);
             if (status != 0)
             {
-                throw new IOException($"libusb.open_device failed: {status}");
+                throw new IOException($"libusb.open_device failed: {libusb.StrError(status)}");
             }
         }
 
@@ -24,7 +24,7 @@ namespace libusb
             if (ret < 0)
             {
                 ArrayPool<byte>.Shared.Return(mem);
-                throw new IOException($"control_transfer(out) failed with error {ret}");
+                throw new IOException($"control_transfer(out) failed with error {libusb.StrError(ret)}");
             }
             var descriptor = Encoding.Unicode.GetString(mem, 2, ret - 2);
             ArrayPool<byte>.Shared.Return(mem);
@@ -36,7 +36,7 @@ namespace libusb
             var status = libusb.reset_device(device_handle);
             if (status != 0)
             {
-                throw new IOException($"libusb.reset_device failed: {status}");
+                throw new IOException($"libusb.reset_device failed: {libusb.StrError(status)}");
             }
         }
 
