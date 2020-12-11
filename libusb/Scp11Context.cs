@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
 using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Operators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
+using Org.BouncyCastle.X509;
 
 namespace libusb
 {
@@ -58,7 +62,7 @@ namespace libusb
             Console.WriteLine();
         }
 
-        public void GenerateKeyPair(long priv = 0)
+        public (X509Certificate, ECPrivateKeyParameters) GenerateKeyPair(long priv = 0)
         {
             AsymmetricCipherKeyPair pair;
             if(priv == 0)
@@ -78,6 +82,31 @@ namespace libusb
             sk_oce.Init(pair.Private);
 
             shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
+
+            IDictionary attrs = new Hashtable();
+            attrs[X509Name.E] = "per.nilsson@yubico.com";
+            attrs[X509Name.CN] = "Per Nilsson";
+            attrs[X509Name.O] = "Yubico AB";
+            attrs[X509Name.C] = "SE";
+
+            IList ord = new ArrayList();
+            ord.Add(X509Name.E);
+            ord.Add(X509Name.CN);
+            ord.Add(X509Name.O);
+            ord.Add(X509Name.C);
+
+            var certGen = new X509V3CertificateGenerator();
+
+            certGen.SetSerialNumber(BigInteger.One);
+            certGen.SetIssuerDN(new X509Name(ord, attrs));
+            certGen.SetNotBefore(DateTime.Today.Subtract(new TimeSpan(1, 0, 0, 0)));
+            certGen.SetNotAfter(DateTime.Today.AddDays(365));
+            certGen.SetSubjectDN(new X509Name(ord, attrs));
+            certGen.SetPublicKey(pair.Public);
+            certGen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true));
+            certGen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pair.Public)));
+
+            return (certGen.Generate(new Asn1SignatureFactory("SHA256withECDSA", pair.Private)), (ECPrivateKeyParameters)pair.Private);
         }
 
         public Scp11Session CreateSession(Session session, ushort key_id)

@@ -21,6 +21,7 @@ namespace libusb
         GetPseudoRandom = 0x51,
         GetPubKey = 0x54,
         DeleteObject = 0x58,
+        AttestAsymmetric = 0x64,
         ChangeAuthKey = 0x6c,
         Error = 0x7f
     }
@@ -176,6 +177,34 @@ namespace libusb
         }
     }
 
+    public class SetAttestKeyReq : IWriteable
+    {
+        public byte algorithm;
+        public Memory<byte> buf;
+
+        public HsmCommand Command => HsmCommand.SetInformation;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(4);
+            s.WriteByte(algorithm);
+            s.Write(buf.Span);
+        }
+    }
+
+    public class SetAttestCertReq : IWriteable
+    {
+        public Memory<byte> buf;
+
+        public HsmCommand Command => HsmCommand.SetInformation;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(5);
+            s.Write(buf.Span);
+        }
+    }
+
     public class SetSerialReq : IWriteable
     {
         public uint serial;
@@ -212,6 +241,20 @@ namespace libusb
         public void WriteTo(Stream s)
         {
             s.Write(key_id);
+        }
+    }
+
+    public class AttestAsymmetricReq : IWriteable
+    {
+        public ushort key_id;
+        public ushort attest_id;
+
+        public HsmCommand Command => HsmCommand.AttestAsymmetric;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(attest_id);
         }
     }
 }
