@@ -25,7 +25,7 @@ namespace libusb_tester
                             using (var usb_session = usb_device.Claim())
                             {
                                 //usb_session.SendCmd(HsmCommand.Bsl);
-                                usb_session.SendCmd(new SetSerialReq { serial = 12345 });
+                                //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
 
                                 using (var scp03_session = new Scp03Context("password").CreateSession(usb_session, 1))
                                 {
@@ -42,8 +42,8 @@ namespace libusb_tester
                                     Console.WriteLine();
                                     var context = new Scp11Context(usb_session);
                                     var t = context.GenerateKeyPair();
-                                    usb_session.SendCmd(new SetAttestKeyReq { algorithm = 12, buf = t.Item2.D.ToByteArrayFixed() });
-                                    usb_session.SendCmd(new SetAttestCertReq { buf = t.Item1.GetEncoded() });
+                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = 12, buf = t.Item2.D.ToByteArrayFixed() });
+                                    //usb_session.SendCmd(new SetAttestCertReq { buf = t.Item1.GetEncoded() });
                                     //context.SetDefaultKey(usb_session);
                                     context.PutAuthKey(scp03_session, 2);
                                     using (var scp11_session = context.CreateSession(usb_session, 2))
