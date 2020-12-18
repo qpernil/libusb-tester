@@ -16,14 +16,15 @@ namespace libusb_tester
                     Console.WriteLine($"Id {device} Vendor 0x{descriptor.idVendor:x} Product 0x{descriptor.idProduct:x} Device 0x{descriptor.bcdDevice:x} Usb 0x{descriptor.bcdUSB:x}");
                     if (descriptor.IsYubiHsm())
                     {
-                        using (var usb_device = usb_ctx.Open(device))
+                        //var config = usb_ctx.GetConfigDescriptor(device, 0);
+                        //var config_id = config.bConfigurationValue;
+                        using (var usb_device = usb_ctx.Open(device, 1))
                         {
                             var manufacturer = usb_device.GetStringDescriptor(descriptor.iManufacturer);
                             var product = usb_device.GetStringDescriptor(descriptor.iProduct);
                             var serial = usb_device.GetStringDescriptor(descriptor.iSerialNumber);
-                            var configuration = usb_device.GetConfiguration();
-                            Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}' Configuration {configuration}");
-                            using (var usb_session = usb_device.Claim())
+                            Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
+                            using (var usb_session = usb_device.Claim(0, 0))
                             {
                                 //usb_session.SendCmd(HsmCommand.Bsl);
                                 //usb_session.SendCmd(new SetSerialReq { serial = 12345 });

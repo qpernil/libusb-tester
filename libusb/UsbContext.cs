@@ -51,7 +51,7 @@ namespace libusb
             return ret;
         }
 
-        public UsbDevice Open(IntPtr device, int configuration = -1)
+        public UsbDevice Open(IntPtr device, int configuration)
         {
             return new UsbDevice(libusb, device, configuration);
         }

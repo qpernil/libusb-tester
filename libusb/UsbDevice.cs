@@ -15,12 +15,12 @@ namespace libusb
             {
                 throw new IOException($"libusb.open_device: {libusb.StrError(status)}");
             }
-            if(configuration >= 0)
+            if (configuration != GetConfiguration())
             {
                 status = libusb.set_configuration(device_handle, configuration);
                 if (status != 0)
                 {
-                    throw new IOException($"libusb.open_device: {libusb.StrError(status)}");
+                    throw new IOException($"libusb.set_configuration: {libusb.StrError(status)}");
                 }
             }
         }
@@ -58,9 +58,9 @@ namespace libusb
             }
         }
 
-        public UsbSession Claim(int interface_number = 0, byte write_endpoint = 0x01, byte read_endpoint = 0x81, int alt_setting = -1)
+        public UsbSession Claim(int interface_number, int alt_setting, byte write_endpoint = 0x01, byte read_endpoint = 0x81)
         {
-            return new UsbSession(libusb, device_handle, interface_number, write_endpoint, read_endpoint, alt_setting);
+            return new UsbSession(libusb, device_handle, interface_number, alt_setting, write_endpoint, read_endpoint);
         }
 
         public void Dispose()
