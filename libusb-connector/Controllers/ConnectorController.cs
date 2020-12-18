@@ -48,7 +48,7 @@ namespace libusb_connector.Controllers
 
         private string GetSerial(DeviceInfo info)
         {
-            using (var device = _usb.Open(info.id))
+            using (var device = _usb.Open(info.id, 1))
             {
                 return device.GetStringDescriptor(info.descriptor.iSerialNumber);
             }
