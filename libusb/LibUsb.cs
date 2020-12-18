@@ -80,6 +80,60 @@ namespace libusb
         public byte bNumConfigurations;
     };
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct config_descriptor
+    {
+        public byte bLength;
+
+        public byte bDescriptorType;
+
+        public ushort wTotalLength;
+
+        public byte bNumInterfaces;
+
+        public byte bConfigurationValue;
+
+        public byte iConfiguration;
+
+        public byte bmAttributes;
+
+        public byte MaxPower;
+
+        public IntPtr Interfaces;
+
+        public IntPtr Extra;
+
+        public int ExtraLength;
+    };
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct interface_descriptor
+    {
+        public byte bLength;
+
+        public byte bDescriptorType;
+
+        public byte bInterfaceNumber;
+
+        public byte bAltSetting;
+
+        public byte bNumEndpoints;
+
+        public byte bInterfaceClass;
+
+        public byte bInterfaceSubClass;
+
+        public byte bInterfaceProtocol;
+
+        public byte iInterface;
+
+        public IntPtr Endpoints;
+
+        public IntPtr Extra;
+
+        public int ExtraLength;
+    }
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_init(out IntPtr ctx);
 
@@ -97,6 +151,12 @@ namespace libusb
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_get_device_descriptor(IntPtr device, ref device_descriptor descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int libusb_get_config_descriptor(IntPtr device, byte index, out IntPtr descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void libusb_free_config_descriptor(IntPtr descriptor);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate IntPtr libusb_ref_device(IntPtr device);
@@ -148,6 +208,8 @@ namespace libusb
         public readonly libusb_get_device_list get_device_list;
         public readonly libusb_free_device_list free_device_list;
         public readonly libusb_get_device_descriptor get_device_descriptor;
+        public readonly libusb_get_config_descriptor get_config_descriptor;
+        public readonly libusb_free_config_descriptor free_config_descriptor;
         public readonly libusb_ref_device ref_device;
         public readonly libusb_unref_device unref_device;
         public readonly libusb_open open;
@@ -178,6 +240,8 @@ namespace libusb
             get_device_list = libusb.GetExport<libusb_get_device_list>();
             free_device_list = libusb.GetExport<libusb_free_device_list>();
             get_device_descriptor = libusb.GetExport<libusb_get_device_descriptor>();
+            get_config_descriptor = libusb.GetExport<libusb_get_config_descriptor>();
+            free_config_descriptor = libusb.GetExport<libusb_free_config_descriptor>();
             ref_device = libusb.GetExport<libusb_ref_device>();
             unref_device = libusb.GetExport<libusb_unref_device>();
             get_configuration = libusb.GetExport<libusb_get_configuration>();

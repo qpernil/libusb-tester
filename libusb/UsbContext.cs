@@ -41,6 +41,16 @@ namespace libusb
             return descriptor;
         }
 
+        public config_descriptor GetConfigDescriptor(IntPtr device, byte index)
+        {
+            var status = libusb.get_config_descriptor(device, index, out var descriptor);
+            if (status != 0)
+                throw new IOException($"libusb.get_config_descriptor({index}): {libusb.StrError(status)}");
+            var ret = Marshal.PtrToStructure<config_descriptor>(descriptor);
+            libusb.free_config_descriptor(descriptor);
+            return ret;
+        }
+
         public UsbDevice Open(IntPtr device, int configuration = -1)
         {
             return new UsbDevice(libusb, device, configuration);
