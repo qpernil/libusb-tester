@@ -21,7 +21,8 @@ namespace libusb_tester
                             var manufacturer = usb_device.GetStringDescriptor(descriptor.iManufacturer);
                             var product = usb_device.GetStringDescriptor(descriptor.iProduct);
                             var serial = usb_device.GetStringDescriptor(descriptor.iSerialNumber);
-                            Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}'");
+                            var configuration = usb_device.GetConfiguration();
+                            Console.WriteLine($"Manufacturer '{manufacturer}' Product '{product}' Serial '{serial}' Configuration {configuration}");
                             using (var usb_session = usb_device.Claim())
                             {
                                 //usb_session.SendCmd(HsmCommand.Bsl);

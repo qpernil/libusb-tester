@@ -7,7 +7,7 @@ namespace libusb
 {
     public class UsbDevice : IDisposable
     {
-        public UsbDevice(LibUsb libusb, IntPtr device)
+        public UsbDevice(LibUsb libusb, IntPtr device, int configuration)
         {
             this.libusb = libusb;
             var status = libusb.open(device, out device_handle);
@@ -15,6 +15,24 @@ namespace libusb
             {
                 throw new IOException($"libusb.open_device: {libusb.StrError(status)}");
             }
+            if(configuration >= 0)
+            {
+                status = libusb.set_configuration(device_handle, configuration);
+                if (status != 0)
+                {
+                    throw new IOException($"libusb.open_device: {libusb.StrError(status)}");
+                }
+            }
+        }
+
+        public int GetConfiguration()
+        {
+            var status = libusb.get_configuration(device_handle, out var configuration);
+            if (status != 0)
+            {
+                throw new IOException($"libusb.get_configuration: {libusb.StrError(status)}");
+            }
+            return configuration;
         }
 
         public string GetStringDescriptor(byte index, ushort langid = 0, int max = 1024)
@@ -40,9 +58,9 @@ namespace libusb
             }
         }
 
-        public UsbSession Claim()
+        public UsbSession Claim(int interface_number = 0, byte write_endpoint = 0x01, byte read_endpoint = 0x81, int alt_setting = -1)
         {
-            return new UsbSession(libusb, device_handle);
+            return new UsbSession(libusb, device_handle, interface_number, write_endpoint, read_endpoint, alt_setting);
         }
 
         public void Dispose()

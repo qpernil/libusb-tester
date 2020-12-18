@@ -111,6 +111,15 @@ namespace libusb
     public delegate void libusb_close(IntPtr device_handle);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int libusb_get_configuration(IntPtr device_handle, out int configuration);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int libusb_set_configuration(IntPtr device_handle, int configuration);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int libusb_clear_halt(IntPtr device_handle, byte endpoint);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_reset_device(IntPtr device_handle);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -118,6 +127,9 @@ namespace libusb
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_release_interface(IntPtr device_handle, int interface_number);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int libusb_set_interface_alt_setting(IntPtr device_handle, int interface_number, int alt_setting);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_interrupt_transfer(IntPtr device_handle, byte endpoint, byte[] data, int length, out int actual_length, uint timeout);
@@ -140,9 +152,13 @@ namespace libusb
         public readonly libusb_unref_device unref_device;
         public readonly libusb_open open;
         public readonly libusb_close close;
+        public readonly libusb_get_configuration get_configuration;
+        public readonly libusb_set_configuration set_configuration;
+        public readonly libusb_clear_halt clear_halt;
         public readonly libusb_reset_device reset_device;
         public readonly libusb_claim_interface claim_interface;
         public readonly libusb_release_interface release_interface;
+        public readonly libusb_set_interface_alt_setting set_interface_alt_setting;
         public readonly libusb_interrupt_transfer interrupt_transfer;
         public readonly libusb_bulk_transfer bulk_transfer;
         public readonly libusb_control_transfer control_transfer;
@@ -164,11 +180,15 @@ namespace libusb
             get_device_descriptor = libusb.GetExport<libusb_get_device_descriptor>();
             ref_device = libusb.GetExport<libusb_ref_device>();
             unref_device = libusb.GetExport<libusb_unref_device>();
+            get_configuration = libusb.GetExport<libusb_get_configuration>();
+            set_configuration = libusb.GetExport<libusb_set_configuration>();
             open = libusb.GetExport<libusb_open>();
             close = libusb.GetExport<libusb_close>();
+            clear_halt = libusb.GetExport<libusb_clear_halt>();
             reset_device = libusb.GetExport<libusb_reset_device>();
             claim_interface = libusb.GetExport<libusb_claim_interface>();
             release_interface = libusb.GetExport<libusb_release_interface>();
+            set_interface_alt_setting = libusb.GetExport<libusb_set_interface_alt_setting>();
             interrupt_transfer = libusb.GetExport<libusb_interrupt_transfer>();
             bulk_transfer = libusb.GetExport<libusb_bulk_transfer>();
             control_transfer = libusb.GetExport<libusb_control_transfer>();
