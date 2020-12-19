@@ -7,9 +7,10 @@ namespace libusb
 {
     public class UsbDevice : IDisposable
     {
-        public UsbDevice(LibUsb libusb, IntPtr device, int configuration)
+        public UsbDevice(LibUsb libusb, IntPtr device, int configuration, byte control_endpoint)
         {
             this.libusb = libusb;
+            this.control_endpoint = control_endpoint;
             var status = libusb.open(device, out device_handle);
             if (status != 0)
             {
@@ -38,7 +39,7 @@ namespace libusb
         public string GetStringDescriptor(byte index, ushort langid = 0, int max = 1024)
         {
             var mem = ArrayPool<byte>.Shared.Rent(max);
-            var ret = libusb.control_transfer(device_handle, 0x80, 0x06, (ushort)(0x300 | index), langid, mem, (ushort)max, 1000);
+            var ret = libusb.control_transfer(device_handle, control_endpoint, 0x06, (ushort)(0x300 | index), langid, mem, (ushort)max, 1000);
             if (ret < 0)
             {
                 ArrayPool<byte>.Shared.Return(mem);
@@ -70,5 +71,6 @@ namespace libusb
 
         private readonly LibUsb libusb;
         private readonly IntPtr device_handle;
+        private byte control_endpoint;
     }
 }

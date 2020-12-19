@@ -51,9 +51,9 @@ namespace libusb
             return ret;
         }
 
-        public UsbDevice Open(IntPtr device, int configuration)
+        public UsbDevice Open(IntPtr device, int configuration, byte control_endpoint = 0x80)
         {
-            return new UsbDevice(libusb, device, configuration);
+            return new UsbDevice(libusb, device, configuration, control_endpoint);
         }
 
         private readonly LibUsb libusb;
