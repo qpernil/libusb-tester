@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using libusb;
 using Microsoft.AspNetCore.Mvc;
@@ -48,7 +48,7 @@ namespace libusb_connector.Controllers
         {
             string serial = _usb.GetDeviceList().Where(i => i.IsYubiHsm).Select(GetSerial).FirstOrDefault() ?? "*";
             string status = serial == "*" ? "NO_DEVICE" : "OK";
-            return $"status={status}\nserial={serial}\nversion=2.2.0\npid=77297\naddress=localhost\nport=12345\n";
+            return $"status={status}\nserial={serial}\nversion=2.2.0\npid={Process.GetCurrentProcess().Id}\naddress={Request.Host.Host}\nport={Request.Host.Port}\n";
         }
         
         [HttpPost]

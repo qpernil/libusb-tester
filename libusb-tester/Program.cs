@@ -12,7 +12,7 @@ namespace libusb_tester
             {
                 foreach (var device in usb_ctx.GetDeviceList())
                 {
-                    Console.WriteLine($"Id {device.device} Vendor 0x{device.descriptor.idVendor:x} Product 0x{device.descriptor.idProduct:x}");
+                    Console.WriteLine($"Id {device.Id} Vendor 0x{device.Vendor:x} Product 0x{device.Product:x}");
                     if (device.IsYubiHsm)
                     {
                         //var config = usb_ctx.GetConfigDescriptor(device, 0);
