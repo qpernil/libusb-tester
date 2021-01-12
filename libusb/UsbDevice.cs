@@ -7,11 +7,12 @@ namespace libusb
 {
     public class UsbDevice : IDisposable
     {
-        public UsbDevice(LibUsb libusb, IntPtr device, int configuration, byte control_endpoint)
+        public UsbDevice(LibUsb libusb, UsbDescriptor descriptor, int configuration, byte control_endpoint)
         {
             this.libusb = libusb;
+            this.descriptor = descriptor;
             this.control_endpoint = control_endpoint;
-            var status = libusb.open(device, out device_handle);
+            var status = libusb.open(descriptor.device, out device_handle);
             if (status != 0)
             {
                 throw new IOException($"libusb.open_device: {libusb.StrError(status)}");
@@ -50,6 +51,10 @@ namespace libusb
             return descriptor;
         }
 
+        public string SerialNumber => GetStringDescriptor(descriptor.descriptor.iSerialNumber);
+        public string Manufacturer => GetStringDescriptor(descriptor.descriptor.iManufacturer);
+        public string Product => GetStringDescriptor(descriptor.descriptor.iProduct);
+
         public void Reset()
         {
             var status = libusb.reset_device(device_handle);
@@ -70,6 +75,7 @@ namespace libusb
         }
 
         private readonly LibUsb libusb;
+        private readonly UsbDescriptor descriptor;
         private readonly IntPtr device_handle;
         private byte control_endpoint;
     }

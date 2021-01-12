@@ -122,10 +122,5 @@ namespace libusb
         {
             s.Write(Encoding.UTF8.GetBytes(value));
         }
-
-        public static bool IsYubiHsm(this device_descriptor d)
-        {
-            return d.idVendor == 0x1050 && d.idProduct == 0x30;
-        }
     }
 }

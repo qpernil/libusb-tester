@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace libusb
@@ -20,25 +21,22 @@ namespace libusb
             libusb.exit(ctx);
         }
 
-        public IEnumerable<IntPtr> GetDeviceList()
+        public IEnumerable<UsbDescriptor> GetDeviceList()
         {
             var ret = libusb.get_device_list(ctx, out var device_list);
             if (ret < 0)
                 throw new IOException($"libusb.get_device_list: {libusb.StrError(ret)}");
-            for (int i = 0; i < ret; i++)
+            try
             {
-                yield return Marshal.ReadIntPtr(device_list, i * IntPtr.Size);
+                for (int i = 0; i < ret; i++)
+                {
+                    yield return new UsbDescriptor(libusb, Marshal.ReadIntPtr(device_list, i * IntPtr.Size));
+                }
             }
-            libusb.free_device_list(device_list, 1);
-        }
-
-        public device_descriptor GetDeviceDescriptor(IntPtr device)
-        {
-            var descriptor = new device_descriptor();
-            var status = libusb.get_device_descriptor(device, ref descriptor);
-            if (status != 0)
-                throw new IOException($"libusb.get_device_descriptor: {libusb.StrError(status)}");
-            return descriptor;
+            finally
+            {
+                libusb.free_device_list(device_list, 1);
+            }
         }
 
         public config_descriptor GetConfigDescriptor(IntPtr device, byte index)
@@ -51,9 +49,9 @@ namespace libusb
             return ret;
         }
 
-        public UsbDevice Open(IntPtr device, int configuration, byte control_endpoint = 0x80)
+        public UsbDevice Open(UsbDescriptor descriptor, int configuration, byte control_endpoint = 0x80)
         {
-            return new UsbDevice(libusb, device, configuration, control_endpoint);
+            return new UsbDevice(libusb, descriptor, configuration, control_endpoint);
         }
 
         private readonly LibUsb libusb;
