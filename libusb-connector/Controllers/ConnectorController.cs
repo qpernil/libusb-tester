@@ -55,8 +55,7 @@ namespace libusb_connector.Controllers
         [Route("api")]
         public byte[] Api([FromBody] byte[] data)
         {
-            var info = _usb.GetDeviceList().Where(i => i.IsYubiHsm).First();
-            using(var device = _usb.Open(info, 1))
+            using(var device = _usb.GetDeviceList().Where(i => i.IsYubiHsm).Select(d => _usb.Open(d, 1)).First())
             {
                 using (var session = device.Claim(0, 0))
                 {
