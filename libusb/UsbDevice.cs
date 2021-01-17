@@ -22,6 +22,7 @@ namespace libusb
                 status = libusb.set_configuration(device_handle, configuration);
                 if (status != 0)
                 {
+                    libusb.close(device_handle);
                     throw new IOException($"libusb.set_configuration: {libusb.StrError(status)}");
                 }
             }
