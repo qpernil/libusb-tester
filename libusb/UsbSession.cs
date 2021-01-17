@@ -22,6 +22,7 @@ namespace libusb
                 status = libusb.set_interface_alt_setting(device_handle, interface_number, alt_setting);
                 if (status != 0)
                 {
+                    libusb.release_interface(device_handle, interface_number);
                     throw new IOException($"libusb.set_interface_alt_setting({interface_number}, {alt_setting}): {libusb.StrError(status)}");
                 }
             }

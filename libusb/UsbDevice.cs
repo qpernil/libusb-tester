@@ -17,7 +17,13 @@ namespace libusb
             {
                 throw new IOException($"libusb.open_device: {libusb.StrError(status)}");
             }
-            if (configuration != GetConfiguration())
+            status = libusb.get_configuration(device_handle, out var current_conf);
+            if (status != 0)
+            {
+                libusb.close(device_handle);
+                throw new IOException($"libusb.get_configuration: {libusb.StrError(status)}");
+            }
+            if (configuration != current_conf)
             {
                 status = libusb.set_configuration(device_handle, configuration);
                 if (status != 0)
@@ -26,6 +32,11 @@ namespace libusb
                     throw new IOException($"libusb.set_configuration: {libusb.StrError(status)}");
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            libusb.close(device_handle);
         }
 
         public int GetConfiguration()
@@ -68,11 +79,6 @@ namespace libusb
         public UsbSession Claim(int interface_number, int alt_setting, byte write_endpoint = 0x01, byte read_endpoint = 0x81)
         {
             return new UsbSession(libusb, device_handle, interface_number, alt_setting, write_endpoint, read_endpoint);
-        }
-
-        public void Dispose()
-        {
-            libusb.close(device_handle);
         }
 
         private readonly LibUsb libusb;
