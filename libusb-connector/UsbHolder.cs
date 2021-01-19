@@ -24,12 +24,14 @@ namespace libusb_connector
 
         public UsbDevice GetDevice()
         {
-            if(device == null || device.SerialNumber == null)
+            var saved = device;
+            if(saved?.SerialNumber == null)
             {
-                device?.Dispose();
-                device = context.GetDeviceList().Where(d => d.IsYubiHsm).Select(d => context.Open(d, 1)).FirstOrDefault();
+                var created = device = context.GetDeviceList().Where(d => d.IsYubiHsm).Select(d => context.Open(d, 1)).FirstOrDefault();
+                saved?.Dispose();
+                saved = created;
             }
-            return device;
+            return saved;
         }
     }
 }
