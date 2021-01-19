@@ -24,6 +24,7 @@ namespace libusb_connector
                 o.OutputFormatters.Insert(0, new RawOutputFormatter());
             });
             services.AddSingleton<UsbContext>();
+            services.AddSingleton<UsbHolder>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

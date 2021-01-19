@@ -56,16 +56,30 @@ namespace libusb
             if (ret < 0)
             {
                 ArrayPool<byte>.Shared.Return(mem);
-                throw new IOException($"control_transfer(out): {libusb.StrError(ret)}");
+                throw new IOException($"control_transfer({control_endpoint}): {libusb.StrError(ret)}");
             }
             var descriptor = Encoding.Unicode.GetString(mem, 2, ret - 2);
             ArrayPool<byte>.Shared.Return(mem);
             return descriptor;
         }
 
-        public string SerialNumber => GetStringDescriptor(descriptor.descriptor.iSerialNumber);
-        public string Manufacturer => GetStringDescriptor(descriptor.descriptor.iManufacturer);
-        public string Product => GetStringDescriptor(descriptor.descriptor.iProduct);
+        public string SafeGetStringDescriptor(byte index, ushort langid = 0, int max = 1024)
+        {
+            var mem = ArrayPool<byte>.Shared.Rent(max);
+            var ret = libusb.control_transfer(device_handle, control_endpoint, 0x06, (ushort)(0x300 | index), langid, mem, (ushort)max, 1000);
+            if (ret < 0)
+            {
+                ArrayPool<byte>.Shared.Return(mem);
+                return null;
+            }
+            var descriptor = Encoding.Unicode.GetString(mem, 2, ret - 2);
+            ArrayPool<byte>.Shared.Return(mem);
+            return descriptor;
+        }
+
+        public string SerialNumber => SafeGetStringDescriptor(descriptor.descriptor.iSerialNumber);
+        public string Manufacturer => SafeGetStringDescriptor(descriptor.descriptor.iManufacturer);
+        public string Product => SafeGetStringDescriptor(descriptor.descriptor.iProduct);
 
         public void Reset()
         {
