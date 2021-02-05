@@ -22,6 +22,8 @@ namespace libusb_tester
                             Console.WriteLine($"Manufacturer '{usb_device.Manufacturer}' Product '{usb_device.Product}' Serial '{usb_device.SerialNumber}'");
                             using (var usb_session = usb_device.Claim(0, 0))
                             {
+                                var resp = usb_session.SendCmd(HsmCommand.Echo, new byte[] { 1, 2, 3, 4, 5 });
+
                                 //usb_session.SendCmd(HsmCommand.Bsl);
                                 //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
 
