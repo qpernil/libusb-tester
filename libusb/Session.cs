@@ -13,11 +13,11 @@ namespace libusb
 
     public abstract class Session : IDisposable
     {
-        public Span<byte> SendCmd(IWriteable input, int max = 2048)
+        public Span<byte> SendCmd(IWriteable input, int max = 2048 + 3)
         {
             return SendCmd(input.Command, input.AsSpan(), max);
         }
-        public Span<byte> SendCmd(HsmCommand cmd, ReadOnlySpan<byte> input = default, int max = 2048)
+        public Span<byte> SendCmd(HsmCommand cmd, ReadOnlySpan<byte> input = default, int max = 2048 + 3)
         {
             var mem = new byte[max];
             mem[0] = (byte)cmd;
@@ -37,7 +37,7 @@ namespace libusb
             var len = BinaryPrimitives.ReadUInt16BigEndian(ret.Slice(1, 2));
             return ret.Slice(3, len);
         }
-        public Span<byte> SendCmd(ReadOnlySpan<byte> input, int max = 2048)
+        public Span<byte> SendCmd(ReadOnlySpan<byte> input, int max = 2048 + 3)
         {
             var mem = new byte[max];
             input.CopyTo(mem);
