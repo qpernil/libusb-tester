@@ -50,7 +50,7 @@ namespace libusb_connector.Controllers
         {
             string serial = holder.GetDevice()?.SerialNumber ?? "*";
             string status = serial == "*" ? "NO_DEVICE" : "OK";
-            return $"status={status}\nserial={serial}\nversion=2.2.0\npid={Process.GetCurrentProcess().Id}\naddress={Request.Host.Host}\nport={Request.Host.Port}\n";
+            return $"status={status}\nserial={serial}\nversion=3.0.0\npid={Process.GetCurrentProcess().Id}\naddress={Request.Host.Host}\nport={Request.Host.Port}\n";
         }
         
         [HttpPost]

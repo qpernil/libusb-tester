@@ -37,6 +37,12 @@ namespace libusb
             var len = BinaryPrimitives.ReadUInt16BigEndian(ret.Slice(1, 2));
             return ret.Slice(3, len);
         }
+        public Span<byte> SendCmd(ReadOnlySpan<byte> input, int max = 2048 + 3)
+        {
+            var mem = new byte[max];
+            input.CopyTo(mem);
+            return Transfer(mem, input.Length);
+        }
         public abstract Span<byte> Transfer(byte[] input, int length);
         public abstract void Dispose();
     }
