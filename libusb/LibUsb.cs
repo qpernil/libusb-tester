@@ -27,6 +27,10 @@ namespace libusb
         {
             return GetExport<T>(typeof(T).Name);
         }
+        public void GetExport<T>(out T func)
+        {
+            func = GetExport<T>();
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -234,28 +238,28 @@ namespace libusb
         public LibUsb(string libraryPath = "libusb-1.0")
         {
             libusb = new SafeNativeLibrary(libraryPath);
-            init = libusb.GetExport<libusb_init>();
-            exit = libusb.GetExport<libusb_exit>();
-            strerror = libusb.GetExport<libusb_strerror>();
-            get_device_list = libusb.GetExport<libusb_get_device_list>();
-            free_device_list = libusb.GetExport<libusb_free_device_list>();
-            get_device_descriptor = libusb.GetExport<libusb_get_device_descriptor>();
-            get_config_descriptor = libusb.GetExport<libusb_get_config_descriptor>();
-            free_config_descriptor = libusb.GetExport<libusb_free_config_descriptor>();
-            ref_device = libusb.GetExport<libusb_ref_device>();
-            unref_device = libusb.GetExport<libusb_unref_device>();
-            get_configuration = libusb.GetExport<libusb_get_configuration>();
-            set_configuration = libusb.GetExport<libusb_set_configuration>();
-            open = libusb.GetExport<libusb_open>();
-            close = libusb.GetExport<libusb_close>();
-            clear_halt = libusb.GetExport<libusb_clear_halt>();
-            reset_device = libusb.GetExport<libusb_reset_device>();
-            claim_interface = libusb.GetExport<libusb_claim_interface>();
-            release_interface = libusb.GetExport<libusb_release_interface>();
-            set_interface_alt_setting = libusb.GetExport<libusb_set_interface_alt_setting>();
-            interrupt_transfer = libusb.GetExport<libusb_interrupt_transfer>();
-            bulk_transfer = libusb.GetExport<libusb_bulk_transfer>();
-            control_transfer = libusb.GetExport<libusb_control_transfer>();
+            libusb.GetExport(out init);
+            libusb.GetExport(out exit);
+            libusb.GetExport(out strerror);
+            libusb.GetExport(out get_device_list);
+            libusb.GetExport(out free_device_list);
+            libusb.GetExport(out get_device_descriptor);
+            libusb.GetExport(out get_config_descriptor);
+            libusb.GetExport(out free_config_descriptor);
+            libusb.GetExport(out ref_device);
+            libusb.GetExport(out unref_device);
+            libusb.GetExport(out get_configuration);
+            libusb.GetExport(out set_configuration);
+            libusb.GetExport(out open);
+            libusb.GetExport(out close);
+            libusb.GetExport(out clear_halt);
+            libusb.GetExport(out reset_device);
+            libusb.GetExport(out claim_interface);
+            libusb.GetExport(out release_interface);
+            libusb.GetExport(out set_interface_alt_setting);
+            libusb.GetExport(out interrupt_transfer);
+            libusb.GetExport(out bulk_transfer);
+            libusb.GetExport(out control_transfer);
         }
     }
 }
