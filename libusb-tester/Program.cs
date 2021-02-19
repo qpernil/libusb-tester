@@ -8,6 +8,17 @@ namespace libusb_tester
     {
         static void Main(string[] args)
         {
+            try
+            {
+                Run(args);
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+        static void Run(string[] args)
+        {
             using (var usb_ctx = new UsbContext())
             {
                 foreach (var device in usb_ctx.GetDeviceList())
@@ -29,6 +40,16 @@ namespace libusb_tester
 
                                 using (var scp03_session = new Scp03Context("password").CreateSession(usb_session, 1))
                                 {
+                                    /*
+                                    using (var scp03_sess2 = new Scp03Session(usb_session, 1, scp03_session, 1, new byte[8]))
+                                    {
+                                        var dinfo = scp03_sess2.SendCmd(HsmCommand.GetDeviceInfo);
+                                        Console.WriteLine("DeviceInfo over scp03_sess2");
+                                        foreach (var b in dinfo)
+                                            Console.Write($"{b:x2}");
+                                        Console.WriteLine();
+                                    }
+                                    */
                                     //scp03_session.SendCmd(HsmCommand.Reset);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
@@ -41,9 +62,9 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     var context = new Scp11Context(usb_session);
-                                    var t = context.GenerateKeyPair();
-                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = 12, buf = t.Item2.D.ToByteArrayFixed() });
-                                    //usb_session.SendCmd(new SetAttestCertReq { buf = t.Item1.GetEncoded() });
+                                    var sk_oce = context.GenerateKeyPair();
+                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = 12, buf = sk_oce.D.ToByteArrayFixed() });
+                                    //usb_session.SendCmd(new SetAttestCertReq { buf = context.GenerateCertificate(sk_oce).GetEncoded() });
                                     //context.SetDefaultKey(usb_session);
                                     context.PutAuthKey(scp03_session, 2);
                                     using (var scp11_session = context.CreateSession(usb_session, 2))

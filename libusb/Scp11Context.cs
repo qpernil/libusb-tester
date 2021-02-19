@@ -62,7 +62,7 @@ namespace libusb
             Console.WriteLine();
         }
 
-        public (X509Certificate, ECPrivateKeyParameters) GenerateKeyPair(long priv = 0)
+        public ECPrivateKeyParameters GenerateKeyPair(long priv = 0)
         {
             AsymmetricCipherKeyPair pair;
             if(priv == 0)
@@ -83,6 +83,11 @@ namespace libusb
 
             shsss = sk_oce.CalculateAgreement(pk_sd).ToByteArrayFixed();
 
+            return (ECPrivateKeyParameters)pair.Private;
+        }
+
+        public X509Certificate GenerateCertificate(AsymmetricKeyParameter signer)
+        {
             IDictionary attrs = new Hashtable();
             attrs[X509Name.E] = "per.nilsson@yubico.com";
             attrs[X509Name.CN] = "Per Nilsson";
@@ -102,11 +107,11 @@ namespace libusb
             certGen.SetNotBefore(DateTime.Today.Subtract(new TimeSpan(1, 0, 0, 0)));
             certGen.SetNotAfter(DateTime.Today.AddDays(365));
             certGen.SetSubjectDN(new X509Name(ord, attrs));
-            certGen.SetPublicKey(pair.Public);
+            certGen.SetPublicKey(pk_oce);
             certGen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true));
-            certGen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pair.Public)));
+            certGen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pk_oce)));
 
-            return (certGen.Generate(new Asn1SignatureFactory("SHA256withECDSA", pair.Private)), (ECPrivateKeyParameters)pair.Private);
+            return certGen.Generate(new Asn1SignatureFactory("SHA256withECDSA", signer));
         }
 
         public Scp11Session CreateSession(Session session, ushort key_id)

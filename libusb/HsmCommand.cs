@@ -23,6 +23,7 @@ namespace libusb
         DeleteObject = 0x58,
         AttestAsymmetric = 0x64,
         ChangeAuthKey = 0x6c,
+        ClientAuth = 0x6d,
         Error = 0x7f
     }
 
@@ -51,14 +52,14 @@ namespace libusb
     public class PutAuthKeyReq : IWriteable
     {
         public ushort key_id; // 0
-        public Memory<byte> label; // 2
+        public ReadOnlyMemory<byte> label; // 2
         public ushort domains; // 42
         public uint capabilities2; // 44
         public uint capabilities; // 48
         public byte algorithm; // 52
         public uint delegated_caps2; // 53
         public uint delegated_caps; // 57
-        public Memory<byte> key; // 61
+        public ReadOnlyMemory<byte> key; // 61
 
         public HsmCommand Command => HsmCommand.PutAuthKey;
 
@@ -80,7 +81,7 @@ namespace libusb
     {
         public ushort key_id;
         public byte algorithm;
-        public Memory<byte> key;
+        public ReadOnlyMemory<byte> key;
 
         public HsmCommand Command => HsmCommand.ChangeAuthKey;
 
@@ -109,7 +110,7 @@ namespace libusb
     public class CreateSessionReq : IWriteable
     {
         public ushort key_id;
-        public Memory<byte> buf;
+        public ReadOnlyMemory<byte> buf;
 
         public HsmCommand Command => HsmCommand.CreateSession;
 
@@ -123,7 +124,7 @@ namespace libusb
     public class AuthenticateSessionReq : IWriteable
     {
         public byte session_id;
-        public Memory<byte> host_crypto;
+        public ReadOnlyMemory<byte> host_crypto;
 
         public HsmCommand Command => HsmCommand.AuthenticateSession;
 
@@ -137,7 +138,7 @@ namespace libusb
     public class SessionCommandReq : IWriteable
     {
         public byte session_id;
-        public Memory<byte> encrypted;
+        public ReadOnlyMemory<byte> encrypted;
 
         public HsmCommand Command => HsmCommand.SessionCommand;
 
@@ -164,7 +165,7 @@ namespace libusb
     {
         public uint delegated_caps2;
         public uint delegated_caps;
-        public Memory<byte> buf;
+        public ReadOnlyMemory<byte> buf;
 
         public HsmCommand Command => HsmCommand.SetInformation;
 
@@ -180,7 +181,7 @@ namespace libusb
     public class SetAttestKeyReq : IWriteable
     {
         public byte algorithm;
-        public Memory<byte> buf;
+        public ReadOnlyMemory<byte> buf;
 
         public HsmCommand Command => HsmCommand.SetInformation;
 
@@ -194,7 +195,7 @@ namespace libusb
 
     public class SetAttestCertReq : IWriteable
     {
-        public Memory<byte> buf;
+        public ReadOnlyMemory<byte> buf;
 
         public HsmCommand Command => HsmCommand.SetInformation;
 
@@ -255,6 +256,24 @@ namespace libusb
         {
             s.Write(key_id);
             s.Write(attest_id);
+        }
+    }
+
+    public class ClientAuthReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> host_chal;
+        public ReadOnlyMemory<byte> card_chal;
+        public ReadOnlyMemory<byte> card_crypto;
+
+        public HsmCommand Command => HsmCommand.ClientAuth;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(host_chal.Span);
+            s.Write(card_chal.Span);
+            s.Write(card_crypto.Span);
         }
     }
 }
