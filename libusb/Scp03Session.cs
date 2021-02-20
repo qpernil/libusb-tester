@@ -45,7 +45,7 @@ namespace libusb
             var card_crypto = create_resp.Slice(1 + 8, 8);
 
             var context = new byte[host_chal.Length + card_chal.Length];
-            host_chal.Span.CopyTo(context.AsSpan(0));
+            host_chal.CopyTo(context);
             card_chal.CopyTo(context.AsSpan(host_chal.Length));
 
             key_enc = ComputeCryptogram(enc_key, 4, context, 0x80);
@@ -69,7 +69,7 @@ namespace libusb
             this.session.SendCmd(auth_req);
         }
 
-        public Scp03Session(Session session, ushort key_id, Session auth_session, ushort auth_key_id, byte[] host_chal)
+        public Scp03Session(Session session, ushort key_id, Session auth_session, ushort auth_key_id, ReadOnlyMemory<byte> host_chal)
         {
             var create_req = new CreateSessionReq
             {
@@ -83,13 +83,13 @@ namespace libusb
             var card_crypto = create_resp.Slice(1 + 8, 8);
 
             var context = new byte[host_chal.Length + card_chal.Length];
-            host_chal.CopyTo(context.AsSpan(0));
+            host_chal.CopyTo(context);
             card_chal.CopyTo(context.AsSpan(host_chal.Length));
 
             var client_auth = new ClientAuthReq
             {
                 key_id = auth_key_id,
-                host_chal = host_chal.AsMemory(),
+                host_chal = host_chal,
                 card_chal = card_chal.ToArray(),
                 card_crypto = card_crypto.ToArray()
             };
