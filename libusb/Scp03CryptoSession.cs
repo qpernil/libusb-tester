@@ -41,11 +41,17 @@ namespace libusb
             SendCmd(HsmCommand.CloseSession);
         }
 
+        public Scp03CryptoSession()
+        {
+            cipher = new PaddedBufferedBlockCipher(new CbcBlockCipher(engine), new ISO7816d4Padding());
+            cmac = new CMac(engine);
+        }
+
         private readonly AesEngine engine = new AesEngine();
-        private readonly PaddedBufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CbcBlockCipher(new AesEngine()), new ISO7816d4Padding());
+        private readonly PaddedBufferedBlockCipher cipher;
         private ulong ctr;
 
-        protected readonly IMac cmac = new CMac(new AesEngine());
+        protected readonly IMac cmac;
         protected Session session;
         protected byte session_id;
         protected KeyParameter key_enc;
