@@ -51,8 +51,9 @@ namespace libusb
             return output;
         }
 
-        public Scp03CMacSession(Session session, KeyParameter key_mac, KeyParameter key_rmac, byte[] mac_chaining)
+        public Scp03CMacSession(IMac cmac, Session session, KeyParameter key_mac, KeyParameter key_rmac, byte[] mac_chaining)
         {
+            this.cmac = cmac;
             this.session = session;
             this.key_mac = key_mac;
             this.key_rmac = key_rmac;
@@ -63,9 +64,9 @@ namespace libusb
         {
         }
 
+        private readonly IMac cmac;
         private readonly Session session;
         private readonly KeyParameter key_mac, key_rmac;
         private readonly byte[] mac_chaining;
-        private readonly IMac cmac = new CMac(new AesEngine());
     }
 }

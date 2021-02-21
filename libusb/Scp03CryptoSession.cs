@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.IO;
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Paddings;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -18,6 +20,7 @@ namespace libusb
             engine.ProcessBlock(enc_ctr, 0, enc_ctr, 0);
             var parameters = new ParametersWithIV(key_enc, enc_ctr);
             cipher.Init(true, parameters);
+
             var session_req = new SessionCommandReq
             {
                 session_id = session_id,
@@ -40,8 +43,9 @@ namespace libusb
 
         private readonly AesEngine engine = new AesEngine();
         private readonly PaddedBufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CbcBlockCipher(new AesEngine()), new ISO7816d4Padding());
-        private ulong ctr = 0;
+        private ulong ctr;
 
+        protected readonly IMac cmac = new CMac(new AesEngine());
         protected Session session;
         protected byte session_id;
         protected KeyParameter key_enc;

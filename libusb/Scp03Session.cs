@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -8,7 +9,7 @@ namespace libusb
 {
     public class Scp03Session : Scp03CryptoSession
     {
-        private static KeyParameter ComputeCryptogram(KeyParameter key, byte type, ReadOnlySpan<byte> context, ushort L)
+        private KeyParameter ComputeCryptogram(KeyParameter key, byte type, ReadOnlySpan<byte> context, ushort L)
         {
             var ms = new MemoryStream();
             //Label
@@ -22,7 +23,6 @@ namespace libusb
             ms.WriteByte(1);
             ms.Write(context);
 
-            var cmac = new CMac(new AesEngine());
             cmac.Init(key);
             cmac.BlockUpdate(ms);
             var result = new byte[cmac.GetMacSize()];
@@ -59,7 +59,7 @@ namespace libusb
                 throw new IOException("The card cryptogram was invalid");
             }
 
-            this.session = new Scp03CMacSession(session, key_mac, key_rmac, new byte[16]);
+            this.session = new Scp03CMacSession(cmac, session, key_mac, key_rmac, new byte[16]);
 
             var auth_req = new AuthenticateSessionReq
             {
@@ -100,7 +100,7 @@ namespace libusb
             var key_rmac = new KeyParameter(auth_resp, 32, 16);
             var host_crypto = ComputeCryptogram(key_mac, 1, context, 0x40).GetKey();
 
-            this.session = new Scp03CMacSession(session, key_mac, key_rmac, new byte[16]);
+            this.session = new Scp03CMacSession(cmac, session, key_mac, key_rmac, new byte[16]);
 
             var auth_req = new AuthenticateSessionReq
             {

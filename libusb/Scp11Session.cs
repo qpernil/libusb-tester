@@ -37,7 +37,6 @@ namespace libusb
             var key_mac = new KeyParameter(shs_oce, 32, 16);
             var key_rmac = new KeyParameter(shs_oce, 48, 16);
 
-            var cmac = new CMac(new AesEngine());
             cmac.Init(receipt_key);
             cmac.BlockUpdate(epk_sd.Q.GetEncoded());
             cmac.BlockUpdate(epk_oce.Q.GetEncoded());
@@ -49,7 +48,7 @@ namespace libusb
                 throw new IOException("The card receipt was invalid");
             }
 
-            this.session = new Scp03CMacSession(session, key_mac, key_rmac, receipt_oce);
+            this.session = new Scp03CMacSession(cmac, session, key_mac, key_rmac, receipt_oce);
         }
     }
 }
