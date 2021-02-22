@@ -109,7 +109,7 @@ namespace libusb
             certGen.SetSubjectDN(new X509Name(ord, attrs));
             certGen.SetPublicKey(pk_oce);
             certGen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true));
-            certGen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pk_oce)));
+            certGen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(signer)));
 
             return certGen.Generate(new Asn1SignatureFactory("SHA256withECDSA", signer));
         }

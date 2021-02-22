@@ -98,7 +98,7 @@ namespace libusb
             key_enc = new KeyParameter(auth_resp, 0, 16);
             var key_mac = new KeyParameter(auth_resp, 16, 16);
             var key_rmac = new KeyParameter(auth_resp, 32, 16);
-            var host_crypto = ComputeCryptogram(key_mac, 1, context, 0x40).GetKey();
+            var host_crypto = auth_resp.AsMemory(48, 8);
 
             this.session = new Scp03CMacSession(cmac, session, key_mac, key_rmac, new byte[16]);
 
