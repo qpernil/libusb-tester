@@ -40,7 +40,6 @@ namespace libusb_tester
 
                                 using (var scp03_session = new Scp03Context("password").CreateSession(usb_session, 1))
                                 {
-                                    /*
                                     using (var scp03_sess2 = new Scp03Session(usb_session, 1, scp03_session, 1, new byte[8]))
                                     {
                                         var dinfo = scp03_sess2.SendCmd(HsmCommand.GetDeviceInfo);
@@ -49,7 +48,6 @@ namespace libusb_tester
                                             Console.Write($"{b:x2}");
                                         Console.WriteLine();
                                     }
-                                    */
                                     //scp03_session.SendCmd(HsmCommand.Reset);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
