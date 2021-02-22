@@ -82,10 +82,6 @@ namespace libusb
             var card_chal = create_resp.Slice(1, 8);
             var card_crypto = create_resp.Slice(1 + 8, 8);
 
-            var context = new byte[host_chal.Length + card_chal.Length];
-            host_chal.CopyTo(context);
-            card_chal.CopyTo(context.AsSpan(host_chal.Length));
-
             var client_auth = new ClientAuthReq
             {
                 key_id = auth_key_id,
