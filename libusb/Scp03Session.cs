@@ -69,8 +69,9 @@ namespace libusb
             this.session.SendCmd(auth_req);
         }
 
-        public Scp03Session(Session session, ushort key_id, Session auth_session, ushort auth_key_id, ReadOnlyMemory<byte> host_chal)
+        public Scp03Session(Session session, ushort key_id, Session auth_session, ushort auth_key_id)
         {
+            var host_chal = auth_session.SendCmd(new GetPseudoRandomReq { length = 8 }).ToArray();
             var create_req = new CreateSessionReq
             {
                 key_id = key_id,

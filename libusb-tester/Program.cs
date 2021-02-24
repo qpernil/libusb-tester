@@ -40,7 +40,7 @@ namespace libusb_tester
 
                                 using (var scp03_session = new Scp03Context("password").CreateSession(usb_session, 1))
                                 {
-                                    using (var scp03_sess2 = new Scp03Session(usb_session, 1, scp03_session, 1, new byte[8]))
+                                    using (var scp03_sess2 = new Scp03Session(usb_session, 1, scp03_session, 1))
                                     {
                                         var dinfo = scp03_sess2.SendCmd(HsmCommand.GetDeviceInfo);
                                         Console.WriteLine("DeviceInfo over scp03_sess2");
@@ -67,6 +67,14 @@ namespace libusb_tester
                                     context.PutAuthKey(scp03_session, 2);
                                     using (var scp11_session = context.CreateSession(usb_session, 2))
                                     {
+                                        using (var scp03_sess3 = new Scp03Session(usb_session, 1, scp11_session, 1))
+                                        {
+                                            var dinfo = scp03_sess3.SendCmd(HsmCommand.GetDeviceInfo);
+                                            Console.WriteLine("DeviceInfo over scp03_sess3");
+                                            foreach (var b in dinfo)
+                                                Console.Write($"{b:x2}");
+                                            Console.WriteLine();
+                                        }
                                         var info2 = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
                                         Console.WriteLine("DeviceInfo over first scp11_session");
                                         foreach (var b in info2)
