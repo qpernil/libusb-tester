@@ -59,6 +59,14 @@ namespace libusb_tester
                                     foreach (var b in rand1)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
+                                    using (var scp11_session = new Scp11Session(usb_session, 2, scp03_session, 3))
+                                    {
+                                        var dinfo = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
+                                        Console.WriteLine("DeviceInfo over scp11_session");
+                                        foreach (var b in dinfo)
+                                            Console.Write($"{b:x2}");
+                                        Console.WriteLine();
+                                    }
                                     var context = new Scp11Context(usb_session);
                                     var sk_oce = context.GenerateKeyPair();
                                     //usb_session.SendCmd(new SetAttestKeyReq { algorithm = 12, buf = sk_oce.D.ToByteArrayFixed() });

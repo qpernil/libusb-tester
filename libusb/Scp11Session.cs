@@ -50,5 +50,36 @@ namespace libusb
 
             this.session = new Scp03CMacSession(cmac, session, key_mac, key_rmac, receipt_oce);
         }
+
+        public Scp11Session(Session session, ushort key_id, Session auth_session, ushort auth_key_id)
+        {
+            var epk_oce = auth_session.SendCmd(HsmCommand.GenerateEphemeral).ToArray();
+
+            var req = new CreateSessionReq
+            {
+                key_id = key_id,
+                buf = epk_oce
+            };
+            var resp = session.SendCmd(req);
+
+            session_id = resp[0];
+            var epk_sd = resp.Slice(1, 65).ToArray();
+            var receipt = resp.Slice(1 + 65, 16).ToArray();
+
+            var client_auth = new ClientAuthReq
+            {
+                key_id = auth_key_id,
+                host_chal = epk_oce,
+                card_chal = epk_sd,
+                card_crypto = receipt
+            };
+            var auth_resp = auth_session.SendCmd(client_auth).ToArray();
+
+            key_enc = new KeyParameter(auth_resp, 0, 16);
+            var key_mac = new KeyParameter(auth_resp, 16, 16);
+            var key_rmac = new KeyParameter(auth_resp, 32, 16);
+
+            this.session = new Scp03CMacSession(cmac, session, key_mac, key_rmac, receipt);
+        }
     }
 }
