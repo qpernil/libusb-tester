@@ -47,6 +47,7 @@ namespace libusb
         INVALID_OTP = 0x0F,
         DEMO_MODE = 0x10,
         OBJECT_EXISTS = 0x11,
+        ALGO_DISABLED = 0x12,
         COMMAND_UNEXECUTED = 0xFF
     }
 
