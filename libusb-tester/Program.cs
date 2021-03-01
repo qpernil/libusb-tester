@@ -128,6 +128,16 @@ namespace libusb_tester
                 }
                 if(sessions.Count == 2)
                 {
+                    using (var sess = new Scp03Session(sessions[0], 1, scp03_sessions[1], 1))
+                    {
+                        sess.SendCmd(new GetPseudoRandomReq { length = 64 });
+                    }
+
+                    using (var sess = new Scp03Session(sessions[1], 1, scp03_sessions[0], 1))
+                    {
+                        sess.SendCmd(new GetPseudoRandomReq { length = 64 });
+                    }
+
                     new Scp11Context(sessions[0]).PutAuthKey(scp03_sessions[1], 3);
                     new Scp11Context(sessions[1]).PutAuthKey(scp03_sessions[0], 3);
 
