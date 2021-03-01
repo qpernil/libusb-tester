@@ -113,19 +113,10 @@ namespace libusb_tester
                         }
                     }
                 }
-                var devices = new List<UsbDevice>();
-                var sessions = new List<UsbSession>();
-                var scp03_sessions = new List<Scp03Session>();
                 var scp03_context = new Scp03Context("password");
-                foreach (var device in usb_ctx.GetDeviceList())
-                {
-                    if (device.IsYubiHsm)
-                    {
-                        devices.Add(usb_ctx.Open(device, 1));
-                        sessions.Add(devices.Last().Claim(0, 0));
-                        scp03_sessions.Add(scp03_context.CreateSession(sessions.Last(), 1));
-                    }
-                }
+                var devices = usb_ctx.OpenDevices(d => d.IsYubiHsm, 1).ToList();
+                var sessions = devices.Select(d => d.Claim(0, 0)).ToList();
+                var scp03_sessions = sessions.Select(s => scp03_context.CreateSession(s, 1)).ToList();
                 if(sessions.Count == 2)
                 {
                     using (var sess = new Scp03Session(sessions[0], 1, scp03_sessions[1], 1))
@@ -151,18 +142,9 @@ namespace libusb_tester
                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
                     }
                 }
-                foreach (var session in scp03_sessions)
-                {
-                    session.Dispose();
-                }
-                foreach (var session in sessions)
-                {
-                    session.Dispose();
-                }
-                foreach (var device in devices)
-                {
-                    device.Dispose();
-                }
+                scp03_sessions.ForEach(s => s.Dispose());
+                sessions.ForEach(s => s.Dispose());
+                devices.ForEach(s => s.Dispose());
             }
         }
     }

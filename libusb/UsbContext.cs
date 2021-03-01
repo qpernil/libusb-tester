@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace libusb
@@ -51,6 +52,11 @@ namespace libusb
         public UsbDevice Open(UsbDescriptor descriptor, int configuration, byte control_endpoint = 0x80)
         {
             return new UsbDevice(libusb, descriptor, configuration, control_endpoint);
+        }
+
+        public IEnumerable<UsbDevice> OpenDevices(Func<UsbDescriptor, bool> filter, int configuration, byte control_endpoint = 0x80)
+        {
+            return GetDeviceList().Where(filter).Select(d => Open(d, configuration, control_endpoint));
         }
 
         private readonly LibUsb libusb;

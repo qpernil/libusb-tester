@@ -27,7 +27,7 @@ namespace libusb_connector
             var saved = device;
             if(saved?.SerialNumber == null)
             {
-                var created = device = context.GetDeviceList().Where(d => d.IsYubiHsm).Select(d => context.Open(d, 1)).FirstOrDefault();
+                var created = device = context.OpenDevices(d => d.IsYubiHsm, 1).FirstOrDefault();
                 saved?.Dispose();
                 saved = created;
             }
