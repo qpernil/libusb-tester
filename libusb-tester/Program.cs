@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using libusb;
 
 namespace libusb_tester
@@ -110,6 +112,46 @@ namespace libusb_tester
                             }
                         }
                     }
+                }
+                var devices = new List<UsbDevice>();
+                var sessions = new List<UsbSession>();
+                var scp03_sessions = new List<Scp03Session>();
+                var scp03_context = new Scp03Context("password");
+                foreach (var device in usb_ctx.GetDeviceList())
+                {
+                    if (device.IsYubiHsm)
+                    {
+                        devices.Add(usb_ctx.Open(device, 1));
+                        sessions.Add(devices.Last().Claim(0, 0));
+                        scp03_sessions.Add(scp03_context.CreateSession(sessions.Last(), 1));
+                    }
+                }
+                if(sessions.Count == 2)
+                {
+                    new Scp11Context(sessions[0]).PutAuthKey(scp03_sessions[1], 3);
+                    new Scp11Context(sessions[1]).PutAuthKey(scp03_sessions[0], 3);
+
+                    using (var sess = new Scp11Session(sessions[0], 3, scp03_sessions[1], 3))
+                    {
+                        sess.SendCmd(new GetPseudoRandomReq { length = 64 });
+                    }
+
+                    using (var sess = new Scp11Session(sessions[1], 3, scp03_sessions[0], 3))
+                    {
+                        sess.SendCmd(new GetPseudoRandomReq { length = 64 });
+                    }
+                }
+                foreach (var session in scp03_sessions)
+                {
+                    session.Dispose();
+                }
+                foreach (var session in sessions)
+                {
+                    session.Dispose();
+                }
+                foreach (var device in devices)
+                {
+                    device.Dispose();
                 }
             }
         }

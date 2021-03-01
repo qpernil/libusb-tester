@@ -6,7 +6,7 @@ namespace libusb
 {
     public abstract class Context
     {
-        public void PutAuthKey(Session session, ushort key_id)
+        public Span<byte> PutAuthKey(Session session, ushort key_id)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace libusb
                 delegated_caps = 0xffffffff,
                 key = Key
             };
-            session.SendCmd(putauth_req);
+            return session.SendCmd(putauth_req);
         }
 
         public void ChangeAuthKey(Session session, ushort key_id)
