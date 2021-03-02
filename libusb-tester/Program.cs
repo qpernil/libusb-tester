@@ -21,6 +21,7 @@ namespace libusb_tester
         }
         static void Run(string[] args)
         {
+            var scp03_context = new Scp03Context("password");
             using (var usb_ctx = new UsbContext())
             {
                 foreach (var device in usb_ctx.GetDeviceList())
@@ -40,7 +41,7 @@ namespace libusb_tester
                                 //usb_session.SendCmd(HsmCommand.Bsl);
                                 //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
 
-                                using (var scp03_session = new Scp03Context("password").CreateSession(usb_session, 1))
+                                using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
                                 {
                                     using (var scp03_sess2 = new Scp03Session(usb_session, 1, scp03_session, 1))
                                     {
@@ -113,7 +114,6 @@ namespace libusb_tester
                         }
                     }
                 }
-                var scp03_context = new Scp03Context("password");
                 var devices = usb_ctx.OpenDevices(d => d.IsYubiHsm, 1).ToList();
                 var sessions = devices.Select(d => d.Claim(0, 0)).ToList();
                 var scp03_sessions = sessions.Select(s => scp03_context.CreateSession(s, 1)).ToList();
