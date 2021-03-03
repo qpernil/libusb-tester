@@ -43,14 +43,6 @@ namespace libusb_tester
 
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
                                 {
-                                    using (var scp03_sess2 = new Scp03Session(usb_session, 1, scp03_session, 1))
-                                    {
-                                        var dinfo = scp03_sess2.SendCmd(HsmCommand.GetDeviceInfo);
-                                        Console.WriteLine("DeviceInfo over scp03_sess2");
-                                        foreach (var b in dinfo)
-                                            Console.Write($"{b:x2}");
-                                        Console.WriteLine();
-                                    }
                                     //scp03_session.SendCmd(HsmCommand.Reset);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
@@ -100,6 +92,14 @@ namespace libusb_tester
                                             Console.Write($"{b:x2}");
                                         Console.WriteLine();
                                         File.WriteAllBytes("attestation.cer", attestation.ToArray());
+                                    }
+                                    using (var scp03_sess2 = new Scp03Session(usb_session, 1, scp03_session, 1))
+                                    {
+                                        var dinfo = scp03_sess2.SendCmd(HsmCommand.GetDeviceInfo);
+                                        Console.WriteLine("DeviceInfo over scp03_sess2");
+                                        foreach (var b in dinfo)
+                                            Console.Write($"{b:x2}");
+                                        Console.WriteLine();
                                     }
                                     using (var scp11_session = new Scp11Session(usb_session, 2, scp03_session, 2))
                                     {
