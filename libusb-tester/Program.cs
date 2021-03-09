@@ -72,7 +72,7 @@ namespace libusb_tester
                                         foreach (var b in rand2)
                                             Console.Write($"{b:x2}");
                                         Console.WriteLine();
-                                        context.GenerateKeyPair();
+                                        context.GenerateKeyPair("password");
                                         context.ChangeAuthKey(scp11_session, 2);
                                     }
                                     using (var scp11_session = context.CreateSession(usb_session, 2))

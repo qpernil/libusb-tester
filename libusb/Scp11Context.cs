@@ -62,16 +62,17 @@ namespace libusb
             Console.WriteLine();
         }
 
-        public ECPrivateKeyParameters GenerateKeyPair(long priv = 0)
+        public ECPrivateKeyParameters GenerateKeyPair(string password = null)
         {
             AsymmetricCipherKeyPair pair;
-            if(priv == 0)
+            if(password == null)
             {
                 pair = generator.GenerateKeyPair();
             }
             else
             {
-                var sk = new ECPrivateKeyParameters(BigInteger.ValueOf(priv), domain);
+                var bytes = Scp03Context.Pkcs5Pbkdf2Hmac(password).GetKey();
+                var sk = new ECPrivateKeyParameters(new BigInteger(1, bytes), domain);
                 var pk = new ECPublicKeyParameters(domain.G.Multiply(sk.D), domain);
                 pair = new AsymmetricCipherKeyPair(pk, sk);
             }
