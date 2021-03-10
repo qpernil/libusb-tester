@@ -17,13 +17,12 @@ namespace libusb
             return (KeyParameter)pbkdf2.GenerateDerivedMacParameters(keySize);
         }
 
-        public Scp03Context(string password) : this(Pkcs5Pbkdf2Hmac(password))
+        public Scp03Context(string password) : this(Pkcs5Pbkdf2Hmac(password).GetKey())
         {
         }
 
-        public Scp03Context(KeyParameter key)
+        public Scp03Context(byte[] bytes)
         {
-            var bytes = key.GetKey();
             enc_key = new KeyParameter(bytes, 0, 16);
             mac_key = new KeyParameter(bytes, 16, 16);
             Key = bytes;
