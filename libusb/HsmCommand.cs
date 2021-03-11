@@ -51,16 +51,25 @@ namespace libusb
         COMMAND_UNEXECUTED = 0xFF
     }
 
+    [Flags]
+    public enum Capability : ulong
+    {
+        WriteAuthKey = 1ul << 0x02,
+        GetRandom = 1ul << 0x13,
+        Reset = 1ul << 0x1c,
+        Attest = 1ul << 0x22,
+        DeleteAuthKey = 1ul << 0x28,
+        ChangeAuthKey = 1ul << 0x2e
+    }
+
     public class PutAuthKeyReq : IWriteable
     {
         public ushort key_id; // 0
         public ReadOnlyMemory<byte> label; // 2
         public ushort domains; // 42
-        public uint capabilities2; // 44
-        public uint capabilities; // 48
+        public Capability capabilities; // 44
         public byte algorithm; // 52
-        public uint delegated_caps2; // 53
-        public uint delegated_caps; // 57
+        public Capability delegated_caps; // 53
         public ReadOnlyMemory<byte> key; // 61
 
         public HsmCommand Command => HsmCommand.PutAuthKey;
@@ -70,11 +79,9 @@ namespace libusb
             s.Write(key_id);
             s.Write(label.Span);
             s.Write(domains);
-            s.Write(capabilities2);
-            s.Write(capabilities);
+            s.Write((ulong)capabilities);
             s.WriteByte(algorithm);
-            s.Write(delegated_caps2);
-            s.Write(delegated_caps);
+            s.Write((ulong)delegated_caps);
             s.Write(key.Span);
         }
     }
@@ -165,8 +172,7 @@ namespace libusb
 
     public class SetDefaltKeyReq : IWriteable
     {
-        public uint delegated_caps2;
-        public uint delegated_caps;
+        public Capability delegated_caps;
         public ReadOnlyMemory<byte> buf;
 
         public HsmCommand Command => HsmCommand.SetInformation;
@@ -174,8 +180,7 @@ namespace libusb
         public void WriteTo(Stream s)
         {
             s.WriteByte(7);
-            s.Write(delegated_caps2);
-            s.Write(delegated_caps);
+            s.Write((ulong)delegated_caps);
             s.Write(buf.Span);
         }
     }

@@ -28,11 +28,9 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities2 = 0xffffffff,
-                capabilities = 0xffffffff,
+                capabilities = Capability.GetRandom | Capability.DeleteAuthKey | Capability.WriteAuthKey | Capability.ChangeAuthKey | Capability.Attest,
                 algorithm = Algorithm,
-                delegated_caps2 = 0xffffffff,
-                delegated_caps = 0xffffffff,
+                delegated_caps = Capability.GetRandom | Capability.DeleteAuthKey | Capability.WriteAuthKey | Capability.ChangeAuthKey | Capability.Attest,
                 key = Key
             };
             return session.SendCmd(putauth_req);
@@ -53,8 +51,7 @@ namespace libusb
         {
             var req = new SetDefaltKeyReq
             {
-                delegated_caps2 = 0xffffffff,
-                delegated_caps = 0xffffffff,
+                delegated_caps = (Capability)0xffffffffffffffff,
                 buf = Key
             };
             foreach (var b in req.buf.Span)

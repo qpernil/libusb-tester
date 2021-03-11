@@ -118,6 +118,14 @@ namespace libusb
             ArrayPool<byte>.Shared.Return(bytes);
         }
 
+        public static void Write(this Stream s, ulong value)
+        {
+            var bytes = ArrayPool<byte>.Shared.Rent(8);
+            BinaryPrimitives.WriteUInt64BigEndian(bytes, value);
+            s.Write(bytes, 0, 8);
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+
         public static void Write(this Stream s, string value)
         {
             s.Write(Encoding.UTF8.GetBytes(value));

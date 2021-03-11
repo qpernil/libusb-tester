@@ -93,22 +93,6 @@ namespace libusb_tester
                                         Console.WriteLine();
                                         File.WriteAllBytes("attestation.cer", attestation.ToArray());
                                     }
-                                    using (var scp03_sess2 = new Scp03Session(usb_session, 1, scp03_session, 1))
-                                    {
-                                        var dinfo = scp03_sess2.SendCmd(HsmCommand.GetDeviceInfo);
-                                        Console.WriteLine("DeviceInfo over scp03_sess2");
-                                        foreach (var b in dinfo)
-                                            Console.Write($"{b:x2}");
-                                        Console.WriteLine();
-                                    }
-                                    using (var scp11_session = new Scp11Session(usb_session, 2, scp03_session, 2))
-                                    {
-                                        var rand2 = scp11_session.SendCmd(new GetPseudoRandomReq { length = 64 });
-                                        Console.WriteLine("GetPseudoRandom over second scp11_session");
-                                        foreach (var b in rand2)
-                                            Console.Write($"{b:x2}");
-                                        Console.WriteLine();
-                                    }
                                 }
                             }
                         }
