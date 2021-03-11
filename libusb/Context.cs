@@ -6,21 +6,28 @@ namespace libusb
 {
     public abstract class Context
     {
-        public Span<byte> PutAuthKey(Session session, ushort key_id)
+        public Span<byte> DeleteObject(Session session, ushort key_id, byte key_type)
         {
-            try
+            var delete_req = new DeleteObjectReq
             {
-                var delete_req = new DeleteObjectReq
-                {
-                    key_id = key_id,
-                    key_type = 2
-                };
-                session.SendCmd(delete_req);
+                key_id = key_id,
+                key_type = key_type
+            };
+            return session.SendCmd(delete_req);
+        }
 
-            }
-            catch (IOException e)
+        public Span<byte> PutAuthKey(Session session, ushort key_id, bool delete = true)
+        {
+            if(delete)
             {
-                Console.WriteLine(e.Message);
+                try
+                {
+                    DeleteObject(session, key_id, 2);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
 
             var putauth_req = new PutAuthKeyReq
