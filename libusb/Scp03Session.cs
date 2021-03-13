@@ -1,8 +1,5 @@
 ﻿using System;
 using System.IO;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
 
 namespace libusb
