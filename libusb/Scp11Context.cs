@@ -90,8 +90,8 @@ namespace libusb
         public X509Certificate GenerateCertificate(AsymmetricKeyParameter signer)
         {
             IDictionary attrs = new Hashtable();
-            attrs[X509Name.E] = "per.nilsson@yubico.com";
-            attrs[X509Name.CN] = "Per Nilsson";
+            attrs[X509Name.E] = "some.one@yubico.com";
+            attrs[X509Name.CN] = "Some One";
             attrs[X509Name.O] = "Yubico AB";
             attrs[X509Name.C] = "SE";
 
