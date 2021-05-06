@@ -57,7 +57,7 @@ namespace libusb_connector.Controllers
         [Route("api")]
         public byte[] Api([FromBody] byte[] data)
         {
-            using (var session = holder.GetDevice().Claim(0, 0))
+            using (var session = holder.GetDevice().Claim(0))
             {
                 return session.SendCmd(data).ToArray();
             }

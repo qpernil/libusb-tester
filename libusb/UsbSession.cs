@@ -28,7 +28,7 @@ namespace libusb
                 libusb.release_interface(device_handle, interface_number);
                 throw new IOException($"libusb.get_configuration reports {current_conf}, expected {configuration}");
             }
-            if (alt_setting > 0)
+            if (alt_setting >= 0)
             {
                 status = libusb.set_interface_alt_setting(device_handle, interface_number, alt_setting);
                 if (status != 0)

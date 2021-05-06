@@ -34,7 +34,7 @@ namespace libusb_tester
                         using (var usb_device = usb_ctx.Open(device, 1))
                         {
                             Console.WriteLine($"Manufacturer '{usb_device.Manufacturer}' Product '{usb_device.Product}' Serial '{usb_device.SerialNumber}'");
-                            using (var usb_session = usb_device.Claim(0, 0))
+                            using (var usb_session = usb_device.Claim(0))
                             {
                                 var resp = usb_session.SendCmd(HsmCommand.Echo, new byte[] { 1, 2, 3, 4, 5 });
 
@@ -103,7 +103,7 @@ namespace libusb_tester
                     }
                 }
                 var devices = usb_ctx.OpenDevices(d => d.IsYubiHsm, 1).ToList();
-                var sessions = devices.Select(d => d.Claim(0, 0)).ToList();
+                var sessions = devices.Select(d => d.Claim(0)).ToList();
                 var scp03_sessions = sessions.Select(s => scp03_context.CreateSession(s, 1)).ToList();
                 if(sessions.Count == 2)
                 {
