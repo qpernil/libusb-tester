@@ -5,7 +5,7 @@ namespace libusb
 {
     public class UsbSession : Session
     {
-        public UsbSession(LibUsb libusb, IntPtr device_handle, int interface_number, int alt_setting, byte write_endpoint, byte read_endpoint)
+        public UsbSession(LibUsb libusb, IntPtr device_handle, int configuration, int interface_number, int alt_setting, byte write_endpoint, byte read_endpoint)
         {
             this.libusb = libusb;
             this.device_handle = device_handle;
@@ -17,7 +17,18 @@ namespace libusb
             {
                 throw new IOException($"libusb.claim_interface({interface_number}): {libusb.StrError(status)}");
             }
-            if(alt_setting > 0)
+            status = libusb.get_configuration(device_handle, out var current_conf);
+            if (status != 0)
+            {
+                libusb.release_interface(device_handle, interface_number);
+                throw new IOException($"libusb.get_configuration: {libusb.StrError(status)}");
+            }
+            if (configuration != current_conf)
+            {
+                libusb.release_interface(device_handle, interface_number);
+                throw new IOException($"libusb.get_configuration reports {current_conf}, expected {configuration}");
+            }
+            if (alt_setting > 0)
             {
                 status = libusb.set_interface_alt_setting(device_handle, interface_number, alt_setting);
                 if (status != 0)

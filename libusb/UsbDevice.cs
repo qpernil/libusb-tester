@@ -11,6 +11,7 @@ namespace libusb
         {
             this.libusb = libusb;
             this.descriptor = descriptor;
+            this.configuration = configuration;
             this.control_endpoint = control_endpoint;
             var status = libusb.open(descriptor.device, out device_handle);
             if (status != 0)
@@ -92,12 +93,13 @@ namespace libusb
 
         public UsbSession Claim(int interface_number, int alt_setting, byte write_endpoint = 0x01, byte read_endpoint = 0x81)
         {
-            return new UsbSession(libusb, device_handle, interface_number, alt_setting, write_endpoint, read_endpoint);
+            return new UsbSession(libusb, device_handle, configuration, interface_number, alt_setting, write_endpoint, read_endpoint);
         }
 
         private readonly LibUsb libusb;
         private readonly UsbDescriptor descriptor;
         private readonly IntPtr device_handle;
-        private byte control_endpoint;
+        private readonly int configuration;
+        private readonly byte control_endpoint;
     }
 }
