@@ -42,12 +42,12 @@ namespace libusb
 
         public int GetConfiguration()
         {
-            var status = libusb.get_configuration(device_handle, out var configuration);
+            var status = libusb.get_configuration(device_handle, out var current_conf);
             if (status != 0)
             {
                 throw new IOException($"libusb.get_configuration: {libusb.StrError(status)}");
             }
-            return configuration;
+            return current_conf;
         }
 
         public string GetStringDescriptor(byte index, ushort langid = 0, int max = 1024)
