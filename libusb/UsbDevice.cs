@@ -52,6 +52,10 @@ namespace libusb
 
         public string GetStringDescriptor(byte index, ushort langid = 0, int max = 1024)
         {
+            if (index == 0)
+            {
+                throw new IOException($"control_transfer({control_endpoint}): Invalid descriptor index");
+            }
             var mem = ArrayPool<byte>.Shared.Rent(max);
             var ret = libusb.control_transfer(device_handle, control_endpoint, 0x06, (ushort)(0x300 | index), langid, mem, (ushort)max, 1000);
             if (ret < 0)
@@ -66,6 +70,10 @@ namespace libusb
 
         public string SafeGetStringDescriptor(byte index, ushort langid = 0, int max = 1024)
         {
+            if (index == 0)
+            {
+                return null;
+            }
             var mem = ArrayPool<byte>.Shared.Rent(max);
             var ret = libusb.control_transfer(device_handle, control_endpoint, 0x06, (ushort)(0x300 | index), langid, mem, (ushort)max, 1000);
             if (ret < 0)
