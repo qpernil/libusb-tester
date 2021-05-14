@@ -40,6 +40,7 @@ namespace libusb_tester
 
                                 //usb_session.SendCmd(HsmCommand.Bsl);
                                 //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
+                                //usb_session.SendCmd(new SetDemoModeReq { demo = 0xffff });
 
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
                                 {

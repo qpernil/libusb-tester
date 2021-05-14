@@ -226,6 +226,19 @@ namespace libusb
         }
     }
 
+    public class SetDemoModeReq : IWriteable
+    {
+        public ushort demo;
+
+        public HsmCommand Command => HsmCommand.SetInformation;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(2);
+            s.Write(demo);
+        }
+    }
+
     public class GetObjectInfoReq : IWriteable
     {
         public ushort key_id;
