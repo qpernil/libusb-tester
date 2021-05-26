@@ -16,10 +16,12 @@ namespace libusb
         GetDevicePubKey = 0x0a,
         CloseSession = 0x40,
         PutAuthKey = 0x44,
+        PutAsymmetricKey = 0x45,
         ListObjects = 0x48,
         GetObjectInfo = 0x4e,
         GetPseudoRandom = 0x51,
         GetPubKey = 0x54,
+        DecryptEcdh = 0x57,
         DeleteObject = 0x58,
         AttestAsymmetric = 0x64,
         ChangeAuthKey = 0x6c,
@@ -55,6 +57,7 @@ namespace libusb
     public enum Capability : ulong
     {
         WriteAuthKey = 1ul << 0x02,
+        DecryptEcdh = 1ul << 0x0b,
         GetRandom = 1ul << 0x13,
         Reset = 1ul << 0x1c,
         Attest = 1ul << 0x22,
@@ -82,6 +85,28 @@ namespace libusb
             s.Write((ulong)capabilities);
             s.WriteByte(algorithm);
             s.Write((ulong)delegated_caps);
+            s.Write(key.Span);
+        }
+    }
+
+    public class PutAsymmetricKeyReq : IWriteable
+    {
+        public ushort key_id; // 0
+        public ReadOnlyMemory<byte> label; // 2
+        public ushort domains; // 42
+        public Capability capabilities; // 44
+        public byte algorithm; // 52
+        public ReadOnlyMemory<byte> key; // 53
+
+        public HsmCommand Command => HsmCommand.PutAsymmetricKey;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(label.Span);
+            s.Write(domains);
+            s.Write((ulong)capabilities);
+            s.WriteByte(algorithm);
             s.Write(key.Span);
         }
     }

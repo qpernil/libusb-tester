@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace libusb
@@ -14,6 +15,33 @@ namespace libusb
                 key_type = key_type
             };
             return session.SendCmd(delete_req);
+        }
+
+        public Span<byte> PutEcdhKey(Session session, ushort key_id, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, 3);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var putecdh_req = new PutAsymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.DecryptEcdh | Capability.Attest,
+                algorithm = 12,
+                key = Enumerable.Repeat((byte)0xff, 32).ToArray()
+            };
+
+            return session.SendCmd(putecdh_req);
         }
 
         public Span<byte> PutAuthKey(Session session, ushort key_id, bool delete = true)
