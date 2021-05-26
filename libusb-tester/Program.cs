@@ -45,7 +45,7 @@ namespace libusb_tester
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
                                 {
                                     //scp03_session.SendCmd(HsmCommand.Reset);
-                                    var id = scp03_context.PutEcdhKey(scp03_session, 4, true);
+                                    var id = scp03_context.PutEcdhKey(scp03_session, 4);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
                                     foreach (var b in info)
