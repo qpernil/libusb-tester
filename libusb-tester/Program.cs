@@ -36,14 +36,19 @@ namespace libusb_tester
                             Console.WriteLine($"Manufacturer '{usb_device.Manufacturer}' Product '{usb_device.Product}' Serial '{usb_device.SerialNumber}'");
                             using (var usb_session = usb_device.Claim(0))
                             {
-                                var resp = usb_session.SendCmd(HsmCommand.Echo, new byte[] { 1, 2, 3, 4, 5 });
-
                                 //usb_session.SendCmd(HsmCommand.Bsl);
                                 //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
                                 //usb_session.SendCmd(new SetDemoModeReq { demo = 0xffff });
+                                //var resp2 = usb_session.SendCmd(HsmCommand.GetDeviceInfo);
+                                var resp = usb_session.SendCmd(HsmCommand.Echo, new byte[] { 1, 2, 3, 4, 5 });
 
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
                                 {
+                                    //var pk_oce = scp03_session.SendCmd(HsmCommand.GetClientPubKey);
+                                    //Console.WriteLine("Client pubkey over scp03_session");
+                                    //foreach (var b in pk_oce)
+                                    //    Console.Write($"{b:x2}");
+                                    //Console.WriteLine();
                                     //scp03_session.SendCmd(HsmCommand.Reset);
                                     var id = scp03_context.PutEcdhKey(scp03_session, 4);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);

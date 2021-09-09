@@ -25,8 +25,9 @@ namespace libusb
         DeleteObject = 0x58,
         AttestAsymmetric = 0x64,
         ChangeAuthKey = 0x6c,
-        ClientAuth = 0x6d,
+        GetClientPubKey = 0x6d,
         GenerateEphemeral = 0x6e,
+        ClientAuth = 0x6f,
         Error = 0x7f
     }
 
