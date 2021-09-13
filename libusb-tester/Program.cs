@@ -39,7 +39,6 @@ namespace libusb_tester
                                 //usb_session.SendCmd(HsmCommand.Bsl);
                                 //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
                                 //usb_session.SendCmd(new SetDemoModeReq { demo = 0xffff });
-                                //var resp2 = usb_session.SendCmd(HsmCommand.GetDeviceInfo);
                                 var resp = usb_session.SendCmd(HsmCommand.Echo, new byte[] { 1, 2, 3, 4, 5 });
 
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
@@ -62,6 +61,7 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     var context = new Scp11Context(usb_session);
+                                    context.PutAuthKey(scp03_session, 3); // Device pubkey in 3
                                     var sk_oce = context.GenerateKeyPair();
                                     //usb_session.SendCmd(new SetAttestKeyReq { algorithm = 12, buf = sk_oce.D.ToByteArrayFixed() });
                                     //usb_session.SendCmd(new SetAttestCertReq { buf = context.GenerateCertificate(sk_oce).GetEncoded() });
@@ -104,6 +104,16 @@ namespace libusb_tester
                                         Console.WriteLine();
                                         File.WriteAllBytes("attestation.cer", attestation.ToArray());
                                     }
+                                    using (var sess = new Scp03Session(usb_session, 1, scp03_session, 1))
+                                    {
+                                        sess.SendCmd(new GetPseudoRandomReq { length = 64 });
+                                    }
+                                    context.SetClientPubKey(scp03_session);
+                                    context.PutAuthKey(scp03_session, 4); // Client pubkey in 4
+                                    using(var sess = new Scp11Session(usb_session, 4, scp03_session, 3))
+                                    {
+                                        sess.SendCmd(new GetPseudoRandomReq { length = 64 });
+                                    }
                                 }
                             }
                         }
@@ -124,15 +134,22 @@ namespace libusb_tester
                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
                     }
 
-                    new Scp11Context(sessions[0]).PutAuthKey(scp03_sessions[1], 3);
-                    new Scp11Context(sessions[1]).PutAuthKey(scp03_sessions[0], 3);
+                    var ctx0 = new Scp11Context(sessions[0]);
+                    ctx0.PutAuthKey(scp03_sessions[1], 5); // Device 0 pubkey in device 1 key 5
+                    ctx0.SetClientPubKey(scp03_sessions[0]);
+                    ctx0.PutAuthKey(scp03_sessions[1], 6); // Client 0 pubkey in device 1 key 6
 
-                    using (var sess = new Scp11Session(sessions[0], 3, scp03_sessions[1], 3))
+                    var ctx1 = new Scp11Context(sessions[1]);
+                    ctx1.PutAuthKey(scp03_sessions[0], 5); // Device 1 pubkey in device 0 key 5
+                    ctx1.SetClientPubKey(scp03_sessions[1]);
+                    ctx1.PutAuthKey(scp03_sessions[0], 6); // CLient 1 pubkey in device 0 key 6
+
+                    using (var sess = new Scp11Session(sessions[0], 6, scp03_sessions[1], 5))
                     {
                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
                     }
 
-                    using (var sess = new Scp11Session(sessions[1], 3, scp03_sessions[0], 3))
+                    using (var sess = new Scp11Session(sessions[1], 6, scp03_sessions[0], 5))
                     {
                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
                     }

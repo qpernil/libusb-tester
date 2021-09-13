@@ -62,6 +62,20 @@ namespace libusb
             Console.WriteLine();
         }
 
+        public void SetClientPubKey(Session session)
+        {
+            var bytes = session.SendCmd(HsmCommand.GetClientPubKey);
+            if (bytes[0] != 49)
+                throw new IOException($"Unknown device pubkey algorithm: {bytes[0]}");
+            bytes[0] = 0x04;
+            pk_oce = DecodePoint(bytes);
+
+            Console.WriteLine("PK.OCE");
+            foreach (var b in bytes)
+                Console.Write($"{b:x2}");
+            Console.WriteLine();
+        }
+
         public ECPrivateKeyParameters GenerateKeyPair(string password = null)
         {
             AsymmetricCipherKeyPair pair;
