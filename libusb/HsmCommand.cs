@@ -26,7 +26,7 @@ namespace libusb
         AttestAsymmetric = 0x64,
         ChangeAuthKey = 0x6c,
         GetClientPubKey = 0x6d,
-        GenerateEphemeral = 0x6e,
+        GetChallenge = 0x6e,
         ClientAuth = 0x6f,
         Error = 0x7f
     }
@@ -139,6 +139,18 @@ namespace libusb
         {
             s.Write(key_id);
             s.WriteByte(key_type);
+        }
+    }
+
+    public class GetChallengeReq : IWriteable
+    {
+        public ushort key_id;
+
+        public HsmCommand Command => HsmCommand.GetChallenge;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
         }
     }
 

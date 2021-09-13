@@ -68,11 +68,13 @@ namespace libusb
 
         public Scp03Session(Session session, ushort key_id, Session auth_session, ushort auth_key_id)
         {
-            var host_chal = auth_session.SendCmd(new GetPseudoRandomReq { length = 8 }).ToArray();
+            var host_chal = auth_session.SendCmd(new GetChallengeReq { key_id = auth_key_id });
+            if (host_chal[0] != 38)
+                throw new IOException($"Unknown host challenge algorithm: {host_chal[0]}");
             var create_req = new CreateSessionReq
             {
                 key_id = key_id,
-                buf = host_chal
+                buf = host_chal.Slice(1).ToArray()
             };
             var create_resp = session.SendCmd(create_req);
 
@@ -83,7 +85,7 @@ namespace libusb
             var client_auth = new ClientAuthReq
             {
                 key_id = auth_key_id,
-                host_chal = host_chal,
+                host_chal = host_chal.Slice(1).ToArray(),
                 card_chal = card_chal.ToArray(),
                 card_crypto = card_crypto.ToArray()
             };

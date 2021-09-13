@@ -51,7 +51,7 @@ namespace libusb
 
         public Scp11Session(Session session, ushort key_id, Session auth_session, ushort auth_key_id)
         {
-            var epk_oce = auth_session.SendCmd(HsmCommand.GenerateEphemeral).ToArray();
+            var epk_oce = auth_session.SendCmd(new GetChallengeReq { key_id = auth_key_id }).ToArray();
             if (epk_oce[0] != 49)
                 throw new IOException($"Unknown ephemeral key algorithm: {epk_oce[0]}");
             epk_oce[0] = 0x04;
