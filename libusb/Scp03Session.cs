@@ -33,7 +33,7 @@ namespace libusb
             var create_req = new CreateSessionReq
             {
                 key_id = key_id,
-                buf = host_chal
+                host_chal = host_chal
             };
             var create_resp = session.SendCmd(create_req);
 
@@ -74,7 +74,7 @@ namespace libusb
             var create_req = new CreateSessionReq
             {
                 key_id = key_id,
-                buf = host_chal.Slice(1).ToArray()
+                host_chal = host_chal.Slice(1).ToArray()
             };
             var create_resp = session.SendCmd(create_req);
 

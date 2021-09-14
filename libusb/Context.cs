@@ -98,9 +98,9 @@ namespace libusb
             var req = new SetDefaltKeyReq
             {
                 delegated_caps = (Capability)0xffffffffffffffff,
-                buf = Key
+                key = Key
             };
-            foreach (var b in req.buf.Span)
+            foreach (var b in req.key.Span)
                 Console.Write($"{b:x2}");
             Console.WriteLine();
 

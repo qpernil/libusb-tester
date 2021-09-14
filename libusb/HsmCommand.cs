@@ -157,14 +157,14 @@ namespace libusb
     public class CreateSessionReq : IWriteable
     {
         public ushort key_id;
-        public ReadOnlyMemory<byte> buf;
+        public ReadOnlyMemory<byte> host_chal;
 
         public HsmCommand Command => HsmCommand.CreateSession;
 
         public void WriteTo(Stream s)
         {
             s.Write(key_id);
-            s.Write(buf.Span);
+            s.Write(host_chal.Span);
         }
     }
 
@@ -211,7 +211,7 @@ namespace libusb
     public class SetDefaltKeyReq : IWriteable
     {
         public Capability delegated_caps;
-        public ReadOnlyMemory<byte> buf;
+        public ReadOnlyMemory<byte> key;
 
         public HsmCommand Command => HsmCommand.SetInformation;
 
@@ -219,14 +219,14 @@ namespace libusb
         {
             s.WriteByte(7);
             s.Write((ulong)delegated_caps);
-            s.Write(buf.Span);
+            s.Write(key.Span);
         }
     }
 
     public class SetAttestKeyReq : IWriteable
     {
         public byte algorithm;
-        public ReadOnlyMemory<byte> buf;
+        public ReadOnlyMemory<byte> key;
 
         public HsmCommand Command => HsmCommand.SetInformation;
 
@@ -234,20 +234,20 @@ namespace libusb
         {
             s.WriteByte(4);
             s.WriteByte(algorithm);
-            s.Write(buf.Span);
+            s.Write(key.Span);
         }
     }
 
     public class SetAttestCertReq : IWriteable
     {
-        public ReadOnlyMemory<byte> buf;
+        public ReadOnlyMemory<byte> cert;
 
         public HsmCommand Command => HsmCommand.SetInformation;
 
         public void WriteTo(Stream s)
         {
             s.WriteByte(5);
-            s.Write(buf.Span);
+            s.Write(cert.Span);
         }
     }
 

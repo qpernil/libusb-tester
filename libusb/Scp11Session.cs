@@ -19,7 +19,7 @@ namespace libusb
             var req = new CreateSessionReq
             {
                 key_id = key_id,
-                buf = epk_oce.Q.GetEncoded()
+                host_chal = epk_oce.Q.GetEncoded()
             };
             var resp = session.SendCmd(req);
 
@@ -59,7 +59,7 @@ namespace libusb
             var req = new CreateSessionReq
             {
                 key_id = key_id,
-                buf = epk_oce
+                host_chal = epk_oce
             };
             var resp = session.SendCmd(req);
 
