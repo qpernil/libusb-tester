@@ -58,8 +58,8 @@ namespace libusb_tester
                                     var context = new Scp11Context(usb_session);
                                     context.PutAuthKey(scp03_session, 3); // Device pubkey in 3
                                     var sk_oce = context.GenerateKeyPair();
-                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = 12, buf = sk_oce.D.ToByteArrayFixed() });
-                                    //usb_session.SendCmd(new SetAttestCertReq { buf = context.GenerateCertificate(sk_oce).GetEncoded() });
+                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = 12, key = sk_oce.D.ToByteArrayFixed() });
+                                    //usb_session.SendCmd(new SetAttestCertReq { cert = context.GenerateCertificate(sk_oce).GetEncoded() });
                                     //context.SetDefaultKey(usb_session);
                                     context.PutAuthKey(scp03_session, 2);
                                     using (var scp11_session = context.CreateSession(usb_session, 2))
