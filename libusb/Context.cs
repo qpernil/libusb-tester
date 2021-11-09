@@ -7,7 +7,7 @@ namespace libusb
 {
     public abstract class Context
     {
-        public Span<byte> DeleteObject(Session session, ushort key_id, byte key_type)
+        public Span<byte> DeleteObject(Session session, ushort key_id, ObjectType key_type)
         {
             var delete_req = new DeleteObjectReq
             {
@@ -23,7 +23,7 @@ namespace libusb
             {
                 try
                 {
-                    DeleteObject(session, key_id, 3);
+                    DeleteObject(session, key_id, ObjectType.AsymmetricKey);
                 }
                 catch (IOException e)
                 {
@@ -40,7 +40,7 @@ namespace libusb
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
                 capabilities = Capability.DecryptEcdh | Capability.Attest,
-                algorithm = 12,
+                algorithm = Algorithm.EC_P256,
                 key = new byte[] {
 //                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 //                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -55,13 +55,64 @@ namespace libusb
             return session.SendCmd(putecdh_req);
         }
 
+        public Span<byte> GenerateAesKey(Session session, ushort key_id, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.SymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var req = new GenerateSymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc,
+                algorithm = Algorithm.AES_128
+            };
+            return session.SendCmd(req);
+        }
+
+        public Span<byte> PutAesKey(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.SymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var req = new PutSymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc,
+                algorithm = Algorithm.AES_128,
+                key = key
+            };
+            return session.SendCmd(req);
+        }
+
         public Span<byte> PutAuthKey(Session session, ushort key_id, bool delete = true)
         {
             if(delete)
             {
                 try
                 {
-                    DeleteObject(session, key_id, 2);
+                    DeleteObject(session, key_id, ObjectType.AuthenticationKey);
                 }
                 catch (IOException e)
                 {
@@ -75,7 +126,7 @@ namespace libusb
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
                 capabilities = Capability.GetRandom | Capability.DeleteAuthKey | Capability.WriteAuthKey | Capability.ChangeAuthKey | Capability.Attest,
-                algorithm = Algorithm,
+                algorithm = Algo,
                 delegated_caps = Capability.GetRandom | Capability.DeleteAuthKey | Capability.WriteAuthKey | Capability.ChangeAuthKey | Capability.Attest,
                 key = Key
             };
@@ -87,7 +138,7 @@ namespace libusb
             var req = new ChangeAuthKeyReq
             {
                 key_id = key_id,
-                algorithm = Algorithm,
+                algorithm = Algo,
                 key = Key
             };
             session.SendCmd(req);
@@ -108,6 +159,6 @@ namespace libusb
         }
 
         protected abstract Memory<byte> Key { get; }
-        protected abstract byte Algorithm { get; }
+        protected abstract Algorithm Algo { get; }
     }
 }

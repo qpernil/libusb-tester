@@ -19,15 +19,23 @@ namespace libusb
         PutAsymmetricKey = 0x45,
         ListObjects = 0x48,
         GetObjectInfo = 0x4e,
+        PutOption = 0x4f,
+        GetOption = 0x50,
         GetPseudoRandom = 0x51,
         GetPubKey = 0x54,
         DecryptEcdh = 0x57,
         DeleteObject = 0x58,
         AttestAsymmetric = 0x64,
         ChangeAuthKey = 0x6c,
-        GetClientPubKey = 0x6d,
-        GetChallenge = 0x6e,
-        ClientAuth = 0x6f,
+        PutSymmetricKey = 0x6d,
+        GenerateSymmetricKey = 0x6e,
+        DecryptEcb = 0x6f,
+        EncryptEcb = 0x70,
+        DecryptCbc = 0x71,
+        EncryptCbc = 0x72,
+        GetClientPubKey = 0x73,
+        GetChallenge = 0x74,
+        ClientAuth = 0x75,
         Error = 0x7f
     }
 
@@ -54,6 +62,28 @@ namespace libusb
         COMMAND_UNEXECUTED = 0xFF
     }
 
+    public enum ObjectType : byte
+    {
+        Opaque = 1,
+        AuthenticationKey = 2,
+        AsymmetricKey = 3,
+        WrapKey = 4,
+        HmacKey = 5,
+        SshTemplate = 6,
+        OtpAeadKey = 7,
+        SymmetricKey = 8
+    }
+
+    public enum Algorithm : byte
+    {
+        EC_P256 = 12,
+        SCP_03 = 38,
+        SCP_11 = 49,
+        AES_128 = 50,
+        AES_192 = 51,
+        AES_256 = 52,
+    }
+
     [Flags]
     public enum Capability : ulong
     {
@@ -63,7 +93,11 @@ namespace libusb
         Reset = 1ul << 0x1c,
         Attest = 1ul << 0x22,
         DeleteAuthKey = 1ul << 0x28,
-        ChangeAuthKey = 1ul << 0x2e
+        ChangeAuthKey = 1ul << 0x2e,
+        DecryptEcb = 1ul << 0x32,
+        EncryptEcb = 1ul << 0x33,
+        DecryptCbc = 1ul << 0x34,
+        EncryptCbc = 1ul << 0x35
     }
 
     public class PutAuthKeyReq : IWriteable
@@ -72,7 +106,7 @@ namespace libusb
         public ReadOnlyMemory<byte> label; // 2
         public ushort domains; // 42
         public Capability capabilities; // 44
-        public byte algorithm; // 52
+        public Algorithm algorithm; // 52
         public Capability delegated_caps; // 53
         public ReadOnlyMemory<byte> key; // 61
 
@@ -84,7 +118,7 @@ namespace libusb
             s.Write(label.Span);
             s.Write(domains);
             s.Write((ulong)capabilities);
-            s.WriteByte(algorithm);
+            s.WriteByte((byte)algorithm);
             s.Write((ulong)delegated_caps);
             s.Write(key.Span);
         }
@@ -96,7 +130,7 @@ namespace libusb
         public ReadOnlyMemory<byte> label; // 2
         public ushort domains; // 42
         public Capability capabilities; // 44
-        public byte algorithm; // 52
+        public Algorithm algorithm; // 52
         public ReadOnlyMemory<byte> key; // 53
 
         public HsmCommand Command => HsmCommand.PutAsymmetricKey;
@@ -107,15 +141,141 @@ namespace libusb
             s.Write(label.Span);
             s.Write(domains);
             s.Write((ulong)capabilities);
-            s.WriteByte(algorithm);
+            s.WriteByte((byte)algorithm);
             s.Write(key.Span);
+        }
+    }
+
+    public class GetAlgorithmToggleReq : IWriteable
+    {
+        public HsmCommand Command => HsmCommand.GetOption;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(4);
+        }
+    }
+
+    public class PutAlgorithmToggleReq : IWriteable
+    {
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.PutOption;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(4);
+            s.Write((ushort)data.Length);
+            s.Write(data.Span);
+        }
+    }
+
+    public class GenerateSymmetricKeyReq : IWriteable
+    {
+        public ushort key_id; // 0
+        public ReadOnlyMemory<byte> label; // 2
+        public ushort domains; // 42
+        public Capability capabilities; // 44
+        public Algorithm algorithm; // 52
+
+        public HsmCommand Command => HsmCommand.GenerateSymmetricKey;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(label.Span);
+            s.Write(domains);
+            s.Write((ulong)capabilities);
+            s.WriteByte((byte)algorithm);
+        }
+    }
+
+    public class PutSymmetricKeyReq : IWriteable
+    {
+        public ushort key_id; // 0
+        public ReadOnlyMemory<byte> label; // 2
+        public ushort domains; // 42
+        public Capability capabilities; // 44
+        public Algorithm algorithm; // 52
+        public ReadOnlyMemory<byte> key; // 53
+
+        public HsmCommand Command => HsmCommand.PutSymmetricKey;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(label.Span);
+            s.Write(domains);
+            s.Write((ulong)capabilities);
+            s.WriteByte((byte)algorithm);
+            s.Write(key.Span);
+        }
+    }
+
+    public class EncryptEcbReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.EncryptEcb;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(data.Span);
+        }
+    }
+
+    public class DecryptEcbReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.DecryptEcb;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(data.Span);
+        }
+    }
+
+    public class EncryptCbcReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> iv;
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.EncryptCbc;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(iv.Span);
+            s.Write(data.Span);
+        }
+    }
+
+    public class DecryptCbcReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> iv;
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.DecryptCbc;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(iv.Span);
+            s.Write(data.Span);
         }
     }
 
     public class ChangeAuthKeyReq : IWriteable
     {
         public ushort key_id;
-        public byte algorithm;
+        public Algorithm algorithm;
         public ReadOnlyMemory<byte> key;
 
         public HsmCommand Command => HsmCommand.ChangeAuthKey;
@@ -123,7 +283,7 @@ namespace libusb
         public void WriteTo(Stream s)
         {
             s.Write(key_id);
-            s.WriteByte(algorithm);
+            s.WriteByte((byte)algorithm);
             s.Write(key.Span);
         }
     }
@@ -131,14 +291,14 @@ namespace libusb
     public class DeleteObjectReq : IWriteable
     {
         public ushort key_id;
-        public byte key_type;
+        public ObjectType key_type;
 
         public HsmCommand Command => HsmCommand.DeleteObject;
 
         public void WriteTo(Stream s)
         {
             s.Write(key_id);
-            s.WriteByte(key_type);
+            s.WriteByte((byte)key_type);
         }
     }
 
@@ -225,7 +385,7 @@ namespace libusb
 
     public class SetAttestKeyReq : IWriteable
     {
-        public byte algorithm;
+        public Algorithm algorithm;
         public ReadOnlyMemory<byte> key;
 
         public HsmCommand Command => HsmCommand.SetInformation;
@@ -233,7 +393,7 @@ namespace libusb
         public void WriteTo(Stream s)
         {
             s.WriteByte(4);
-            s.WriteByte(algorithm);
+            s.WriteByte((byte)algorithm);
             s.Write(key.Span);
         }
     }
@@ -280,14 +440,14 @@ namespace libusb
     public class GetObjectInfoReq : IWriteable
     {
         public ushort key_id;
-        public byte key_type;
+        public ObjectType key_type;
 
         public HsmCommand Command => HsmCommand.GetObjectInfo;
 
         public void WriteTo(Stream s)
         {
             s.Write(key_id);
-            s.WriteByte(key_type);
+            s.WriteByte((byte)key_type);
         }
     }
 

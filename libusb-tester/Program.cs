@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using libusb;
 
 namespace libusb_tester
@@ -21,6 +21,13 @@ namespace libusb_tester
         }
         static void Run(string[] args)
         {
+            var x = new PCSC();
+            var prc = x.establish_context(PCSC.SCARD_SCOPE_SYSTEM, IntPtr.Zero, IntPtr.Zero, out var pctx);
+            var buf = new byte[512];
+            int cb = 512;
+            prc = x.list_readers(pctx, null, buf, ref cb);
+            var s = Encoding.UTF8.GetString(buf[0..cb]);
+            prc = x.release_context(pctx);
             var scp03_context = new Scp03Context("password");
             using (var usb_ctx = new UsbContext())
             {
@@ -44,6 +51,21 @@ namespace libusb_tester
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
                                 {
                                     //scp03_session.SendCmd(HsmCommand.Reset);
+                                    /*
+                                    var opts = scp03_session.SendCmd(new GetAlgorithmToggleReq { });
+                                    for(int i = 1; i < opts.Length; i += 2)
+                                    {
+                                        opts[i] = 1;
+                                    }
+                                    var res = scp03_session.SendCmd(new PutAlgorithmToggleReq { data = opts.ToArray() });
+                                    */
+                                    scp03_context.PutAesKey(scp03_session, 4, new byte[16]);
+                                    var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16 * 125] });
+                                    var z = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
+                                    var decrypted = scp03_session.SendCmd(new DecryptEcbReq { key_id = 4, data = encrypted.ToArray() });
+                                    encrypted = scp03_session.SendCmd(new EncryptCbcReq { key_id = 4, iv = new byte[16], data = new byte[16 * 125] });
+                                    z = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
+                                    decrypted = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
                                     var id = scp03_context.PutEcdhKey(scp03_session, 4);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
@@ -58,7 +80,7 @@ namespace libusb_tester
                                     var context = new Scp11Context(usb_session);
                                     context.PutAuthKey(scp03_session, 3); // Device pubkey in 3
                                     var sk_oce = context.GenerateKeyPair();
-                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = 12, key = sk_oce.D.ToByteArrayFixed() });
+                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = Algorithm.EC_P256, key = sk_oce.D.ToByteArrayFixed() });
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = context.GenerateCertificate(sk_oce).GetEncoded() });
                                     //context.SetDefaultKey(usb_session);
                                     context.PutAuthKey(scp03_session, 2);
@@ -66,7 +88,7 @@ namespace libusb_tester
                                     {
                                         context.GenerateKeyPair("password");
                                         context.ChangeAuthKey(scp11_session, 2);
-                                        context.DeleteObject(scp11_session, 2, 2);
+                                        context.DeleteObject(scp11_session, 2, ObjectType.AuthenticationKey);
                                         var info2 = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
                                         Console.WriteLine("DeviceInfo over first scp11_session");
                                         foreach (var b in info2)
@@ -99,6 +121,7 @@ namespace libusb_tester
                                         Console.WriteLine();
                                         File.WriteAllBytes("attestation.cer", attestation.ToArray());
                                     }
+                                    /*
                                     using (var sess = new Scp03Session(usb_session, 1, scp03_session, 1))
                                     {
                                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
@@ -109,6 +132,7 @@ namespace libusb_tester
                                     {
                                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
                                     }
+                                    */
                                 }
                             }
                         }

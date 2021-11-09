@@ -135,7 +135,7 @@ namespace libusb
         }
 
         protected override Memory<byte> Key => (pk_oce ?? pk_sd).Q.GetEncoded().AsMemory(1);
-        protected override byte Algorithm => 49;
+        protected override Algorithm Algo => Algorithm.SCP_11;
 
         public readonly ECDomainParameters domain;
         public readonly IAsymmetricCipherKeyPairGenerator generator;

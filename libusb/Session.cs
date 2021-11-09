@@ -25,13 +25,14 @@ namespace libusb
             input.CopyTo(mem.AsSpan(3));
 
             var sw = Stopwatch.StartNew();
-            Console.WriteLine($"{GetType().Name}.SendCmd {cmd} {input.Length + 3}...");
+            Console.WriteLine($"{GetType().Name}.SendCmd {cmd} {input.Length + 3} bytes...");
             var ret = Transfer(mem, input.Length + 3);
-            Console.WriteLine($"{GetType().Name}.SendCmd {cmd} returned {ret.Length} in {sw.Elapsed.TotalMilliseconds}ms.");
+            Console.WriteLine($"{GetType().Name}.SendCmd {cmd} returned {ret.Length} bytes in {sw.Elapsed.TotalMilliseconds}ms.");
 
             if (ret[0] != ((byte)cmd | 0x80))
             {
-                throw new IOException($"The {cmd} command returned {ret.Length} bytes: {(HsmError)ret[3]}");
+                Console.WriteLine($"{GetType().Name}.SendCmd {cmd} failed: {(HsmError)ret[3]}.");
+                throw new IOException($"{GetType().Name}.SendCmd {cmd} failed: {(HsmError)ret[3]}");
             }
 
             var len = BinaryPrimitives.ReadUInt16BigEndian(ret.Slice(1, 2));
