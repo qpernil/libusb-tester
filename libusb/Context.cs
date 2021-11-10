@@ -74,7 +74,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.DecryptAesEcb | Capability.EncryptAesEcb | Capability.DecryptAesCbc | Capability.EncryptAesCbc,
+                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc,
                 algorithm = Algorithm.AES_128
             };
             return session.SendCmd(req);
@@ -99,7 +99,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.DecryptAesEcb | Capability.EncryptAesEcb | Capability.DecryptAesCbc | Capability.EncryptAesCbc,
+                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc,
                 algorithm = Algorithm.AES_128,
                 key = key
             };
@@ -125,9 +125,9 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.GetRandom | Capability.DeleteAuthKey | Capability.WriteAuthKey | Capability.ChangeAuthKey | Capability.Attest,
+                capabilities = Capability.GetRandom | Capability.DeleteAuthKey | Capability.PutAuthKey | Capability.ChangeAuthKey | Capability.Attest,
                 algorithm = Algo,
-                delegated_caps = Capability.GetRandom | Capability.DeleteAuthKey | Capability.WriteAuthKey | Capability.ChangeAuthKey | Capability.Attest,
+                delegated_caps = Capability.GetRandom | Capability.DeleteAuthKey | Capability.PutAuthKey | Capability.ChangeAuthKey | Capability.Attest,
                 key = Key
             };
             return session.SendCmd(putauth_req);

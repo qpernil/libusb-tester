@@ -87,17 +87,23 @@ namespace libusb
     [Flags]
     public enum Capability : ulong
     {
-        WriteAuthKey = 1ul << 0x02,
+        PutAuthKey = 1ul << 0x02,
+        PutAsymmetricKey = 1ul << 0x03,
+        GenerateAsymmetricKey = 1ul << 0x04,
+        DeleteAsymmetricKey = 1ul << 0x09,
         DecryptEcdh = 1ul << 0x0b,
         GetRandom = 1ul << 0x13,
         Reset = 1ul << 0x1c,
         Attest = 1ul << 0x22,
         DeleteAuthKey = 1ul << 0x28,
         ChangeAuthKey = 1ul << 0x2e,
-        DecryptAesEcb = 1ul << 0x32,
-        EncryptAesEcb = 1ul << 0x33,
-        DecryptAesCbc = 1ul << 0x34,
-        EncryptAesCbc = 1ul << 0x35
+        PutSymmetricKey = 1ul << 0x2f,
+        GenerateSymmetricKey = 1ul << 0x30,
+        DeleteSymmetricKey = 1ul << 0x31,
+        DecryptEcb = 1ul << 0x32,
+        EncryptEcb = 1ul << 0x33,
+        DecryptCbc = 1ul << 0x34,
+        EncryptCbc = 1ul << 0x35
     }
 
     public class PutAuthKeyReq : IWriteable
