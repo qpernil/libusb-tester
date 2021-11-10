@@ -125,9 +125,9 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.GetRandom | Capability.DeleteAuthKey | Capability.PutAuthKey | Capability.ChangeAuthKey | Capability.Attest,
+                capabilities = (Capability)0xffffffffffffffff,
                 algorithm = Algo,
-                delegated_caps = Capability.GetRandom | Capability.DeleteAuthKey | Capability.PutAuthKey | Capability.ChangeAuthKey | Capability.Attest,
+                delegated_caps = (Capability)0xffffffffffffffff,
                 key = Key
             };
             return session.SendCmd(putauth_req);

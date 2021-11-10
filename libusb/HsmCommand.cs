@@ -103,7 +103,8 @@ namespace libusb
         DecryptEcb = 1ul << 0x32,
         EncryptEcb = 1ul << 0x33,
         DecryptCbc = 1ul << 0x34,
-        EncryptCbc = 1ul << 0x35
+        EncryptCbc = 1ul << 0x35,
+        ClientAuth = 1ul << 0x36,
     }
 
     public class PutAuthKeyReq : IWriteable

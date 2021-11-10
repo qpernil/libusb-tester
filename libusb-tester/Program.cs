@@ -122,7 +122,6 @@ namespace libusb_tester
                                         Console.WriteLine();
                                         File.WriteAllBytes("attestation.cer", attestation.ToArray());
                                     }
-                                    /*
                                     using (var sess = new Scp03Session(usb_session, 1, scp03_session, 1))
                                     {
                                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
@@ -133,7 +132,6 @@ namespace libusb_tester
                                     {
                                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
                                     }
-                                    */
                                 }
                             }
                         }
