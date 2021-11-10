@@ -94,10 +94,10 @@ namespace libusb
         Attest = 1ul << 0x22,
         DeleteAuthKey = 1ul << 0x28,
         ChangeAuthKey = 1ul << 0x2e,
-        DecryptEcb = 1ul << 0x32,
-        EncryptEcb = 1ul << 0x33,
-        DecryptCbc = 1ul << 0x34,
-        EncryptCbc = 1ul << 0x35
+        DecryptAesEcb = 1ul << 0x32,
+        EncryptAesEcb = 1ul << 0x33,
+        DecryptAesCbc = 1ul << 0x34,
+        EncryptAesCbc = 1ul << 0x35
     }
 
     public class PutAuthKeyReq : IWriteable

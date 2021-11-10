@@ -74,7 +74,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc,
+                capabilities = Capability.DecryptAesEcb | Capability.EncryptAesEcb | Capability.DecryptAesCbc | Capability.EncryptAesCbc,
                 algorithm = Algorithm.AES_128
             };
             return session.SendCmd(req);
@@ -99,7 +99,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc,
+                capabilities = Capability.DecryptAesEcb | Capability.EncryptAesEcb | Capability.DecryptAesCbc | Capability.EncryptAesCbc,
                 algorithm = Algorithm.AES_128,
                 key = key
             };
