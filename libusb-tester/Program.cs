@@ -27,6 +27,7 @@ namespace libusb_tester
             int cb = 512;
             prc = x.list_readers(pctx, null, buf, ref cb);
             var s = Encoding.UTF8.GetString(buf[0..cb]);
+            Console.WriteLine(s);
             prc = x.release_context(pctx);
             var scp03_context = new Scp03Context("password");
             using (var usb_ctx = new UsbContext())
