@@ -62,11 +62,11 @@ namespace libusb_tester
                                     */
                                     scp03_context.PutAesKey(scp03_session, 4, new byte[16]);
                                     var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16 * 125] });
-                                    var z = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
-                                    var decrypted = scp03_session.SendCmd(new DecryptEcbReq { key_id = 4, data = encrypted.ToArray() });
+                                    var decrypted = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
+                                    var decrypted2 = scp03_session.SendCmd(new DecryptEcbReq { key_id = 4, data = encrypted.ToArray() });
                                     encrypted = scp03_session.SendCmd(new EncryptCbcReq { key_id = 4, iv = new byte[16], data = new byte[16 * 125] });
-                                    z = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
-                                    decrypted = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
+                                    decrypted = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
+                                    decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
                                     var id = scp03_context.PutEcdhKey(scp03_session, 4);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
@@ -122,6 +122,7 @@ namespace libusb_tester
                                         Console.WriteLine();
                                         File.WriteAllBytes("attestation.cer", attestation.ToArray());
                                     }
+                                    /*
                                     using (var sess = new Scp03Session(usb_session, 1, scp03_session, 1))
                                     {
                                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
@@ -132,6 +133,7 @@ namespace libusb_tester
                                     {
                                         sess.SendCmd(new GetPseudoRandomReq { length = 64 });
                                     }
+                                    */
                                 }
                             }
                         }
