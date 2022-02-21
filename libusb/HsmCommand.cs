@@ -18,6 +18,9 @@ namespace libusb
         PutAuthKey = 0x44,
         PutAsymmetricKey = 0x45,
         ListObjects = 0x48,
+        ExportWrapped = 0x4a,
+        ImportWrapped = 0x4b,
+        PutWrapKey = 0x4c,
         GetObjectInfo = 0x4e,
         PutOption = 0x4f,
         GetOption = 0x50,
@@ -77,7 +80,10 @@ namespace libusb
     public enum Algorithm : byte
     {
         EC_P256 = 12,
+        AES128_CCM_WRAP = 29,
         SCP_03 = 38,
+        AES192_CCM_WRAP = 41,
+        AES256_CCM_WRAP = 42,
         SCP_11 = 49,
         AES_128 = 50,
         AES_192 = 51,
@@ -92,6 +98,10 @@ namespace libusb
         GenerateAsymmetricKey = 1ul << 0x04,
         DeleteAsymmetricKey = 1ul << 0x09,
         DecryptEcdh = 1ul << 0x0b,
+        ExportWrapped = 1ul << 0x0c,
+        ImportWrapped = 1ul << 0x0d,
+        PutWrapKey = 1ul << 0x0e,
+        ExportUnderWrap = 1ul << 0x10,
         GetRandom = 1ul << 0x13,
         Reset = 1ul << 0x1c,
         Attest = 1ul << 0x22,
@@ -128,6 +138,46 @@ namespace libusb
             s.WriteByte((byte)algorithm);
             s.Write((ulong)delegated_caps);
             s.Write(key.Span);
+        }
+    }
+
+    public class PutWrapKeyReq : IWriteable
+    {
+        public ushort key_id; // 0
+        public ReadOnlyMemory<byte> label; // 2
+        public ushort domains; // 42
+        public Capability capabilities; // 44
+        public Algorithm algorithm; // 52
+        public Capability delegated_caps; // 53
+        public ReadOnlyMemory<byte> key; // 61
+
+        public HsmCommand Command => HsmCommand.PutWrapKey;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(label.Span);
+            s.Write(domains);
+            s.Write((ulong)capabilities);
+            s.WriteByte((byte)algorithm);
+            s.Write((ulong)delegated_caps);
+            s.Write(key.Span);
+        }
+    }
+
+    public class ExportWrappedReq : IWriteable
+    {
+        public ushort key_id;
+        public ObjectType target_type;
+        public ushort target_key;
+
+        public HsmCommand Command => HsmCommand.ExportWrapped;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte((byte)target_type);
+            s.Write(target_key);
         }
     }
 

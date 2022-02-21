@@ -68,6 +68,10 @@ namespace libusb_tester
                                     decrypted = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
                                     decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
                                     var id = scp03_context.PutEcdhKey(scp03_session, 4);
+                                    scp03_context.PutWrapKey(scp03_session, 2, new byte[32]);
+                                    scp03_context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 4);
+                                    scp03_context.ExportWrapped(scp03_session, 2, ObjectType.SymmetricKey, 4);
+                                    scp03_context.ExportWrapped(scp03_session, 2, ObjectType.WrapKey, 2);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
                                     foreach (var b in info)

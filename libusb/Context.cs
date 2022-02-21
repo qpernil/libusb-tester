@@ -39,7 +39,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.DecryptEcdh | Capability.Attest,
+                capabilities = Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
                 algorithm = Algorithm.EC_P256,
                 key = new byte[] {
 //                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -74,7 +74,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc,
+                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc | Capability.ExportUnderWrap,
                 algorithm = Algorithm.AES_128
             };
             return session.SendCmd(req);
@@ -99,7 +99,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc,
+                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc | Capability.ExportUnderWrap,
                 algorithm = Algorithm.AES_128,
                 key = key
             };
@@ -142,6 +142,44 @@ namespace libusb
                 key = Key
             };
             session.SendCmd(req);
+        }
+
+        public Span<byte> PutWrapKey(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.WrapKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var putwrap_req = new PutWrapKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = (Capability)0xffffffffffffffff,
+                algorithm = Algorithm.AES256_CCM_WRAP,
+                delegated_caps = (Capability)0xffffffffffffffff,
+                key = key
+            };
+            return session.SendCmd(putwrap_req);
+        }
+
+        public Span<byte> ExportWrapped(Session session, ushort key_id, ObjectType target_type, ushort target_key)
+        {
+            var exportwrapped_req = new ExportWrappedReq
+            {
+                key_id = key_id,
+                target_type = target_type,
+                target_key = target_key
+            };
+            return session.SendCmd(exportwrapped_req);
         }
 
         public void SetDefaultKey(Session session)
