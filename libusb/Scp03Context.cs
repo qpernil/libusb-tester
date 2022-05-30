@@ -38,7 +38,7 @@ namespace libusb
         protected override Memory<byte> Key { get; }
         protected override Algorithm Algo => Algorithm.SCP_03;
 
-        private readonly SecureRandom rand = new SecureRandom();
+        private readonly Random rand = Random.Shared;
         private readonly KeyParameter enc_key, mac_key;
     }
 }
