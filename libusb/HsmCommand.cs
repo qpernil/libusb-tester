@@ -17,6 +17,7 @@ namespace libusb
         CloseSession = 0x40,
         PutAuthKey = 0x44,
         PutAsymmetricKey = 0x45,
+        GenerateAsymmetricKey = 0x46,
         ListObjects = 0x48,
         ExportWrapped = 0x4a,
         ImportWrapped = 0x4b,
@@ -26,6 +27,7 @@ namespace libusb
         GetOption = 0x50,
         GetPseudoRandom = 0x51,
         GetPubKey = 0x54,
+        SignEcdsa = 0x56,
         DecryptEcdh = 0x57,
         DeleteObject = 0x58,
         AttestAsymmetric = 0x64,
@@ -96,6 +98,7 @@ namespace libusb
         PutAuthKey = 1ul << 0x02,
         PutAsymmetricKey = 1ul << 0x03,
         GenerateAsymmetricKey = 1ul << 0x04,
+        SignEcdh = 1ul << 0x07,
         DeleteAsymmetricKey = 1ul << 0x09,
         DecryptEcdh = 1ul << 0x0b,
         ExportWrapped = 1ul << 0x0c,
@@ -200,6 +203,26 @@ namespace libusb
             s.Write((ulong)capabilities);
             s.WriteByte((byte)algorithm);
             s.Write(key.Span);
+        }
+    }
+
+    public class GenerateAsymmetricKeyReq : IWriteable
+    {
+        public ushort key_id; // 0
+        public ReadOnlyMemory<byte> label; // 2
+        public ushort domains; // 42
+        public Capability capabilities; // 44
+        public Algorithm algorithm; // 52
+
+        public HsmCommand Command => HsmCommand.GenerateAsymmetricKey;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(label.Span);
+            s.Write(domains);
+            s.Write((ulong)capabilities);
+            s.WriteByte((byte)algorithm);
         }
     }
 
@@ -531,6 +554,20 @@ namespace libusb
         {
             s.Write(key_id);
             s.Write(attest_id);
+        }
+    }
+
+    public class SignEcdsaReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> hash;
+
+        public HsmCommand Command => HsmCommand.SignEcdsa;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(hash.Span);
         }
     }
 

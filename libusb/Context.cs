@@ -39,7 +39,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
+                capabilities = Capability.SignEcdh | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
                 algorithm = Algorithm.EC_P256,
                 key = new byte[] {
 //                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -53,6 +53,41 @@ namespace libusb
                 }
             };
             return session.SendCmd(putecdh_req);
+        }
+
+        public Span<byte> GenerateEcdhKey(Session session, ushort key_id, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.AsymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var genecdh_req = new GenerateAsymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.SignEcdh | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
+                algorithm = Algorithm.EC_P256,
+            };
+            return session.SendCmd(genecdh_req);
+        }
+
+        public Span<byte> SignEcdh(Session session, ushort key_id)
+        {
+            var signecdh_req = new SignEcdsaReq
+            {
+                key_id = key_id,
+                hash = new byte[20]
+            };
+            return session.SendCmd(signecdh_req);
         }
 
         public Span<byte> GenerateAesKey(Session session, ushort key_id, bool delete = true)
