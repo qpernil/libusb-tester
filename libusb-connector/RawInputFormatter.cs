@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
@@ -10,6 +11,11 @@ namespace libusb_connector
         public RawInputFormatter()
         {
             SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/octet-stream"));
+        }
+
+        protected override bool CanReadType(Type type)
+        {
+            return type == typeof(byte[]);
         }
 
         public async override Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context)

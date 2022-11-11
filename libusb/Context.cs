@@ -141,6 +141,32 @@ namespace libusb
             return session.SendCmd(req);
         }
 
+        public Span<byte> PutOpaque(Session session, ushort object_id, ReadOnlyMemory<byte> data, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, object_id, ObjectType.Opaque);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var req = new PutOpaqueReq
+            {
+                object_id = object_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.ExportUnderWrap,
+                algorithm = Algorithm.OPAQUE_DATA,
+                data = data
+            };
+            return session.SendCmd(req);
+        }
+
         public Span<byte> PutAuthKey(Session session, ushort key_id, bool delete = true)
         {
             if(delete)

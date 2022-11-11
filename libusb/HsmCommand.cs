@@ -15,6 +15,7 @@ namespace libusb
         SetInformation = 0x09,
         GetDevicePubKey = 0x0a,
         CloseSession = 0x40,
+        PutOpaque = 0x42,
         PutAuthKey = 0x44,
         PutAsymmetricKey = 0x45,
         GenerateAsymmetricKey = 0x46,
@@ -83,6 +84,8 @@ namespace libusb
     {
         EC_P256 = 12,
         AES128_CCM_WRAP = 29,
+        OPAQUE_DATA = 30,
+        OPAQUE_X509_CERT = 31,
         SCP_03 = 38,
         AES192_CCM_WRAP = 41,
         AES256_CCM_WRAP = 42,
@@ -289,6 +292,28 @@ namespace libusb
             s.Write((ulong)capabilities);
             s.WriteByte((byte)algorithm);
             s.Write(key.Span);
+        }
+    }
+
+    public class PutOpaqueReq : IWriteable
+    {
+        public ushort object_id; // 0
+        public ReadOnlyMemory<byte> label; // 2
+        public ushort domains; // 42
+        public Capability capabilities; // 44
+        public Algorithm algorithm; // 52
+        public ReadOnlyMemory<byte> data; // 53
+
+        public HsmCommand Command => HsmCommand.PutOpaque;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(object_id);
+            s.Write(label.Span);
+            s.Write(domains);
+            s.Write((ulong)capabilities);
+            s.WriteByte((byte)algorithm);
+            s.Write(data.Span);
         }
     }
 

@@ -21,6 +21,19 @@ namespace libusb_tester
         }
         static void Run(string[] args)
         {
+            using (var usb_ctx = new UsbContext())
+            {
+                var scp03_context = new Scp03Context("password");
+                var devices = usb_ctx.OpenDevices(d => d.IsYubiHsm, 1).ToList();
+                var sessions = devices.Select(d => d.Claim(0)).ToList();
+                var scp03_sessions = sessions.Select(s => scp03_context.CreateSession(s, 1)).ToList();
+                scp03_sessions.ForEach(s => s.Dispose());
+                sessions.ForEach(s => s.Dispose());
+                devices.ForEach(s => s.Dispose());
+            }
+        }
+        static void Run2(string[] args)
+        {
             //var z = new NSRecord("DFFFFFFFFFFFFFFFFF7F8188818180bb5c424c1b3121cf630cbcbaf60fa91e53786d1ab9e8b6e5855acb9afbec944555481d88fcd8e32947f7696d80a8f4df55be51dcb967fc5ef3d213a971a11fee54917cbe10d4b6ba69a71ee1434ce6b6cadb46ceff0bbf2ba832cb5516af35a1debf182e0a57544a64bfe2d0f711cf94dffb44dda9d1d4a9abdf1460e783b6f18203010001");
             /*
             var x = new PCSC();
@@ -63,6 +76,7 @@ namespace libusb_tester
                                     }
                                     var res = scp03_session.SendCmd(new PutAlgorithmToggleReq { data = opts.ToArray() });
                                     */
+                                    scp03_context.PutOpaque(scp03_session, 0, new byte[254]);
                                     scp03_context.PutAesKey(scp03_session, 4, new byte[16]);
                                     var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16 * 125] });
                                     var decrypted = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
