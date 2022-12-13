@@ -19,7 +19,7 @@ namespace libusb_tester
                 Console.WriteLine(e);
             }
         }
-        static void Run(string[] args)
+        static void Run1(string[] args)
         {
             using (var usb_ctx = new UsbContext())
             {
@@ -32,7 +32,7 @@ namespace libusb_tester
                 devices.ForEach(s => s.Dispose());
             }
         }
-        static void Run2(string[] args)
+        static void Run(string[] args)
         {
             //var z = new NSRecord("DFFFFFFFFFFFFFFFFF7F8188818180bb5c424c1b3121cf630cbcbaf60fa91e53786d1ab9e8b6e5855acb9afbec944555481d88fcd8e32947f7696d80a8f4df55be51dcb967fc5ef3d213a971a11fee54917cbe10d4b6ba69a71ee1434ce6b6cadb46ceff0bbf2ba832cb5516af35a1debf182e0a57544a64bfe2d0f711cf94dffb44dda9d1d4a9abdf1460e783b6f18203010001");
             /*
@@ -61,6 +61,7 @@ namespace libusb_tester
                             using (var usb_session = usb_device.Claim(0))
                             {
                                 //usb_session.SendCmd(HsmCommand.Bsl);
+                                //usb_session.SendCmd(new SetFipsDeviceReq { fips = 1 });
                                 //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
                                 //usb_session.SendCmd(new SetDemoModeReq { demo = 0xffff });
                                 var resp = usb_session.SendCmd(HsmCommand.Echo, new byte[] { 1, 2, 3, 4, 5 });
@@ -69,12 +70,13 @@ namespace libusb_tester
                                 {
                                     //scp03_session.SendCmd(HsmCommand.Reset);
                                     /*
+                                    var res = scp03_session.SendCmd(new PutFipsModeReq { });
                                     var opts = scp03_session.SendCmd(new GetAlgorithmToggleReq { });
                                     for(int i = 1; i < opts.Length; i += 2)
                                     {
                                         opts[i] = 1;
                                     }
-                                    var res = scp03_session.SendCmd(new PutAlgorithmToggleReq { data = opts.ToArray() });
+                                    res = scp03_session.SendCmd(new PutAlgorithmToggleReq { data = opts.ToArray() });
                                     */
                                     scp03_context.PutOpaque(scp03_session, 0, new byte[254]);
                                     scp03_context.PutAesKey(scp03_session, 4, new byte[16]);

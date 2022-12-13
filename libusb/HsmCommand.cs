@@ -253,6 +253,20 @@ namespace libusb
         }
     }
 
+    public class PutFipsModeReq : IWriteable
+    {
+        public byte fips;
+
+        public HsmCommand Command => HsmCommand.PutOption;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(5);
+            s.Write((ushort)1);
+            s.WriteByte(fips);
+        }
+    }
+
     public class GenerateSymmetricKeyReq : IWriteable
     {
         public ushort key_id; // 0
@@ -539,6 +553,19 @@ namespace libusb
         {
             s.WriteByte(2);
             s.Write(demo);
+        }
+    }
+
+    public class SetFipsDeviceReq : IWriteable
+    {
+        public byte fips;
+
+        public HsmCommand Command => HsmCommand.SetInformation;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(0x0a);
+            s.WriteByte(fips);
         }
     }
 
