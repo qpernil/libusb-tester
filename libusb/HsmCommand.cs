@@ -267,6 +267,16 @@ namespace libusb
         }
     }
 
+    public class GetFipsModeReq : IWriteable
+    {
+        public HsmCommand Command => HsmCommand.GetOption;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(5);
+        }
+    }
+
     public class GenerateSymmetricKeyReq : IWriteable
     {
         public ushort key_id; // 0

@@ -70,14 +70,19 @@ namespace libusb_tester
                                 {
                                     //scp03_session.SendCmd(HsmCommand.Reset);
                                     /*
-                                    var res = scp03_session.SendCmd(new PutFipsModeReq { });
                                     var opts = scp03_session.SendCmd(new GetAlgorithmToggleReq { });
                                     for(int i = 1; i < opts.Length; i += 2)
                                     {
                                         opts[i] = 1;
                                     }
-                                    res = scp03_session.SendCmd(new PutAlgorithmToggleReq { data = opts.ToArray() });
+                                    var res = scp03_session.SendCmd(new PutAlgorithmToggleReq { data = opts.ToArray() });
+                                    res = scp03_session.SendCmd(new PutFipsModeReq { fips = 1 });
                                     */
+                                    var fips = scp03_session.SendCmd(new GetFipsModeReq { });
+                                    Console.WriteLine("GetFipsMode over scp03_session");
+                                    foreach (var b in fips)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
                                     scp03_context.PutOpaque(scp03_session, 0, new byte[254]);
                                     scp03_context.PutAesKey(scp03_session, 4, new byte[16]);
                                     var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16 * 125] });
