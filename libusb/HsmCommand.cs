@@ -187,6 +187,20 @@ namespace libusb
         }
     }
 
+    public class ImportWrappedReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> wrapped_key;
+
+        public HsmCommand Command => HsmCommand.ImportWrapped;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(wrapped_key.Span);
+        }
+    }
+
     public class PutAsymmetricKeyReq : IWriteable
     {
         public ushort key_id; // 0

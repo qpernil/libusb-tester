@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using Org.BouncyCastle.Utilities.Zlib;
 
 namespace libusb
 {
@@ -241,6 +242,27 @@ namespace libusb
                 target_key = target_key
             };
             return session.SendCmd(exportwrapped_req);
+        }
+
+        public Span<byte> ImportWrapped(Session session, ushort key_id, ReadOnlyMemory<byte> wrapped_key, ushort delete = 0)
+        {
+            if (delete > 0)
+            {
+                try
+                {
+                    DeleteObject(session, delete, ObjectType.AsymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+            var importwrapped_req = new ImportWrappedReq
+            {
+                key_id = key_id,
+                wrapped_key = wrapped_key
+            };
+            return session.SendCmd(importwrapped_req);
         }
 
         public void SetDefaultKey(Session session)

@@ -19,7 +19,7 @@ namespace libusb_tester
                 Console.WriteLine(e);
             }
         }
-        static void Run1(string[] args)
+        static void Run(string[] args)
         {
             using (var usb_ctx = new UsbContext())
             {
@@ -27,12 +27,16 @@ namespace libusb_tester
                 var devices = usb_ctx.OpenDevices(d => d.IsYubiHsm, 1).ToList();
                 var sessions = devices.Select(d => d.Claim(0)).ToList();
                 var scp03_sessions = sessions.Select(s => scp03_context.CreateSession(s, 1)).ToList();
+                scp03_sessions.ForEach(s => scp03_context.PutWrapKey(s, 2, new byte[32]));
+                scp03_context.GenerateEcdhKey(scp03_sessions.First(), 4);
+                var wrapped_key = scp03_context.ExportWrapped(scp03_sessions.First(), 2, ObjectType.AsymmetricKey, 4).ToArray();
+                scp03_sessions.ForEach(s => scp03_context.ImportWrapped(s, 2, wrapped_key, 4));
                 scp03_sessions.ForEach(s => s.Dispose());
                 sessions.ForEach(s => s.Dispose());
                 devices.ForEach(s => s.Dispose());
             }
         }
-        static void Run(string[] args)
+        static void Run1(string[] args)
         {
             //var z = new NSRecord("DFFFFFFFFFFFFFFFFF7F8188818180bb5c424c1b3121cf630cbcbaf60fa91e53786d1ab9e8b6e5855acb9afbec944555481d88fcd8e32947f7696d80a8f4df55be51dcb967fc5ef3d213a971a11fee54917cbe10d4b6ba69a71ee1434ce6b6cadb46ceff0bbf2ba832cb5516af35a1debf182e0a57544a64bfe2d0f711cf94dffb44dda9d1d4a9abdf1460e783b6f18203010001");
             /*
