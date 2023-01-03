@@ -27,10 +27,11 @@ namespace libusb_tester
                 var devices = usb_ctx.OpenDevices(d => d.IsYubiHsm, 1).ToList();
                 var sessions = devices.Select(d => d.Claim(0)).ToList();
                 var scp03_sessions = sessions.Select(s => scp03_context.CreateSession(s, 1)).ToList();
-                scp03_sessions.ForEach(s => scp03_context.PutWrapKey(s, 2, new byte[32]));
-                scp03_context.GenerateEcdhKey(scp03_sessions.First(), 4);
-                var wrapped_key = scp03_context.ExportWrapped(scp03_sessions.First(), 2, ObjectType.AsymmetricKey, 4).ToArray();
-                scp03_sessions.ForEach(s => scp03_context.ImportWrapped(s, 2, wrapped_key, 4));
+                var wrap_key = scp03_context.RandBytes(32);
+                scp03_sessions.ForEach(s => scp03_context.PutWrapKey(s, 2, wrap_key));
+                scp03_context.GenerateEcdhKey(scp03_sessions.First(), 3);
+                var wrapped_key = scp03_context.ExportWrapped(scp03_sessions.First(), 2, ObjectType.AsymmetricKey, 3).ToArray();
+                scp03_sessions.ForEach(s => scp03_context.ImportWrapped(s, 2, wrapped_key, 3));
                 scp03_sessions.ForEach(s => s.Dispose());
                 sessions.ForEach(s => s.Dispose());
                 devices.ForEach(s => s.Dispose());

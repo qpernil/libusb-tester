@@ -29,9 +29,14 @@ namespace libusb
 
         public Scp03Session CreateSession(Session session, ushort key_id)
         {
-            var host_chal = new byte[8];
-            rand.NextBytes(host_chal);
-            return new Scp03Session(session, key_id, enc_key, mac_key, host_chal);
+            return new Scp03Session(session, key_id, enc_key, mac_key, RandBytes(8));
+        }
+
+        public byte[] RandBytes(ushort len)
+        {
+            var bytes = new byte[len];
+            rand.NextBytes(bytes);
+            return bytes;
         }
 
         protected override Memory<byte> Key { get; }
