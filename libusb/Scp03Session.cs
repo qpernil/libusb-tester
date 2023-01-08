@@ -6,6 +6,10 @@ namespace libusb
 {
     public class Scp03Session : Scp03CryptoSession
     {
+        public override string ToString()
+        {
+            return $"Scp03Session on {session}";
+        }
         private KeyParameter ComputeCryptogram(KeyParameter key, byte type, ReadOnlySpan<byte> context, ushort L)
         {
             var ms = new MemoryStream();

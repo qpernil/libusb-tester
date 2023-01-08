@@ -8,6 +8,15 @@ namespace libusb
 {
     public abstract class Context
     {
+        public Span<byte> ListObjects(Session session, ObjectType type)
+        {
+            var list_req = new ListObjectsReq
+            {
+                type = type
+            };
+            return session.SendCmd(list_req);
+        }
+
         public Span<byte> DeleteObject(Session session, ushort key_id, ObjectType key_type)
         {
             var delete_req = new DeleteObjectReq
@@ -263,6 +272,16 @@ namespace libusb
                 wrapped_key = wrapped_key
             };
             return session.SendCmd(importwrapped_req);
+        }
+
+        public Span<byte> GetPubKey(Session session, ushort key_id, out Algorithm algo) {
+            var getpub_req = new GetPubKeyReq
+            {
+                key_id = key_id
+            };
+            var ret = session.SendCmd(getpub_req);
+            algo = (Algorithm)ret[0];
+            return ret.Slice(1);
         }
 
         public void SetDefaultKey(Session session)

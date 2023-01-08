@@ -664,4 +664,17 @@ namespace libusb
             s.Write(card_crypto.Span);
         }
     }
+
+    public class ListObjectsReq : IWriteable
+    {
+        public ObjectType type;
+
+        public HsmCommand Command => HsmCommand.ListObjects;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(2);
+            s.WriteByte((byte)type);
+        }
+    }
 }

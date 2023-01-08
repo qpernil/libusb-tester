@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -29,9 +31,41 @@ namespace libusb_tester
                 var scp03_sessions = sessions.Select(s => scp03_context.CreateSession(s, 1)).ToList();
                 var wrap_key = scp03_context.RandBytes(32);
                 scp03_sessions.ForEach(s => scp03_context.PutWrapKey(s, 2, wrap_key));
-                scp03_context.GenerateEcdhKey(scp03_sessions.First(), 3);
-                var wrapped_key = scp03_context.ExportWrapped(scp03_sessions.First(), 2, ObjectType.AsymmetricKey, 3).ToArray();
-                scp03_sessions.ForEach(s => scp03_context.ImportWrapped(s, 2, wrapped_key, 3));
+                for (ushort i = 3; i < 10; i++)
+                {
+                    scp03_context.GenerateEcdhKey(scp03_sessions.First(), i);
+                    var wrapped_key = scp03_context.ExportWrapped(scp03_sessions.First(), 2, ObjectType.AsymmetricKey, i).ToArray();
+                    scp03_sessions.ForEach(s => scp03_context.ImportWrapped(s, 2, wrapped_key, i));
+                }
+                scp03_context.DeleteObject(scp03_sessions[0], 4, ObjectType.AsymmetricKey);
+                scp03_context.DeleteObject(scp03_sessions[1], 5, ObjectType.AsymmetricKey);
+                scp03_context.DeleteObject(scp03_sessions[2], 6, ObjectType.AsymmetricKey);
+                var dict = new Dictionary<string, List<Scp03Session>>();
+                foreach(var session in scp03_sessions)
+                {
+                    var resp = scp03_context.ListObjects(session, ObjectType.AsymmetricKey);
+                    while (resp.Length >= 4)
+                    {
+                        var id = BinaryPrimitives.ReadUInt16BigEndian(resp.Slice(0, 2));
+                        var type = resp[2];
+                        var seq = resp[3];
+                        var pub = BitConverter.ToString(scp03_context.GetPubKey(session, id, out var algo).ToArray());
+                        Console.WriteLine(new { id, type, seq, algo });
+                        if (!dict.TryAdd(pub, new List<Scp03Session> { session }))
+                        {
+                            dict[pub].Add(session);
+                        }
+                        resp = resp.Slice(4);
+                    }
+                }
+                foreach(var e in dict)
+                {
+                    Console.WriteLine(e.Key);
+                    foreach(var v in e.Value)
+                    {
+                        Console.WriteLine(v);
+                    }
+                }
                 scp03_sessions.ForEach(s => s.Dispose());
                 sessions.ForEach(s => s.Dispose());
                 devices.ForEach(s => s.Dispose());

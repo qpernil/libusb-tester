@@ -10,6 +10,10 @@ namespace libusb
 {
     public class Scp03CMacSession : Session
     {
+        public override string ToString()
+        {
+            return $"Scp03CMacSession on {session}";
+        }
         public override Span<byte> Transfer(byte[] input, int length)
         {
             // Adjust encoded length to include mac

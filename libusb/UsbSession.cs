@@ -5,6 +5,10 @@ namespace libusb
 {
     public class UsbSession : Session
     {
+        public override string ToString()
+        {
+            return $"UsbSession on {device_handle}";
+        }
         public UsbSession(LibUsb libusb, IntPtr device_handle, int configuration, int interface_number, int alt_setting, byte write_endpoint, byte read_endpoint)
         {
             this.libusb = libusb;
