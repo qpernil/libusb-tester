@@ -7,6 +7,10 @@ namespace libusb
 {
     public class Scp11Session : Scp03CryptoSession
     {
+        public override string ToString()
+        {
+            return $"Scp11Session on {session}";
+        }
         public Scp11Session(Scp11Context context, Session session, ushort key_id)
         {
             var pair = context.generator.GenerateKeyPair();
