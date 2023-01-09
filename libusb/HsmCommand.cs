@@ -82,13 +82,19 @@ namespace libusb
 
     public enum Algorithm : byte
     {
+        RSA_2048 = 9,
+        RSA_3072 = 10,
+        RSA_4096 = 11,
         EC_P256 = 12,
+        EC_P384 = 13,
+        EC_P521 = 14,
         AES128_CCM_WRAP = 29,
         OPAQUE_DATA = 30,
         OPAQUE_X509_CERT = 31,
         SCP_03 = 38,
         AES192_CCM_WRAP = 41,
         AES256_CCM_WRAP = 42,
+        EC_P224 = 47,
         SCP_11 = 49,
         AES_128 = 50,
         AES_192 = 51,
@@ -101,6 +107,8 @@ namespace libusb
         PutAuthKey = 1ul << 0x02,
         PutAsymmetricKey = 1ul << 0x03,
         GenerateAsymmetricKey = 1ul << 0x04,
+        SignPkcs = 1ul << 0x05,
+        SignPss = 1ul << 0x06,
         SignEcdh = 1ul << 0x07,
         DeleteAsymmetricKey = 1ul << 0x09,
         DecryptEcdh = 1ul << 0x0b,

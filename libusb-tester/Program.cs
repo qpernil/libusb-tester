@@ -4,10 +4,73 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using libusb;
 
 namespace libusb_tester
 {
+    public class HsmPool
+    {
+        public void Add(Session session)
+        {
+            sessions.Add(session);
+        }
+        public void Init()
+        {
+            semaphore = new Semaphore(sessions.Count, sessions.Count);
+        }
+        public SessionHolder GetSession()
+        {
+            semaphore.WaitOne();
+            mutex.WaitOne();
+            var ret = new SessionHolder(this, sessions[0]);
+            sessions.RemoveAt(0);
+            mutex.ReleaseMutex();
+            return ret;
+        }
+        internal void ReleaseSession(Session session)
+        {
+            mutex.WaitOne();
+            sessions.Add(session);
+            mutex.ReleaseMutex();
+            semaphore.Release();
+        }
+        private readonly List<Session> sessions = new List<Session>();
+        private readonly Mutex mutex = new Mutex();
+        private Semaphore semaphore;
+    }
+    public class SessionHolder : IDisposable
+    {
+        public SessionHolder(HsmPool owner, Session session)
+        {
+            this.owner = owner;
+            this.session = session;
+        }
+        public void Dispose()
+        {
+            owner.ReleaseSession(session);
+        }
+        private readonly HsmPool owner;
+        public readonly Session session;
+    }
+    public class Key
+    {
+        public Key(ushort id, Session session)
+        {
+            this.id = id;
+            Add(session);
+        }
+        public void Add(Session session)
+        {
+            sessions.Add(session);
+        }
+        public override string ToString()
+        {
+            return string.Join(", ", sessions);
+        }
+        private readonly List<Session> sessions = new List<Session>();
+        public readonly ushort id;
+    }
     static class Program
     {
         static void Main(string[] args)
@@ -21,6 +84,18 @@ namespace libusb_tester
                 Console.WriteLine(e);
             }
         }
+        static void ThreadStart(object obj)
+        {
+            HsmPool pool = (HsmPool)obj;
+            for(int i = 0; i < 100; i++)
+            {
+                using (var holder = pool.GetSession())
+                {
+                    Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} using {holder.session}");
+                    var pub = Context.GetPubKey(holder.session, 7, out var algo).ToArray();
+                }
+            }
+        }
         static void Run(string[] args)
         {
             using (var usb_ctx = new UsbContext())
@@ -30,42 +105,48 @@ namespace libusb_tester
                 var sessions = devices.Select(d => d.Claim(0)).ToList();
                 var scp03_sessions = sessions.Select(s => scp03_context.CreateSession(s, 1)).ToList();
                 var wrap_key = scp03_context.RandBytes(32);
-                scp03_sessions.ForEach(s => scp03_context.PutWrapKey(s, 2, wrap_key));
+                scp03_sessions.ForEach(s => Context.PutWrapKey(s, 2, wrap_key));
                 for (ushort i = 3; i < 10; i++)
                 {
-                    scp03_context.GenerateEcdhKey(scp03_sessions.First(), i);
-                    var wrapped_key = scp03_context.ExportWrapped(scp03_sessions.First(), 2, ObjectType.AsymmetricKey, i).ToArray();
-                    scp03_sessions.ForEach(s => scp03_context.ImportWrapped(s, 2, wrapped_key, i));
+                    Context.GenerateEcdhKey(scp03_sessions.First(), i);
+                    var wrapped_key = Context.ExportWrapped(scp03_sessions.First(), 2, ObjectType.AsymmetricKey, i).ToArray();
+                    scp03_sessions.ForEach(s => Context.ImportWrapped(s, 2, wrapped_key, i));
                 }
-                scp03_context.DeleteObject(scp03_sessions[0], 4, ObjectType.AsymmetricKey);
-                scp03_context.DeleteObject(scp03_sessions[1], 5, ObjectType.AsymmetricKey);
-                scp03_context.DeleteObject(scp03_sessions[2], 6, ObjectType.AsymmetricKey);
-                var dict = new Dictionary<string, List<Scp03Session>>();
+                Context.DeleteObject(scp03_sessions[0], 4, ObjectType.AsymmetricKey);
+                Context.DeleteObject(scp03_sessions[1], 5, ObjectType.AsymmetricKey);
+                Context.DeleteObject(scp03_sessions[2], 6, ObjectType.AsymmetricKey);
+                var dict = new Dictionary<string, Key>();
+                var pool = new HsmPool();
                 foreach(var session in scp03_sessions)
                 {
-                    var resp = scp03_context.ListObjects(session, ObjectType.AsymmetricKey);
+                    var resp = Context.ListObjects(session, ObjectType.AsymmetricKey);
                     while (resp.Length >= 4)
                     {
                         var id = BinaryPrimitives.ReadUInt16BigEndian(resp.Slice(0, 2));
                         var type = resp[2];
                         var seq = resp[3];
-                        var pub = BitConverter.ToString(scp03_context.GetPubKey(session, id, out var algo).ToArray());
-                        Console.WriteLine(new { id, type, seq, algo });
-                        if (!dict.TryAdd(pub, new List<Scp03Session> { session }))
+                        var pub = BitConverter.ToString(Context.GetPubKey(session, id, out var algo).ToArray()).Replace("-", string.Empty);
+                        Console.WriteLine(new { id, type, seq, algo, pub });
+                        if(dict.TryGetValue(pub, out var key))
                         {
-                            dict[pub].Add(session);
+                            key.Add(session);
+                        }
+                        else
+                        {
+                            dict.Add(pub, new Key(id, session));
                         }
                         resp = resp.Slice(4);
                     }
+                    pool.Add(session);
                 }
-                foreach(var e in dict)
+                pool.Init();
+                List<Thread> threads = new List<Thread>();
+                for(int i = 0; i < 100; i++)
                 {
-                    Console.WriteLine(e.Key);
-                    foreach(var v in e.Value)
-                    {
-                        Console.WriteLine(v);
-                    }
+                    threads.Add(new Thread(ThreadStart));
                 }
+                foreach (var t in threads) t.Start(pool);
+                foreach (var t in threads) t.Join();
                 scp03_sessions.ForEach(s => s.Dispose());
                 sessions.ForEach(s => s.Dispose());
                 devices.ForEach(s => s.Dispose());
@@ -122,19 +203,19 @@ namespace libusb_tester
                                     foreach (var b in fips)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-                                    scp03_context.PutOpaque(scp03_session, 0, new byte[254]);
-                                    scp03_context.PutAesKey(scp03_session, 4, new byte[16]);
+                                    Context.PutOpaque(scp03_session, 0, new byte[254]);
+                                    Context.PutAesKey(scp03_session, 4, new byte[16]);
                                     var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16 * 125] });
                                     var decrypted = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
                                     var decrypted2 = scp03_session.SendCmd(new DecryptEcbReq { key_id = 4, data = encrypted.ToArray() });
                                     encrypted = scp03_session.SendCmd(new EncryptCbcReq { key_id = 4, iv = new byte[16], data = new byte[16 * 125] });
                                     decrypted = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
                                     decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
-                                    var id = scp03_context.PutEcdhKey(scp03_session, 4);
-                                    scp03_context.PutWrapKey(scp03_session, 2, new byte[32]);
-                                    scp03_context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 4);
-                                    scp03_context.ExportWrapped(scp03_session, 2, ObjectType.SymmetricKey, 4);
-                                    scp03_context.ExportWrapped(scp03_session, 2, ObjectType.WrapKey, 2);
+                                    var id = Context.PutEcdhKey(scp03_session, 4);
+                                    Context.PutWrapKey(scp03_session, 2, new byte[32]);
+                                    Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 4);
+                                    Context.ExportWrapped(scp03_session, 2, ObjectType.SymmetricKey, 4);
+                                    Context.ExportWrapped(scp03_session, 2, ObjectType.WrapKey, 2);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
                                     foreach (var b in info)
@@ -156,7 +237,7 @@ namespace libusb_tester
                                     {
                                         context.GenerateKeyPair("password");
                                         context.ChangeAuthKey(scp11_session, 2);
-                                        context.DeleteObject(scp11_session, 2, ObjectType.AuthenticationKey);
+                                        Context.DeleteObject(scp11_session, 2, ObjectType.AuthenticationKey);
                                         var info2 = scp11_session.SendCmd(HsmCommand.GetDeviceInfo);
                                         Console.WriteLine("DeviceInfo over first scp11_session");
                                         foreach (var b in info2)

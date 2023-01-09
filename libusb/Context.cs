@@ -8,7 +8,7 @@ namespace libusb
 {
     public abstract class Context
     {
-        public Span<byte> ListObjects(Session session, ObjectType type)
+        public static Span<byte> ListObjects(Session session, ObjectType type)
         {
             var list_req = new ListObjectsReq
             {
@@ -17,7 +17,7 @@ namespace libusb
             return session.SendCmd(list_req);
         }
 
-        public Span<byte> DeleteObject(Session session, ushort key_id, ObjectType key_type)
+        public static Span<byte> DeleteObject(Session session, ushort key_id, ObjectType key_type)
         {
             var delete_req = new DeleteObjectReq
             {
@@ -27,7 +27,7 @@ namespace libusb
             return session.SendCmd(delete_req);
         }
 
-        public Span<byte> PutEcdhKey(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> PutEcdhKey(Session session, ushort key_id, bool delete = true)
         {
             if (delete)
             {
@@ -65,7 +65,32 @@ namespace libusb
             return session.SendCmd(putecdh_req);
         }
 
-        public Span<byte> GenerateEcdhKey(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> GenerateRsaKey(Session session, ushort key_id, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.AsymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var genrsa_req = new GenerateAsymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.SignPkcs | Capability.SignPss | Capability.Attest | Capability.ExportUnderWrap,
+                algorithm = Algorithm.RSA_2048,
+            };
+            return session.SendCmd(genrsa_req);
+        }
+
+        public static Span<byte> GenerateEcdhKey(Session session, ushort key_id, bool delete = true)
         {
             if (delete)
             {
@@ -90,7 +115,7 @@ namespace libusb
             return session.SendCmd(genecdh_req);
         }
 
-        public Span<byte> SignEcdh(Session session, ushort key_id)
+        public static Span<byte> SignEcdh(Session session, ushort key_id)
         {
             var signecdh_req = new SignEcdsaReq
             {
@@ -100,7 +125,7 @@ namespace libusb
             return session.SendCmd(signecdh_req);
         }
 
-        public Span<byte> GenerateAesKey(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> GenerateAesKey(Session session, ushort key_id, bool delete = true)
         {
             if (delete)
             {
@@ -125,7 +150,7 @@ namespace libusb
             return session.SendCmd(req);
         }
 
-        public Span<byte> PutAesKey(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
+        public static Span<byte> PutAesKey(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
         {
             if (delete)
             {
@@ -151,7 +176,7 @@ namespace libusb
             return session.SendCmd(req);
         }
 
-        public Span<byte> PutOpaque(Session session, ushort object_id, ReadOnlyMemory<byte> data, bool delete = true)
+        public static Span<byte> PutOpaque(Session session, ushort object_id, ReadOnlyMemory<byte> data, bool delete = true)
         {
             if (delete)
             {
@@ -215,7 +240,7 @@ namespace libusb
             session.SendCmd(req);
         }
 
-        public Span<byte> PutWrapKey(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
+        public static Span<byte> PutWrapKey(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
         {
             if (delete)
             {
@@ -242,7 +267,7 @@ namespace libusb
             return session.SendCmd(putwrap_req);
         }
 
-        public Span<byte> ExportWrapped(Session session, ushort key_id, ObjectType target_type, ushort target_key)
+        public static Span<byte> ExportWrapped(Session session, ushort key_id, ObjectType target_type, ushort target_key)
         {
             var exportwrapped_req = new ExportWrappedReq
             {
@@ -253,7 +278,7 @@ namespace libusb
             return session.SendCmd(exportwrapped_req);
         }
 
-        public Span<byte> ImportWrapped(Session session, ushort key_id, ReadOnlyMemory<byte> wrapped_key, ushort delete = 0)
+        public static Span<byte> ImportWrapped(Session session, ushort key_id, ReadOnlyMemory<byte> wrapped_key, ushort delete = 0)
         {
             if (delete > 0)
             {
@@ -274,7 +299,7 @@ namespace libusb
             return session.SendCmd(importwrapped_req);
         }
 
-        public Span<byte> GetPubKey(Session session, ushort key_id, out Algorithm algo) {
+        public static Span<byte> GetPubKey(Session session, ushort key_id, out Algorithm algo) {
             var getpub_req = new GetPubKeyReq
             {
                 key_id = key_id
