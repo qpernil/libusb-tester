@@ -16,6 +16,7 @@ namespace libusb
         GetDevicePubKey = 0x0a,
         CloseSession = 0x40,
         PutOpaque = 0x42,
+        GetOpaque = 0x43,
         PutAuthKey = 0x44,
         PutAsymmetricKey = 0x45,
         GenerateAsymmetricKey = 0x46,
@@ -360,6 +361,18 @@ namespace libusb
             s.Write((ulong)capabilities);
             s.WriteByte((byte)algorithm);
             s.Write(data.Span);
+        }
+    }
+
+    public class GetOpaqueReq : IWriteable
+    {
+        public ushort object_id; // 0
+
+        public HsmCommand Command => HsmCommand.GetOpaque;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(object_id);
         }
     }
 

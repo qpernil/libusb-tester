@@ -55,11 +55,6 @@ namespace libusb
             var card_crypto_host = ComputeCryptogram(key_mac, 0, context, 0x40).GetKey();
             var host_crypto = ComputeCryptogram(key_mac, 1, context, 0x40).GetKey();
 
-            if (!card_crypto.SequenceEqual(card_crypto_host))
-            {
-                throw new IOException("The card cryptogram was invalid");
-            }
-
             this.session = new Scp03CMacSession(cmac, session, key_mac, key_rmac, new byte[16]);
 
             var auth_req = new AuthenticateSessionReq
@@ -68,6 +63,11 @@ namespace libusb
                 host_crypto = host_crypto
             };
             this.session.SendCmd(auth_req);
+
+            if (!card_crypto.SequenceEqual(card_crypto_host))
+            {
+                throw new IOException("The card cryptogram was invalid");
+            }
         }
 
         public Scp03Session(Session session, ushort key_id, Session auth_session, ushort auth_key_id)

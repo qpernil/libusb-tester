@@ -92,11 +92,11 @@ namespace libusb_tester
                 using (var holder = pool.GetSession())
                 {
                     Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} using {holder.session}");
-                    var pub = Context.GetPubKey(holder.session, 7, out var algo).ToArray();
+                    var pub = Context.SignEcdh(holder.session, 7);
                 }
             }
         }
-        static void Run(string[] args)
+        static void Run1(string[] args)
         {
             using (var usb_ctx = new UsbContext())
             {
@@ -112,9 +112,12 @@ namespace libusb_tester
                     var wrapped_key = Context.ExportWrapped(scp03_sessions.First(), 2, ObjectType.AsymmetricKey, i).ToArray();
                     scp03_sessions.ForEach(s => Context.ImportWrapped(s, 2, wrapped_key, i));
                 }
-                Context.DeleteObject(scp03_sessions[0], 4, ObjectType.AsymmetricKey);
-                Context.DeleteObject(scp03_sessions[1], 5, ObjectType.AsymmetricKey);
-                Context.DeleteObject(scp03_sessions[2], 6, ObjectType.AsymmetricKey);
+                /*
+                Context.DeleteObject(scp03_sessions[0], 3, ObjectType.AsymmetricKey);
+                Context.DeleteObject(scp03_sessions[1], 4, ObjectType.AsymmetricKey);
+                Context.DeleteObject(scp03_sessions[2], 5, ObjectType.AsymmetricKey);
+                Context.DeleteObject(scp03_sessions[3], 6, ObjectType.AsymmetricKey);
+                */
                 var dict = new Dictionary<string, Key>();
                 var pool = new HsmPool();
                 foreach(var session in scp03_sessions)
@@ -145,14 +148,17 @@ namespace libusb_tester
                 {
                     threads.Add(new Thread(ThreadStart));
                 }
+                var start = DateTime.Now;
                 foreach (var t in threads) t.Start(pool);
                 foreach (var t in threads) t.Join();
+                var elapsed = DateTime.Now - start;
+                Console.WriteLine($"Peformed 10000 operations in {elapsed}");
                 scp03_sessions.ForEach(s => s.Dispose());
                 sessions.ForEach(s => s.Dispose());
                 devices.ForEach(s => s.Dispose());
             }
         }
-        static void Run1(string[] args)
+        static void Run(string[] args)
         {
             //var z = new NSRecord("DFFFFFFFFFFFFFFFFF7F8188818180bb5c424c1b3121cf630cbcbaf60fa91e53786d1ab9e8b6e5855acb9afbec944555481d88fcd8e32947f7696d80a8f4df55be51dcb967fc5ef3d213a971a11fee54917cbe10d4b6ba69a71ee1434ce6b6cadb46ceff0bbf2ba832cb5516af35a1debf182e0a57544a64bfe2d0f711cf94dffb44dda9d1d4a9abdf1460e783b6f18203010001");
             /*
@@ -197,17 +203,28 @@ namespace libusb_tester
                                     }
                                     var res = scp03_session.SendCmd(new PutAlgorithmToggleReq { data = opts.ToArray() });
                                     res = scp03_session.SendCmd(new PutFipsModeReq { fips = 1 });
-                                    */
                                     var fips = scp03_session.SendCmd(new GetFipsModeReq { });
                                     Console.WriteLine("GetFipsMode over scp03_session");
                                     foreach (var b in fips)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
+                                    */
                                     Context.PutOpaque(scp03_session, 0, new byte[254]);
                                     Context.PutAesKey(scp03_session, 4, new byte[16]);
-                                    var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16 * 125] });
+                                    var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16*125] });
                                     var decrypted = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
                                     var decrypted2 = scp03_session.SendCmd(new DecryptEcbReq { key_id = 4, data = encrypted.ToArray() });
+                                    /*
+                                    Console.WriteLine("Decrypted data");
+                                    foreach (var b in decrypted2.ToArray())
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+                                    var opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 });
+                                    Console.WriteLine("Opaque data");
+                                    foreach (var b in opaque.ToArray())
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+                                    */
                                     encrypted = scp03_session.SendCmd(new EncryptCbcReq { key_id = 4, iv = new byte[16], data = new byte[16 * 125] });
                                     decrypted = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
                                     decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
