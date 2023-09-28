@@ -92,7 +92,7 @@ namespace libusb_tester
                 using (var holder = pool.GetSession())
                 {
                     Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} using {holder.session}");
-                    var pub = Context.SignEcdh(holder.session, 7);
+                    var pub = Context.SignEddsa(holder.session, 7);
                 }
             }
         }
@@ -108,7 +108,7 @@ namespace libusb_tester
                 scp03_sessions.ForEach(s => Context.PutWrapKey(s, 2, wrap_key));
                 for (ushort i = 3; i < 10; i++)
                 {
-                    Context.GenerateEcdhKey(scp03_sessions.First(), i);
+                    Context.GenerateEd25519Key(scp03_sessions.First(), i);
                     var wrapped_key = Context.ExportWrapped(scp03_sessions.First(), 2, ObjectType.AsymmetricKey, i).ToArray();
                     scp03_sessions.ForEach(s => Context.ImportWrapped(s, 2, wrapped_key, i));
                 }
@@ -209,16 +209,33 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     */
-                                    Context.PutOpaque(scp03_session, 0, new byte[254]);
+                                    Context.PutOpaque(scp03_session, 3, new byte[254]);
                                     Context.PutAesKey(scp03_session, 4, new byte[16]);
                                     var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16*125] });
                                     var decrypted = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
                                     var decrypted2 = scp03_session.SendCmd(new DecryptEcbReq { key_id = 4, data = encrypted.ToArray() });
                                     /*
-                                    Console.WriteLine("Decrypted data");
-                                    foreach (var b in decrypted2.ToArray())
+                                    var encrypted2 = scp03_session.SendCmd(new WrapKwpReq { key_id = 4, data = new byte[1125] });
+                                    var decrypted3 = scp03_session.SendCmd(new UnwrapKwpReq { key_id = 4, data = encrypted2.ToArray() });
+
+                                    File.WriteAllBytes("kwp-wrapped", encrypted2.ToArray());
+                                    File.WriteAllBytes("kwp-unwrapped", decrypted3.ToArray());
+
+                                    Console.Write($"/opt/homebrew/opt/openssl@3/bin/openssl enc -d -id-aes128-wrap-pad -iv A65959A6 -K ");
+                                    foreach (var b in new byte[16])
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine(" -in kwp-wrapped");
+
+                                    Console.WriteLine($"KWP wrapped data {encrypted2.Length}");
+                                    foreach (var b in encrypted2.ToArray())
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
+                                    Console.WriteLine($"KWP unwrapped data {decrypted3.Length}");
+                                    foreach (var b in decrypted3.ToArray())
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+                                    */
+                                    /*
                                     var opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 });
                                     Console.WriteLine("Opaque data");
                                     foreach (var b in opaque.ToArray())
@@ -228,9 +245,30 @@ namespace libusb_tester
                                     encrypted = scp03_session.SendCmd(new EncryptCbcReq { key_id = 4, iv = new byte[16], data = new byte[16 * 125] });
                                     decrypted = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
                                     decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
-                                    var id = Context.PutEcdhKey(scp03_session, 4);
+                                    var id = Context.PutEcP256Key(scp03_session, 5);
+                                    Context.SignEcdsa(scp03_session, 5);
+                                    var id2 = Context.PutEd25519Key(scp03_session, 6);
+                                    Context.SignEddsa(scp03_session, 6);
+                                    var pub = BitConverter.ToString(Context.GetPubKey(scp03_session, 6, out var algo).ToArray()).Replace("-", string.Empty);
+                                    Console.WriteLine("EDDSA GetPubKey over scp03_session");
+                                    foreach (var b in pub)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+                                    var id3 = Context.GenerateEcP256Key(scp03_session, 7);
+                                    Context.SignEcdsa(scp03_session, 7);
+                                    var id4 = Context.GenerateEd25519Key(scp03_session, 8);
+                                    Context.SignEddsa(scp03_session, 8);
                                     Context.PutWrapKey(scp03_session, 2, new byte[32]);
-                                    Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 4);
+                                    Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 5);
+                                    var ed_key = Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 6).ToArray();
+                                    Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 7);
+                                    Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 8);
+                                    Context.ImportWrapped(scp03_session, 2, ed_key, 6);
+                                    Console.WriteLine("EDDSA After ImportWrapped over scp03_session");
+                                    pub = BitConverter.ToString(Context.GetPubKey(scp03_session, 6, out algo).ToArray()).Replace("-", string.Empty);
+                                    foreach (var b in pub)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.SymmetricKey, 4);
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.WrapKey, 2);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);

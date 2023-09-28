@@ -27,7 +27,7 @@ namespace libusb
             return session.SendCmd(delete_req);
         }
 
-        public static Span<byte> PutEcdhKey(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> PutEcP256Key(Session session, ushort key_id, bool delete = true)
         {
             if (delete)
             {
@@ -44,12 +44,12 @@ namespace libusb
             // ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632550
             // ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
-            var putecdh_req = new PutAsymmetricKeyReq
+            var putasym_req = new PutAsymmetricKeyReq
             {
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.SignEcdh | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
+                capabilities = Capability.SignEcdsa | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
                 algorithm = Algorithm.EC_P256,
                 key = new byte[] {
 //                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -62,7 +62,38 @@ namespace libusb
                     0xf3, 0xb9, 0xca, 0xc2, 0xfc, 0x63, 0x25, 0x50-8
                 }
             };
-            return session.SendCmd(putecdh_req);
+            return session.SendCmd(putasym_req);
+        }
+
+        public static Span<byte> PutEd25519Key(Session session, ushort key_id, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.AsymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var putasym_req = new PutAsymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.SignEddsa | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
+                algorithm = Algorithm.ED25519,
+                key = new byte[] {
+                    0x01, 0x02, 0x03, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    0xff, 0xff, 0xff, 0xff, 0xff, 0x04, 0x05, 0x06,
+                }
+            };
+            return session.SendCmd(putasym_req);
         }
 
         public static Span<byte> GenerateRsaKey(Session session, ushort key_id, bool delete = true)
@@ -79,7 +110,7 @@ namespace libusb
                 }
             }
 
-            var genrsa_req = new GenerateAsymmetricKeyReq
+            var genasym_req = new GenerateAsymmetricKeyReq
             {
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
@@ -87,10 +118,10 @@ namespace libusb
                 capabilities = Capability.SignPkcs | Capability.SignPss | Capability.Attest | Capability.ExportUnderWrap,
                 algorithm = Algorithm.RSA_2048,
             };
-            return session.SendCmd(genrsa_req);
+            return session.SendCmd(genasym_req);
         }
 
-        public static Span<byte> GenerateEcdhKey(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> GenerateEcP256Key(Session session, ushort key_id, bool delete = true)
         {
             if (delete)
             {
@@ -104,25 +135,60 @@ namespace libusb
                 }
             }
 
-            var genecdh_req = new GenerateAsymmetricKeyReq
+            var genasym_req = new GenerateAsymmetricKeyReq
             {
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.SignEcdh | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
+                capabilities = Capability.SignEcdsa | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
                 algorithm = Algorithm.EC_P256,
             };
-            return session.SendCmd(genecdh_req);
+            return session.SendCmd(genasym_req);
         }
 
-        public static Span<byte> SignEcdh(Session session, ushort key_id)
+        public static Span<byte> GenerateEd25519Key(Session session, ushort key_id, bool delete = true)
         {
-            var signecdh_req = new SignEcdsaReq
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.AsymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var genasym_req = new GenerateAsymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.SignEddsa | Capability.Attest | Capability.ExportUnderWrap,
+                algorithm = Algorithm.ED25519,
+            };
+            return session.SendCmd(genasym_req);
+        }
+
+        public static Span<byte> SignEcdsa(Session session, ushort key_id)
+        {
+            var signecdsa_req = new SignEcdsaReq
             {
                 key_id = key_id,
                 hash = new byte[20]
             };
-            return session.SendCmd(signecdh_req);
+            return session.SendCmd(signecdsa_req);
+        }
+
+        public static Span<byte> SignEddsa(Session session, ushort key_id)
+        {
+            var signeddsa_req = new SignEddsaReq
+            {
+                key_id = key_id,
+                hash = new byte[20]
+            };
+            return session.SendCmd(signeddsa_req);
         }
 
         public static Span<byte> GenerateAesKey(Session session, ushort key_id, bool delete = true)

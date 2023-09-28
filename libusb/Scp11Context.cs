@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
@@ -103,13 +105,13 @@ namespace libusb
 
         public X509Certificate GenerateCertificate(AsymmetricKeyParameter signer)
         {
-            IDictionary attrs = new Hashtable();
+            var attrs = new Dictionary<DerObjectIdentifier, string>();
             attrs[X509Name.E] = "some.one@yubico.com";
             attrs[X509Name.CN] = "Some One";
             attrs[X509Name.O] = "Yubico AB";
             attrs[X509Name.C] = "SE";
 
-            IList ord = new ArrayList();
+            var ord = new List<DerObjectIdentifier>();
             ord.Add(X509Name.E);
             ord.Add(X509Name.CN);
             ord.Add(X509Name.O);

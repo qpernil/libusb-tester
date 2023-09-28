@@ -36,13 +36,16 @@ namespace libusb
         ChangeAuthKey = 0x6c,
         PutSymmetricKey = 0x6d,
         GenerateSymmetricKey = 0x6e,
+        SignEddsa = 0x6a,
         DecryptEcb = 0x6f,
         EncryptEcb = 0x70,
         DecryptCbc = 0x71,
         EncryptCbc = 0x72,
-        GetClientPubKey = 0x73,
-        GetChallenge = 0x74,
-        ClientAuth = 0x75,
+        WrapKwp = 0x73,
+        UnwrapKwp = 0x74,
+        GetClientPubKey = 0x75,
+        GetChallenge = 0x76,
+        ClientAuth = 0x77,
         Error = 0x7f
     }
 
@@ -78,7 +81,8 @@ namespace libusb
         HmacKey = 5,
         SshTemplate = 6,
         OtpAeadKey = 7,
-        SymmetricKey = 8
+        SymmetricKey = 8,
+        PublicKey = 9
     }
 
     public enum Algorithm : byte
@@ -95,6 +99,7 @@ namespace libusb
         SCP_03 = 38,
         AES192_CCM_WRAP = 41,
         AES256_CCM_WRAP = 42,
+        ED25519 = 46,
         EC_P224 = 47,
         SCP_11 = 49,
         AES_128 = 50,
@@ -110,7 +115,8 @@ namespace libusb
         GenerateAsymmetricKey = 1ul << 0x04,
         SignPkcs = 1ul << 0x05,
         SignPss = 1ul << 0x06,
-        SignEcdh = 1ul << 0x07,
+        SignEcdsa = 1ul << 0x07,
+        SignEddsa = 1ul << 0x08,
         DeleteAsymmetricKey = 1ul << 0x09,
         DecryptEcdh = 1ul << 0x0b,
         ExportWrapped = 1ul << 0x0c,
@@ -436,6 +442,34 @@ namespace libusb
         }
     }
 
+    public class WrapKwpReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.WrapKwp;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(data.Span);
+        }
+    }
+
+    public class UnwrapKwpReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.UnwrapKwp;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(data.Span);
+        }
+    }
+
     public class ChangeAuthKeyReq : IWriteable
     {
         public ushort key_id;
@@ -660,6 +694,20 @@ namespace libusb
         public ReadOnlyMemory<byte> hash;
 
         public HsmCommand Command => HsmCommand.SignEcdsa;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(hash.Span);
+        }
+    }
+
+    public class SignEddsaReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> hash;
+
+        public HsmCommand Command => HsmCommand.SignEddsa;
 
         public void WriteTo(Stream s)
         {
