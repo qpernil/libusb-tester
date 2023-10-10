@@ -23,7 +23,9 @@ namespace libusb_tester
 
                         var keys = s.FindAllObjects(new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_PRIVATE_KEY),
                                                                                 factories.ObjectAttributeFactory.Create(CKA.CKA_KEY_TYPE, CKK.CKK_EC),
-                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_MODULUS_BITS, 256) });
+                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_MODULUS_BITS, 256),
+                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_EXTRACTABLE, false),
+                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_TOKEN, true)});
 
                         if (keys.Count > 0)
                         {
