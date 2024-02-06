@@ -40,7 +40,7 @@ namespace libusb
         }
 
         protected override Memory<byte> Key { get; }
-        protected override Algorithm Algo => Algorithm.SCP_03;
+        protected override Algorithm Algo => Algorithm.AES128_YUBICO_AUTHENTICATION;
 
         private readonly Random rand = Random.Shared;
         private readonly KeyParameter enc_key, mac_key;

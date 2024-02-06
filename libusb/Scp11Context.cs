@@ -103,7 +103,14 @@ namespace libusb
             return (ECPrivateKeyParameters)pair.Private;
         }
 
-        public X509Certificate GenerateCertificate(AsymmetricKeyParameter signer)
+        public static AsymmetricCipherKeyPair GenerateRsaKeyPair(int strength)
+        {
+            var generator = GeneratorUtilities.GetKeyPairGenerator("RSA");
+            generator.Init(new RsaKeyGenerationParameters(BigInteger.ValueOf(0x010001), new SecureRandom(), strength, 0));
+            return generator.GenerateKeyPair();
+        }
+
+        public static X509Certificate GenerateCertificate(AsymmetricKeyParameter pubkey, AsymmetricKeyParameter signer, string algo = "SHA256withECDSA")
         {
             var attrs = new Dictionary<DerObjectIdentifier, string>();
             attrs[X509Name.E] = "some.one@yubico.com";
@@ -124,11 +131,11 @@ namespace libusb
             certGen.SetNotBefore(DateTime.Today.Subtract(new TimeSpan(1, 0, 0, 0)));
             certGen.SetNotAfter(DateTime.Today.AddDays(365));
             certGen.SetSubjectDN(new X509Name(ord, attrs));
-            certGen.SetPublicKey(pk_oce);
+            certGen.SetPublicKey(pubkey);
             certGen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true));
-            certGen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pk_oce)));
+            certGen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubkey)));
 
-            return certGen.Generate(new Asn1SignatureFactory("SHA256withECDSA", signer));
+            return certGen.Generate(new Asn1SignatureFactory(algo, signer));
         }
 
         public Scp11Session CreateSession(Session session, ushort key_id)
@@ -137,7 +144,7 @@ namespace libusb
         }
 
         protected override Memory<byte> Key => (pk_oce ?? pk_sd).Q.GetEncoded().AsMemory(1);
-        protected override Algorithm Algo => Algorithm.SCP_11;
+        protected override Algorithm Algo => Algorithm.EC_P256_YUBICO_AUTHENTICATION;
 
         public readonly ECDomainParameters domain;
         public readonly IAsymmetricCipherKeyPairGenerator generator;

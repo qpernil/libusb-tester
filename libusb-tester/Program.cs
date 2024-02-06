@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using libusb;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace libusb_tester
 {
@@ -158,6 +159,16 @@ namespace libusb_tester
                 devices.ForEach(s => s.Dispose());
             }
         }
+        static Algorithm AlgoFromBitLength(int bitlength)
+        {
+            switch(bitlength)
+            {
+                case 2048: return Algorithm.RSA_2048;
+                case 3072: return Algorithm.RSA_3072;
+                case 4096: return Algorithm.RSA_4096;
+                default: throw new IOException($"Invalid RSA bitlength {bitlength}");
+            }
+        }
         static void Run(string[] args)
         {
             //var z = new NSRecord("DFFFFFFFFFFFFFFFFF7F8188818180bb5c424c1b3121cf630cbcbaf60fa91e53786d1ab9e8b6e5855acb9afbec944555481d88fcd8e32947f7696d80a8f4df55be51dcb967fc5ef3d213a971a11fee54917cbe10d4b6ba69a71ee1434ce6b6cadb46ceff0bbf2ba832cb5516af35a1debf182e0a57544a64bfe2d0f711cf94dffb44dda9d1d4a9abdf1460e783b6f18203010001");
@@ -197,11 +208,17 @@ namespace libusb_tester
                                     //scp03_session.SendCmd(HsmCommand.Reset);
                                     /*
                                     var opts = scp03_session.SendCmd(new GetAlgorithmToggleReq { });
-                                    for(int i = 1; i < opts.Length; i += 2)
+                                    for(int i = 0; i < opts.Length; i += 2)
                                     {
-                                        opts[i] = 1;
+                                        Console.WriteLine($"{opts[i]}:{opts[i + 1]:x2}");
+                                        opts[i + 1] = opts[i] == (byte)Algorithm.AES128_YUBICO_AUTHENTICATION ? (byte)0 : (byte)1;
                                     }
+                                    Console.WriteLine();
+                                    var scp11_context = new Pkcs11Scp11Context(scp03_session);
                                     var res = scp03_session.SendCmd(new PutAlgorithmToggleReq { data = opts.ToArray() });
+                                    scp11_context.PutAuthKey(scp03_session, 0);
+                                    scp03_context.PutAuthKey(scp03_session, 0);
+                                    
                                     res = scp03_session.SendCmd(new PutFipsModeReq { fips = 1 });
                                     var fips = scp03_session.SendCmd(new GetFipsModeReq { });
                                     Console.WriteLine("GetFipsMode over scp03_session");
@@ -285,7 +302,15 @@ namespace libusb_tester
                                     context.PutAuthKey(scp03_session, 3); // Device pubkey in 3
                                     var sk_oce = context.GenerateKeyPair();
                                     //usb_session.SendCmd(new SetAttestKeyReq { algorithm = Algorithm.EC_P256, key = sk_oce.D.ToByteArrayFixed() });
-                                    //usb_session.SendCmd(new SetAttestCertReq { cert = context.GenerateCertificate(sk_oce).GetEncoded() });
+                                    //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(context.pk_oce, sk_oce).GetEncoded() });
+                                    var pair = Scp11Context.GenerateRsaKeyPair(4096);
+                                    var crt = (RsaPrivateCrtKeyParameters)pair.Private;
+                                    Console.WriteLine(crt.Modulus.BitLength);
+                                    var p = crt.P.ToByteArrayFixed(crt.Modulus.BitLength / 16);
+                                    var q = crt.Q.ToByteArrayFixed(crt.Modulus.BitLength / 16);
+                                    Scp11Context.PutRsaKey(scp03_session, 0, Algorithm.RSA_4096, p.Concat(q).ToArray());
+                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = AlgoFromBitLength(crt.Modulus.BitLength), key = p.Concat(q).ToArray() });
+                                    //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(pair.Public, pair.Private, "SHA256withRSA").GetEncoded() });
                                     //context.SetDefaultKey(usb_session);
                                     context.PutAuthKey(scp03_session, 2);
                                     using (var scp11_session = context.CreateSession(usb_session, 2))

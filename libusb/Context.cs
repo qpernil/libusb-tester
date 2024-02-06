@@ -96,6 +96,32 @@ namespace libusb
             return session.SendCmd(putasym_req);
         }
 
+        public static Span<byte> PutRsaKey(Session session, ushort key_id, Algorithm algorithm, ReadOnlyMemory<byte> key, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.AsymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var putasym_req = new PutAsymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.SignPkcs | Capability.SignPss | Capability.Attest | Capability.ExportUnderWrap,
+                algorithm = algorithm,
+                key = key
+            };
+            return session.SendCmd(putasym_req);
+        }
+
         public static Span<byte> GenerateRsaKey(Session session, ushort key_id, bool delete = true)
         {
             if (delete)
