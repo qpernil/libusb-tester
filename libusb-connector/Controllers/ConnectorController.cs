@@ -12,10 +12,10 @@ namespace libusb_connector.Controllers
     public class ConnectorController : ControllerBase
     {
         private readonly ILogger<ConnectorController> logger;
-        private readonly UsbHolder holder;
-        private readonly UsbContext usb;
+        private readonly FakeUsbHolder holder;
+        private readonly FakeUsbContext usb;
 
-        public ConnectorController(ILogger<ConnectorController> logger, UsbHolder holder, UsbContext usb)
+        public ConnectorController(ILogger<ConnectorController> logger, FakeUsbHolder holder, FakeUsbContext usb)
         {
             this.logger = logger;
             this.holder = holder;
@@ -24,12 +24,12 @@ namespace libusb_connector.Controllers
 
         [HttpGet]
         [Route("devices")]
-        public IEnumerable<UsbDescriptor> Devices()
+        public IEnumerable<FakeUsbDescriptor> Devices()
         {
             return usb.GetDeviceList();
         }
 
-        private string GetSerial(UsbDescriptor info)
+        private string GetSerial(FakeUsbDescriptor info)
         {
             using (var device = usb.Open(info, 1))
             {
