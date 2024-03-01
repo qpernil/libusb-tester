@@ -3,7 +3,6 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using libusb;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -197,10 +196,15 @@ namespace libusb_tester
                             Console.WriteLine($"Manufacturer '{usb_device.Manufacturer}' Product '{usb_device.Product}' Serial '{usb_device.SerialNumber}'");
                             using (var usb_session = usb_device.Claim(0))
                             {
-                                //usb_session.SendCmd(HsmCommand.Bsl);
-                                //usb_session.SendCmd(new SetFipsDeviceReq { fips = 1 });
                                 //usb_session.SendCmd(new SetSerialReq { serial = 12345 });
+                                //usb_session.SendCmd(new SetBslCodeReq { code = new byte[16] });
+                                //usb_session.SendCmd(new SetBslCodeReq { code = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } });
+                                //usb_session.SendCmd(HsmCommand.Bsl);
+                                //usb_session.SendCmd(new BslReq { code = new byte[16] });
+                                //usb_session.SendCmd(new BslReq { code = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 } });
+                                //usb_session.SendCmd(new SetFipsDeviceReq { fips = 1 });
                                 //usb_session.SendCmd(new SetDemoModeReq { demo = 0xffff });
+                                //usb_session.SendCmd(new SetFuseReq());
                                 var resp = usb_session.SendCmd(HsmCommand.Echo, new byte[] { 1, 2, 3, 4, 5 });
 
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
@@ -227,10 +231,12 @@ namespace libusb_tester
                                     Console.WriteLine();
                                     */
                                     Context.PutOpaque(scp03_session, 3, new byte[254]);
+                                    /*
                                     Context.PutAesKey(scp03_session, 4, new byte[16]);
                                     var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16*125] });
                                     var decrypted = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
                                     var decrypted2 = scp03_session.SendCmd(new DecryptEcbReq { key_id = 4, data = encrypted.ToArray() });
+                                    */
                                     /*
                                     var encrypted2 = scp03_session.SendCmd(new WrapKwpReq { key_id = 4, data = new byte[1125] });
                                     var decrypted3 = scp03_session.SendCmd(new UnwrapKwpReq { key_id = 4, data = encrypted2.ToArray() });
@@ -259,9 +265,11 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     */
+                                    /*
                                     encrypted = scp03_session.SendCmd(new EncryptCbcReq { key_id = 4, iv = new byte[16], data = new byte[16 * 125] });
                                     decrypted = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
                                     decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
+                                    */
                                     var id = Context.PutEcP256Key(scp03_session, 5);
                                     Context.SignEcdsa(scp03_session, 5);
                                     var id2 = Context.PutEd25519Key(scp03_session, 6);
@@ -286,7 +294,7 @@ namespace libusb_tester
                                     foreach (var b in pub)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-                                    Context.ExportWrapped(scp03_session, 2, ObjectType.SymmetricKey, 4);
+                                    //Context.ExportWrapped(scp03_session, 2, ObjectType.SymmetricKey, 4);
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.WrapKey, 2);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
@@ -303,13 +311,13 @@ namespace libusb_tester
                                     var sk_oce = context.GenerateKeyPair();
                                     //usb_session.SendCmd(new SetAttestKeyReq { algorithm = Algorithm.EC_P256, key = sk_oce.D.ToByteArrayFixed() });
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(context.pk_oce, sk_oce).GetEncoded() });
-                                    var pair = Scp11Context.GenerateRsaKeyPair(4096);
+                                    var pair = Scp11Context.GenerateRsaKeyPair(2048);
                                     var crt = (RsaPrivateCrtKeyParameters)pair.Private;
                                     Console.WriteLine(crt.Modulus.BitLength);
                                     var p = crt.P.ToByteArrayFixed(crt.Modulus.BitLength / 16);
                                     var q = crt.Q.ToByteArrayFixed(crt.Modulus.BitLength / 16);
-                                    Scp11Context.PutRsaKey(scp03_session, 0, Algorithm.RSA_4096, p.Concat(q).ToArray());
-                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = AlgoFromBitLength(crt.Modulus.BitLength), key = p.Concat(q).ToArray() });
+                                    Context.PutRsaKey(scp03_session, 0, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
+                                    //usb_session.SendCmd(new SetAttestKeyReq { algorithm = AlgoFromBitLength(crt.Modulus.BitLength), key = q.Concat(p).ToArray() });
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(pair.Public, pair.Private, "SHA256withRSA").GetEncoded() });
                                     //context.SetDefaultKey(usb_session);
                                     context.PutAuthKey(scp03_session, 2);

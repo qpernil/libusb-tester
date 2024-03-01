@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Text;
-using Org.BouncyCastle.Utilities.Zlib;
 
 namespace libusb
 {

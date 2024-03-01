@@ -41,12 +41,13 @@ namespace libusb
         EncryptEcb = 0x70,
         DecryptCbc = 0x71,
         EncryptCbc = 0x72,
-        WrapKwp = 0x73,
-        UnwrapKwp = 0x74,
-        GetClientPubKey = 0x75,
-        GetChallenge = 0x76,
-        ClientAuth = 0x77,
-        Error = 0x7f
+        // Fake command codes for now
+        WrapKwp = 0x30,
+        UnwrapKwp = 0x31,
+        GetClientPubKey = 0x32,
+        GetChallenge = 0x33,
+        ClientAuth = 0x34,
+        Error = 0x35
     }
 
     public enum HsmError : byte
@@ -575,7 +576,7 @@ namespace libusb
 
         public void WriteTo(Stream s)
         {
-            s.WriteByte(7);
+            s.WriteByte(0x07);
             s.Write((ulong)delegated_caps);
             s.Write(key.Span);
         }
@@ -590,7 +591,7 @@ namespace libusb
 
         public void WriteTo(Stream s)
         {
-            s.WriteByte(4);
+            s.WriteByte(0x04);
             s.WriteByte((byte)algorithm);
             s.Write(key.Span);
         }
@@ -604,7 +605,7 @@ namespace libusb
 
         public void WriteTo(Stream s)
         {
-            s.WriteByte(5);
+            s.WriteByte(0x05);
             s.Write(cert.Span);
         }
     }
@@ -617,7 +618,7 @@ namespace libusb
 
         public void WriteTo(Stream s)
         {
-            s.WriteByte(1);
+            s.WriteByte(0x01);
             s.Write(serial);
         }
     }
@@ -630,7 +631,7 @@ namespace libusb
 
         public void WriteTo(Stream s)
         {
-            s.WriteByte(2);
+            s.WriteByte(0x02);
             s.Write(demo);
         }
     }
@@ -645,6 +646,41 @@ namespace libusb
         {
             s.WriteByte(0x0a);
             s.WriteByte(fips);
+        }
+    }
+
+    public class SetFuseReq : IWriteable
+    {
+        public HsmCommand Command => HsmCommand.SetInformation;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(0x06);
+        }
+    }
+
+    public class SetBslCodeReq : IWriteable
+    {
+        public ReadOnlyMemory<byte> code;
+
+        public HsmCommand Command => HsmCommand.SetInformation;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(0x03);
+            s.Write(code.Span);
+        }
+    }
+
+    public class BslReq : IWriteable
+    {
+        public ReadOnlyMemory<byte> code;
+
+        public HsmCommand Command => HsmCommand.Bsl;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(code.Span);
         }
     }
 

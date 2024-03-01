@@ -26,8 +26,14 @@ namespace libusb
 
             var sw = Stopwatch.StartNew();
             Console.WriteLine($"{GetType().Name}.SendCmd {cmd} {input.Length + 3} bytes...");
+            foreach (var b in mem.AsSpan(0, input.Length + 3))
+                Console.Write($"{b:x2}");
+            Console.WriteLine();
             var ret = Transfer(mem, input.Length + 3);
             Console.WriteLine($"{GetType().Name}.SendCmd {cmd} returned {ret.Length} bytes in {sw.Elapsed.TotalMilliseconds}ms.");
+            foreach (var b in ret)
+                Console.Write($"{b:x2}");
+            Console.WriteLine();
 
             if (ret[0] != ((byte)cmd | 0x80))
             {
