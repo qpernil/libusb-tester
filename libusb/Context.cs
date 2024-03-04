@@ -357,13 +357,14 @@ namespace libusb
             return session.SendCmd(putwrap_req);
         }
 
-        public static Span<byte> ExportWrapped(Session session, ushort key_id, ObjectType target_type, ushort target_key)
+        public static Span<byte> ExportWrapped(Session session, ushort key_id, ObjectType target_type, ushort target_key, byte format = 0)
         {
             var exportwrapped_req = new ExportWrappedReq
             {
                 key_id = key_id,
                 target_type = target_type,
-                target_key = target_key
+                target_key = target_key,
+                format = format
             };
             return session.SendCmd(exportwrapped_req);
         }

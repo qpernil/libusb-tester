@@ -275,7 +275,7 @@ namespace libusb_tester
                                     var id2 = Context.PutEd25519Key(scp03_session, 6);
                                     Context.SignEddsa(scp03_session, 6);
                                     var pub = BitConverter.ToString(Context.GetPubKey(scp03_session, 6, out var algo).ToArray()).Replace("-", string.Empty);
-                                    Console.WriteLine("EDDSA GetPubKey over scp03_session");
+                                    Console.WriteLine($"{algo} GetPubKey over scp03_session");
                                     foreach (var b in pub)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
@@ -289,8 +289,8 @@ namespace libusb_tester
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 7);
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 8);
                                     Context.ImportWrapped(scp03_session, 2, ed_key, 6);
-                                    Console.WriteLine("EDDSA After ImportWrapped over scp03_session");
                                     pub = BitConverter.ToString(Context.GetPubKey(scp03_session, 6, out algo).ToArray()).Replace("-", string.Empty);
+                                    Console.WriteLine($"{algo} After ImportWrapped over scp03_session");
                                     foreach (var b in pub)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();

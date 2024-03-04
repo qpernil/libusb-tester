@@ -192,6 +192,7 @@ namespace libusb
         public ushort key_id;
         public ObjectType target_type;
         public ushort target_key;
+        public byte format;
 
         public HsmCommand Command => HsmCommand.ExportWrapped;
 
@@ -200,6 +201,10 @@ namespace libusb
             s.Write(key_id);
             s.WriteByte((byte)target_type);
             s.Write(target_key);
+            if (format != 0)
+            {
+                s.WriteByte(format);
+            }
         }
     }
 
