@@ -172,12 +172,12 @@ namespace libusb_tester
         {
             //var z = new NSRecord("DFFFFFFFFFFFFFFFFF7F8188818180bb5c424c1b3121cf630cbcbaf60fa91e53786d1ab9e8b6e5855acb9afbec944555481d88fcd8e32947f7696d80a8f4df55be51dcb967fc5ef3d213a971a11fee54917cbe10d4b6ba69a71ee1434ce6b6cadb46ceff0bbf2ba832cb5516af35a1debf182e0a57544a64bfe2d0f711cf94dffb44dda9d1d4a9abdf1460e783b6f18203010001");
             /*
-            var x = new PCSC();
+            var x = new PCSC("/Users/PNilsson/Firmware/YkPlus/yubi-ifx-common/sim/ykplus/build/libykplus-pcsc.dylib");
             var prc = x.establish_context(PCSC.SCARD_SCOPE_SYSTEM, IntPtr.Zero, IntPtr.Zero, out var pctx);
             var buf = new byte[512];
             int cb = 512;
             prc = x.list_readers(pctx, null, buf, ref cb);
-            var s = Encoding.UTF8.GetString(buf[0..cb]);
+            var s = Encoding.UTF8.GetString(buf, 0, cb);
             Console.WriteLine(s);
             prc = x.release_context(pctx);
             */

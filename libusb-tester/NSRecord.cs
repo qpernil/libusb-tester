@@ -37,7 +37,7 @@ namespace libusb_tester
         static MemoryStream FromString(string s)
         {
             var st = new MemoryStream();
-            for (int i = 0; i < s.Length; i += 2)
+            for (int i = 0; i < s.Length - 1; i += 2)
             {
                 var b = HexVal(s[i]);
                 b <<= 4;

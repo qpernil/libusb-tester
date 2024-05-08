@@ -21,9 +21,9 @@ namespace libusb
 
         public const uint SCARD_SCOPE_SYSTEM = 2;
 
-        public PCSC()
+        public PCSC(string library = null)
         {
-            pcsc = new SafeNativeLibrary("winscard", "/System/Library/Frameworks/PCSC.framework/PCSC", "pcsclite");
+            pcsc = new SafeNativeLibrary(library ?? "winscard", library ?? "/System/Library/Frameworks/PCSC.framework/PCSC", library ?? "pcsclite");
             pcsc.GetExport(out establish_context);
             pcsc.GetExport(out release_context);
             pcsc.GetExport(out list_readers);
