@@ -105,7 +105,7 @@ namespace libusb_tester
                 var sessions = devices.Select(d => d.Claim(0)).ToList();
                 var scp03_sessions = sessions.Select(s => scp03_context.CreateSession(s, 1)).ToList();
                 var wrap_key = scp03_context.RandBytes(32);
-                scp03_sessions.ForEach(s => Context.PutWrapKey(s, 2, wrap_key));
+                scp03_sessions.ForEach(s => Context.PutWrapKey(s, 2, Algorithm.AES256_CCM_WRAP, wrap_key));
                 for (ushort i = 3; i < 10; i++)
                 {
                     Context.GenerateEd25519Key(scp03_sessions.First(), i);
@@ -283,7 +283,7 @@ namespace libusb_tester
                                     Context.SignEcdsa(scp03_session, 7);
                                     var id4 = Context.GenerateEd25519Key(scp03_session, 8);
                                     Context.SignEddsa(scp03_session, 8);
-                                    Context.PutWrapKey(scp03_session, 2, new byte[32]);
+                                    Context.PutWrapKey(scp03_session, 2, Algorithm.AES256_CCM_WRAP, new byte[32]);
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 5);
                                     var ed_key = Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 6).ToArray();
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 7);
@@ -312,11 +312,15 @@ namespace libusb_tester
                                     //usb_session.SendCmd(new SetAttestKeyReq { algorithm = Algorithm.EC_P256, key = sk_oce.D.ToByteArrayFixed() });
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(context.pk_oce, sk_oce).GetEncoded() });
                                     var pair = Scp11Context.GenerateRsaKeyPair(2048);
+                                    var rsa = (RsaKeyParameters)pair.Public;
                                     var crt = (RsaPrivateCrtKeyParameters)pair.Private;
-                                    Console.WriteLine(crt.Modulus.BitLength);
-                                    var p = crt.P.ToByteArrayFixed(crt.Modulus.BitLength / 16);
-                                    var q = crt.Q.ToByteArrayFixed(crt.Modulus.BitLength / 16);
+                                    var p = crt.P.ToByteArrayUnsigned();
+                                    var q = crt.Q.ToByteArrayUnsigned();
                                     Context.PutRsaKey(scp03_session, 0, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
+                                    Context.PutPublicWrapKey(scp03_session, 555, AlgoFromBitLength(rsa.Modulus.BitLength), rsa.Modulus.ToByteArrayUnsigned());
+                                    var wrapped = Context.ExportWrapped(scp03_session, 2, ObjectType.PublicWrapKey, 555).ToArray();
+                                    Context.DeleteObject(scp03_session, 555, ObjectType.PublicWrapKey);
+                                    Context.ImportWrapped(scp03_session, 2, wrapped);
                                     //usb_session.SendCmd(new SetAttestKeyReq { algorithm = AlgoFromBitLength(crt.Modulus.BitLength), key = q.Concat(p).ToArray() });
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(pair.Public, pair.Private, "SHA256withRSA").GetEncoded() });
                                     //context.SetDefaultKey(usb_session);

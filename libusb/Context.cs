@@ -330,7 +330,7 @@ namespace libusb
             session.SendCmd(req);
         }
 
-        public static Span<byte> PutWrapKey(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
+        public static Span<byte> PutWrapKey(Session session, ushort key_id, Algorithm algorithm, ReadOnlyMemory<byte> key, bool delete = true)
         {
             if (delete)
             {
@@ -350,7 +350,34 @@ namespace libusb
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
                 capabilities = (Capability)0xffffffffffffffff,
-                algorithm = Algorithm.AES256_CCM_WRAP,
+                algorithm = algorithm,
+                delegated_caps = (Capability)0xffffffffffffffff,
+                key = key
+            };
+            return session.SendCmd(putwrap_req);
+        }
+
+        public static Span<byte> PutPublicWrapKey(Session session, ushort key_id, Algorithm algorithm, ReadOnlyMemory<byte> key, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.PublicWrapKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var putwrap_req = new PutPublicWrapKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = (Capability)0xffffffffffffffff,
+                algorithm = algorithm,
                 delegated_caps = (Capability)0xffffffffffffffff,
                 key = key
             };

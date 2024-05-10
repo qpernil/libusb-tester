@@ -41,6 +41,7 @@ namespace libusb
         EncryptEcb = 0x70,
         DecryptCbc = 0x71,
         EncryptCbc = 0x72,
+        PutPublicWrapKey = 0x73,
         // Fake command codes for now
         WrapKwp = 0x30,
         UnwrapKwp = 0x31,
@@ -83,7 +84,7 @@ namespace libusb
         SshTemplate = 6,
         OtpAeadKey = 7,
         SymmetricKey = 8,
-        PublicKey = 9
+        PublicWrapKey = 9
     }
 
     public enum Algorithm : byte
@@ -174,6 +175,30 @@ namespace libusb
         public ReadOnlyMemory<byte> key; // 61
 
         public HsmCommand Command => HsmCommand.PutWrapKey;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(label.Span);
+            s.Write(domains);
+            s.Write((ulong)capabilities);
+            s.WriteByte((byte)algorithm);
+            s.Write((ulong)delegated_caps);
+            s.Write(key.Span);
+        }
+    }
+
+    public class PutPublicWrapKeyReq : IWriteable
+    {
+        public ushort key_id; // 0
+        public ReadOnlyMemory<byte> label; // 2
+        public ushort domains; // 42
+        public Capability capabilities; // 44
+        public Algorithm algorithm; // 52
+        public Capability delegated_caps; // 53
+        public ReadOnlyMemory<byte> key; // 61
+
+        public HsmCommand Command => HsmCommand.PutPublicWrapKey;
 
         public void WriteTo(Stream s)
         {

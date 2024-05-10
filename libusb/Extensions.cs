@@ -13,11 +13,14 @@ namespace libusb
         public static byte[] ToByteArrayFixed(this BigInteger num, int size = 32)
         {
             var ret = num.ToByteArrayUnsigned();
-            if(ret.Length != size)
+            if(ret.Length < size)
             {
                 var bytes = new byte[size];
                 ret.CopyTo(bytes, size - ret.Length);
                 return bytes;
+            } else if(ret.Length > size)
+            {
+                return ret.AsSpan(0, size).ToArray();
             }
             return ret;
         }
