@@ -396,13 +396,13 @@ namespace libusb
             return session.SendCmd(exportwrapped_req);
         }
 
-        public static Span<byte> ImportWrapped(Session session, ushort key_id, ReadOnlyMemory<byte> wrapped_key, ushort delete = 0)
+        public static Span<byte> ImportWrapped(Session session, ushort key_id, ReadOnlyMemory<byte> wrapped_key, ObjectType type = ObjectType.None, ushort delete = 0)
         {
             if (delete > 0)
             {
                 try
                 {
-                    DeleteObject(session, delete, ObjectType.AsymmetricKey);
+                    DeleteObject(session, delete, type);
                 }
                 catch (IOException e)
                 {
@@ -413,6 +413,45 @@ namespace libusb
             {
                 key_id = key_id,
                 wrapped_key = wrapped_key
+            };
+            return session.SendCmd(importwrapped_req);
+        }
+
+        public static Span<byte> ExportRsaWrapped(Session session, ushort key_id, ObjectType target_type, ushort target_key, Algorithm aes_algo, Algorithm hash_algo, Algorithm mgf_algo, ReadOnlyMemory<byte> digest)
+        {
+            var exportwrapped_req = new ExportRsaWrappedReq
+            {
+                key_id = key_id,
+                target_type = target_type,
+                target_key = target_key,
+                aes_algorithm = aes_algo,
+                hash_algorithm = hash_algo,
+                mgf_algorithm = mgf_algo,
+                digest = digest
+            };
+            return session.SendCmd(exportwrapped_req);
+        }
+
+        public static Span<byte> ImportRsaWrapped(Session session, ushort key_id, Algorithm hash_algo, Algorithm mgf_algo, ReadOnlyMemory<byte> wrapped_key, ReadOnlyMemory<byte> digest, ObjectType type = ObjectType.None, ushort delete = 0)
+        {
+            if (delete > 0)
+            {
+                try
+                {
+                    DeleteObject(session, delete, type);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+            var importwrapped_req = new ImportRsaWrappedReq
+            {
+                key_id = key_id,
+                hash_algorithm = hash_algo,
+                mgf_algorithm = mgf_algo,
+                wrapped_key = wrapped_key,
+                digest = digest
             };
             return session.SendCmd(importwrapped_req);
         }

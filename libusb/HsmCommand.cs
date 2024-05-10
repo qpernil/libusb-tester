@@ -42,6 +42,10 @@ namespace libusb
         DecryptCbc = 0x71,
         EncryptCbc = 0x72,
         PutPublicWrapKey = 0x73,
+        GetRsaWrapped = 0x74,
+        PutRsaWrapped = 0x75,
+        ExportRsaWrapped = 0x76,
+        ImportRsaWrapped = 0x77,
         // Fake command codes for now
         WrapKwp = 0x30,
         UnwrapKwp = 0x31,
@@ -76,6 +80,7 @@ namespace libusb
 
     public enum ObjectType : byte
     {
+        None = 0,
         Opaque = 1,
         AuthenticationKey = 2,
         AsymmetricKey = 3,
@@ -95,9 +100,17 @@ namespace libusb
         EC_P256 = 12,
         EC_P384 = 13,
         EC_P521 = 14,
+        RSA_OAEP_SHA1 = 25,
+        RSA_OAEP_SHA256 = 26,
+        RSA_OAEP_SHA384 = 27,
+        RSA_OAEP_SHA512 = 28,
         AES128_CCM_WRAP = 29,
         OPAQUE_DATA = 30,
         OPAQUE_X509_CERT = 31,
+        MGF1_SHA1 = 32,
+        MGF1_SHA256 = 33,
+        MGF1_SHA384 = 34,
+        MGF1_SHA512 = 35,
         AES128_YUBICO_AUTHENTICATION = 38,
         AES192_CCM_WRAP = 41,
         AES256_CCM_WRAP = 42,
@@ -244,6 +257,50 @@ namespace libusb
         {
             s.Write(key_id);
             s.Write(wrapped_key.Span);
+        }
+    }
+
+    public class ExportRsaWrappedReq : IWriteable
+    {
+        public ushort key_id;
+        public ObjectType target_type;
+        public ushort target_key;
+        public Algorithm aes_algorithm;
+        public Algorithm hash_algorithm;
+        public Algorithm mgf_algorithm;
+        public ReadOnlyMemory<byte> digest;
+        
+        public HsmCommand Command => HsmCommand.ExportRsaWrapped;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte((byte)target_type);
+            s.Write(target_key);
+            s.WriteByte((byte)aes_algorithm);
+            s.WriteByte((byte)hash_algorithm);
+            s.WriteByte((byte)mgf_algorithm);
+            s.Write(digest.Span);
+        }
+    }
+
+    public class ImportRsaWrappedReq : IWriteable
+    {
+        public ushort key_id;
+        public Algorithm hash_algorithm;
+        public Algorithm mgf_algorithm;
+        public ReadOnlyMemory<byte> wrapped_key;
+        public ReadOnlyMemory<byte> digest;
+
+        public HsmCommand Command => HsmCommand.ImportRsaWrapped;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte((byte)hash_algorithm);
+            s.WriteByte((byte)mgf_algorithm);
+            s.Write(wrapped_key.Span);
+            s.Write(digest.Span);
         }
     }
 
