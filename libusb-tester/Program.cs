@@ -316,6 +316,9 @@ namespace libusb_tester
                                     var crt = (RsaPrivateCrtKeyParameters)pair.Private;
                                     var p = crt.P.ToByteArrayUnsigned();
                                     var q = crt.Q.ToByteArrayUnsigned();
+                                    Context.PutRsaKey(scp03_session, 4, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
+                                    Context.SignPkcs1(scp03_session, 4);
+                                    Context.SignPss(scp03_session, 4);
                                     var n = crt.Modulus.ToByteArrayUnsigned();
                                     Console.WriteLine($"<<<<< {p.Length} {q.Length} {n.Length}");
                                     Context.PutWrapKey(scp03_session, 555, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());

@@ -20,6 +20,7 @@ namespace libusb
         PutAuthKey = 0x44,
         PutAsymmetricKey = 0x45,
         GenerateAsymmetricKey = 0x46,
+        SignPkcs1 = 0x47,
         ListObjects = 0x48,
         ExportWrapped = 0x4a,
         ImportWrapped = 0x4b,
@@ -29,6 +30,7 @@ namespace libusb
         GetOption = 0x50,
         GetPseudoRandom = 0x51,
         GetPubKey = 0x54,
+        SignPss = 0x55,
         SignEcdsa = 0x56,
         DecryptEcdh = 0x57,
         DeleteObject = 0x58,
@@ -808,6 +810,38 @@ namespace libusb
         {
             s.Write(key_id);
             s.Write(attest_id);
+        }
+    }
+
+    public class SignPkcs1Req : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> hash;
+
+        public HsmCommand Command => HsmCommand.SignPkcs1;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(hash.Span);
+        }
+    }
+
+    public class SignPssReq : IWriteable
+    {
+        public ushort key_id;
+        public Algorithm mgf_algorithm;
+        public ushort salt_len;
+        public ReadOnlyMemory<byte> hash;
+
+        public HsmCommand Command => HsmCommand.SignPss;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte((byte)mgf_algorithm);
+            s.Write(salt_len);
+            s.Write(hash.Span);
         }
     }
 

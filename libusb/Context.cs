@@ -195,6 +195,28 @@ namespace libusb
             return session.SendCmd(genasym_req);
         }
 
+        public static Span<byte> SignPkcs1(Session session, ushort key_id)
+        {
+            var signecdsa_req = new SignPkcs1Req
+            {
+                key_id = key_id,
+                hash = new byte[20]
+            };
+            return session.SendCmd(signecdsa_req);
+        }
+
+        public static Span<byte> SignPss(Session session, ushort key_id)
+        {
+            var signecdsa_req = new SignPssReq
+            {
+                key_id = key_id,
+                mgf_algorithm = Algorithm.MGF1_SHA1,
+                salt_len = 20,
+                hash = new byte[20]
+            };
+            return session.SendCmd(signecdsa_req);
+        }
+
         public static Span<byte> SignEcdsa(Session session, ushort key_id)
         {
             var signecdsa_req = new SignEcdsaReq
