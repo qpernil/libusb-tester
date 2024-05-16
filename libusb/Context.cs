@@ -288,7 +288,7 @@ namespace libusb
             return session.SendCmd(req);
         }
 
-        public static Span<byte> PutOpaque(Session session, ushort object_id, ReadOnlyMemory<byte> data, bool delete = true)
+        public static Span<byte> PutOpaque(Session session, ushort object_id, Algorithm algorithm, ReadOnlyMemory<byte> data, bool delete = true)
         {
             if (delete)
             {
@@ -308,7 +308,7 @@ namespace libusb
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
                 capabilities = Capability.ExportUnderWrap,
-                algorithm = Algorithm.OPAQUE_DATA,
+                algorithm = algorithm,
                 data = data
             };
             return session.SendCmd(req);

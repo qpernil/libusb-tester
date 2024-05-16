@@ -230,7 +230,7 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     */
-                                    Context.PutOpaque(scp03_session, 3, new byte[254]);
+                                    Context.PutOpaque(scp03_session, 3, Algorithm.OPAQUE_DATA, new byte[254]);
                                     /*
                                     Context.PutAesKey(scp03_session, 4, new byte[16]);
                                     var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16*125] });
@@ -317,6 +317,11 @@ namespace libusb_tester
                                     var p = crt.P.ToByteArrayUnsigned();
                                     var q = crt.Q.ToByteArrayUnsigned();
                                     Context.PutRsaKey(scp03_session, 4, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
+                                    var attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 0, attest_id = 0 }).ToArray();
+                                    File.WriteAllBytes("attestation0.cer", attestation);
+                                    Context.PutOpaque(scp03_session, 7, Algorithm.OPAQUE_X509_CERT, attestation);
+                                    attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 7, attest_id = 4 }).ToArray();
+                                    File.WriteAllBytes("attestation4.cer", attestation);
                                     Context.SignPkcs1(scp03_session, 4);
                                     Context.SignPss(scp03_session, 4);
                                     var n = crt.Modulus.ToByteArrayUnsigned();
@@ -363,11 +368,6 @@ namespace libusb_tester
                                         foreach (var b in rand2)
                                             Console.Write($"{b:x2}");
                                         Console.WriteLine();
-                                        var attestation = scp11_session.SendCmd(new AttestAsymmetricReq { key_id = 0, attest_id = 0 });
-                                        foreach (var b in attestation)
-                                            Console.Write($"{b:x2}");
-                                        Console.WriteLine();
-                                        File.WriteAllBytes("attestation.cer", attestation.ToArray());
                                     }
                                     /*
                                     using (var sess = new Scp03Session(usb_session, 1, scp03_session, 1))
