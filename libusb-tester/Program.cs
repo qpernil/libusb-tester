@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -231,12 +232,17 @@ namespace libusb_tester
                                     Console.WriteLine();
                                     */
                                     Context.PutOpaque(scp03_session, 3, Algorithm.OPAQUE_DATA, new byte[254]);
-                                    /*
+                                    var opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 3 });
+
+                                    Debug.Assert(opaque.SequenceEqual(new byte[254]));
+
                                     Context.PutAesKey(scp03_session, 4, new byte[16]);
                                     var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16*125] });
                                     var decrypted = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
                                     var decrypted2 = scp03_session.SendCmd(new DecryptEcbReq { key_id = 4, data = encrypted.ToArray() });
-                                    */
+
+                                    Debug.Assert(decrypted.SequenceEqual(decrypted2.ToArray()));
+
                                     /*
                                     var encrypted2 = scp03_session.SendCmd(new WrapKwpReq { key_id = 4, data = new byte[1125] });
                                     var decrypted3 = scp03_session.SendCmd(new UnwrapKwpReq { key_id = 4, data = encrypted2.ToArray() });
@@ -258,18 +264,19 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     */
-                                    /*
-                                    var opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 });
+
+                                    opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 });
                                     Console.WriteLine("Opaque data");
                                     foreach (var b in opaque.ToArray())
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-                                    */
-                                    /*
+                                    
                                     encrypted = scp03_session.SendCmd(new EncryptCbcReq { key_id = 4, iv = new byte[16], data = new byte[16 * 125] });
                                     decrypted = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
                                     decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
-                                    */
+
+                                    Debug.Assert(decrypted.SequenceEqual(decrypted2.ToArray()));
+
                                     var id = Context.PutEcP256Key(scp03_session, 5);
                                     Context.SignEcdsa(scp03_session, 5);
                                     var id2 = Context.PutEd25519Key(scp03_session, 6);
@@ -294,7 +301,7 @@ namespace libusb_tester
                                     foreach (var b in pub)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-                                    //Context.ExportWrapped(scp03_session, 2, ObjectType.SymmetricKey, 4);
+                                    Context.ExportWrapped(scp03_session, 2, ObjectType.SymmetricKey, 4);
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.WrapKey, 2);
                                     var info = scp03_session.SendCmd(HsmCommand.GetDeviceInfo);
                                     Console.WriteLine("DeviceInfo over scp03_session");
@@ -316,16 +323,16 @@ namespace libusb_tester
                                     var crt = (RsaPrivateCrtKeyParameters)pair.Private;
                                     var p = crt.P.ToByteArrayUnsigned();
                                     var q = crt.Q.ToByteArrayUnsigned();
+                                    var n = crt.Modulus.ToByteArrayUnsigned();
                                     Context.PutRsaKey(scp03_session, 4, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
                                     var attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 0, attest_id = 0 }).ToArray();
                                     File.WriteAllBytes("attestation0.cer", attestation);
-                                    Context.PutOpaque(scp03_session, 7, Algorithm.OPAQUE_X509_CERT, attestation);
-                                    attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 7, attest_id = 4 }).ToArray();
+                                    Context.PutOpaque(scp03_session, 4, Algorithm.OPAQUE_X509_CERT, attestation);
+                                    attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 4, attest_id = 4 }).ToArray();
                                     File.WriteAllBytes("attestation4.cer", attestation);
                                     Context.SignPkcs1(scp03_session, 4);
-                                    Context.SignPss(scp03_session, 4);
-                                    var n = crt.Modulus.ToByteArrayUnsigned();
-                                    Console.WriteLine($"<<<<< {p.Length} {q.Length} {n.Length}");
+                                    Context.SignPss(scp03_session, 4, Algorithm.MGF1_SHA256, new byte[32]);
+                                    Console.WriteLine($"<<<<< p {p.Length} q {q.Length} n {n.Length}");
                                     Context.PutWrapKey(scp03_session, 555, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
                                     Context.PutPublicWrapKey(scp03_session, 555, AlgoFromBitLength(rsa.Modulus.BitLength), n);
                                     var wrapped = Context.ExportWrapped(scp03_session, 2, ObjectType.PublicWrapKey, 555).ToArray();

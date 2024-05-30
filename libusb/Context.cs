@@ -205,14 +205,14 @@ namespace libusb
             return session.SendCmd(signecdsa_req);
         }
 
-        public static Span<byte> SignPss(Session session, ushort key_id)
+        public static Span<byte> SignPss(Session session, ushort key_id, Algorithm mgf_algorithm, ReadOnlyMemory<byte> salt)
         {
             var signecdsa_req = new SignPssReq
             {
                 key_id = key_id,
-                mgf_algorithm = Algorithm.MGF1_SHA1,
-                salt_len = 20,
-                hash = new byte[20]
+                mgf_algorithm = mgf_algorithm,
+                salt_len = (ushort)salt.Length,
+                hash = salt
             };
             return session.SendCmd(signecdsa_req);
         }
