@@ -243,6 +243,12 @@ namespace libusb_tester
 
                                     Debug.Assert(decrypted.SequenceEqual(decrypted2.ToArray()));
 
+                                    encrypted = scp03_session.SendCmd(new EncryptCbcReq { key_id = 4, iv = new byte[16], data = new byte[16 * 125] });
+                                    decrypted = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
+                                    decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
+
+                                    Debug.Assert(decrypted.SequenceEqual(decrypted2.ToArray()));
+
                                     /*
                                     var encrypted2 = scp03_session.SendCmd(new WrapKwpReq { key_id = 4, data = new byte[1125] });
                                     var decrypted3 = scp03_session.SendCmd(new UnwrapKwpReq { key_id = 4, data = encrypted2.ToArray() });
@@ -271,12 +277,6 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     
-                                    encrypted = scp03_session.SendCmd(new EncryptCbcReq { key_id = 4, iv = new byte[16], data = new byte[16 * 125] });
-                                    decrypted = scp03_session.CbcCrypt(false, new byte[16], new byte[16], encrypted.ToArray());
-                                    decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
-
-                                    Debug.Assert(decrypted.SequenceEqual(decrypted2.ToArray()));
-
                                     var id = Context.PutEcP256Key(scp03_session, 5);
                                     Context.SignEcdsa(scp03_session, 5);
                                     var id2 = Context.PutEd25519Key(scp03_session, 6);
