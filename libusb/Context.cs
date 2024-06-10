@@ -333,9 +333,9 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = (Capability)0xffffffffffffffff,
+                capabilities = Capability.All,
                 algorithm = Algo,
-                delegated_caps = (Capability)0xffffffffffffffff,
+                delegated_caps = Capability.All,
                 key = Key
             };
             return session.SendCmd(putauth_req);
@@ -371,9 +371,9 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = (Capability)0xffffffffffffffff,
+                capabilities = Capability.All,
                 algorithm = algorithm,
-                delegated_caps = (Capability)0xffffffffffffffff,
+                delegated_caps = Capability.All,
                 key = key
             };
             return session.SendCmd(putwrap_req);
@@ -398,9 +398,9 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = (Capability)0xffffffffffffffff,
+                capabilities = Capability.All,
                 algorithm = algorithm,
-                delegated_caps = (Capability)0xffffffffffffffff,
+                delegated_caps = Capability.All,
                 key = key
             };
             return session.SendCmd(putwrap_req);
@@ -478,6 +478,21 @@ namespace libusb
             return session.SendCmd(importwrapped_req);
         }
 
+        public static Span<byte> GetRsaWrapped(Session session, ushort key_id, ObjectType target_type, ushort target_key, Algorithm aes_algo, Algorithm hash_algo, Algorithm mgf_algo, ReadOnlyMemory<byte> digest)
+        {
+            var getwrapped_req = new GetRsaWrappedReq
+            {
+                key_id = key_id,
+                target_type = target_type,
+                target_key = target_key,
+                aes_algorithm = aes_algo,
+                hash_algorithm = hash_algo,
+                mgf_algorithm = mgf_algo,
+                digest = digest
+            };
+            return session.SendCmd(getwrapped_req);
+        }
+
         public static Span<byte> GetPubKey(Session session, ushort key_id, out Algorithm algo) {
             var getpub_req = new GetPubKeyReq
             {
@@ -492,7 +507,7 @@ namespace libusb
         {
             var req = new SetDefaltKeyReq
             {
-                delegated_caps = (Capability)0xffffffffffffffff,
+                delegated_caps = Capability.All,
                 key = Key
             };
             foreach (var b in req.key.Span)

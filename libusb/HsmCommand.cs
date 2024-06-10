@@ -153,6 +153,7 @@ namespace libusb
         DecryptCbc = 1ul << 0x34,
         EncryptCbc = 1ul << 0x35,
         ClientAuth = 1ul << 0x36,
+        All = ulong.MaxValue
     }
 
     public class PutAuthKeyReq : IWriteable
@@ -302,6 +303,30 @@ namespace libusb
             s.WriteByte((byte)hash_algorithm);
             s.WriteByte((byte)mgf_algorithm);
             s.Write(wrapped_key.Span);
+            s.Write(digest.Span);
+        }
+    }
+
+    public class GetRsaWrappedReq : IWriteable
+    {
+        public ushort key_id;
+        public ObjectType target_type;
+        public ushort target_key;
+        public Algorithm aes_algorithm;
+        public Algorithm hash_algorithm;
+        public Algorithm mgf_algorithm;
+        public ReadOnlyMemory<byte> digest;
+
+        public HsmCommand Command => HsmCommand.GetRsaWrapped;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte((byte)target_type);
+            s.Write(target_key);
+            s.WriteByte((byte)aes_algorithm);
+            s.WriteByte((byte)hash_algorithm);
+            s.WriteByte((byte)mgf_algorithm);
             s.Write(digest.Span);
         }
     }

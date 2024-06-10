@@ -231,11 +231,6 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     */
-                                    Context.PutOpaque(scp03_session, 3, Algorithm.OPAQUE_DATA, new byte[254]);
-                                    var opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 3 });
-
-                                    Debug.Assert(opaque.SequenceEqual(new byte[254]));
-
                                     Context.PutAesKey(scp03_session, 4, new byte[16]);
                                     var encrypted = scp03_session.SendCmd(new EncryptEcbReq { key_id = 4, data = new byte[16*125] });
                                     var decrypted = scp03_session.EcbCrypt(false, new byte[16], encrypted.ToArray());
@@ -271,11 +266,8 @@ namespace libusb_tester
                                     Console.WriteLine();
                                     */
 
-                                    opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 });
-                                    Console.WriteLine("Opaque data");
-                                    foreach (var b in opaque.ToArray())
-                                        Console.Write($"{b:x2}");
-                                    Console.WriteLine();
+                                    var opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 }).ToArray();
+                                    File.WriteAllBytes("attestation.cer", opaque);
                                     
                                     var id = Context.PutEcP256Key(scp03_session, 5);
                                     Context.SignEcdsa(scp03_session, 5);
@@ -327,7 +319,9 @@ namespace libusb_tester
                                     Context.PutRsaKey(scp03_session, 4, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
                                     var attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 0, attest_id = 0 }).ToArray();
                                     File.WriteAllBytes("attestation0.cer", attestation);
-                                    Context.PutOpaque(scp03_session, 4, Algorithm.OPAQUE_X509_CERT, attestation);
+                                    Context.PutOpaque(scp03_session, 4, Algorithm.OPAQUE_X509_CERT, opaque);
+                                    var opaque2 = scp03_session.SendCmd(new GetOpaqueReq { object_id = 4 }).ToArray();
+                                    Debug.Assert(opaque.SequenceEqual(opaque2));
                                     attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 4, attest_id = 4 }).ToArray();
                                     File.WriteAllBytes("attestation4.cer", attestation);
                                     Context.SignPkcs1(scp03_session, 4);
@@ -339,6 +333,11 @@ namespace libusb_tester
                                     Context.ImportWrapped(scp03_session, 2, wrapped, ObjectType.PublicWrapKey, 555);
                                     wrapped = Context.ExportRsaWrapped(scp03_session, 555, ObjectType.PublicWrapKey, 555, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, new byte[32]).ToArray();
                                     Context.ImportRsaWrapped(scp03_session, 555, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, wrapped, new byte[32], ObjectType.PublicWrapKey, 555);
+                                    var decr = new Pkcs11RsaDecryptor(2048);
+                                    var modulus = decr.GetModulus();
+                                    Context.PutPublicWrapKey(scp03_session, 556, AlgoFromBitLength(modulus.Length * 8), modulus);
+                                    wrapped = Context.GetRsaWrapped(scp03_session, 556, ObjectType.AsymmetricKey, 4, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, new byte[32]).ToArray();
+                                    decr.Dispose();
                                     Console.WriteLine(">>>>>");
                                     //usb_session.SendCmd(new SetAttestKeyReq { algorithm = AlgoFromBitLength(crt.Modulus.BitLength), key = q.Concat(p).ToArray() });
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(pair.Public, pair.Private, "SHA256withRSA").GetEncoded() });
