@@ -333,11 +333,12 @@ namespace libusb_tester
                                     Context.ImportWrapped(scp03_session, 2, wrapped, ObjectType.PublicWrapKey, 555);
                                     wrapped = Context.ExportRsaWrapped(scp03_session, 555, ObjectType.PublicWrapKey, 555, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, new byte[32]).ToArray();
                                     Context.ImportRsaWrapped(scp03_session, 555, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, wrapped, new byte[32], ObjectType.PublicWrapKey, 555);
-                                    var decr = new Pkcs11RsaDecryptor(2048);
-                                    var modulus = decr.GetModulus();
-                                    Context.PutPublicWrapKey(scp03_session, 556, AlgoFromBitLength(modulus.Length * 8), modulus);
-                                    wrapped = Context.GetRsaWrapped(scp03_session, 556, ObjectType.AsymmetricKey, 4, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, new byte[32]).ToArray();
-                                    decr.Dispose();
+                                    using (var decr = new Pkcs11RsaDecryptor("123456", 2048))
+                                    {
+                                        var modulus = decr.GetModulus();
+                                        Context.PutPublicWrapKey(scp03_session, 556, AlgoFromBitLength(modulus.Length * 8), modulus);
+                                        wrapped = Context.GetRsaWrapped(scp03_session, 556, ObjectType.AsymmetricKey, 4, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, new byte[32]).ToArray();
+                                    }
                                     Console.WriteLine(">>>>>");
                                     //usb_session.SendCmd(new SetAttestKeyReq { algorithm = AlgoFromBitLength(crt.Modulus.BitLength), key = q.Concat(p).ToArray() });
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(pair.Public, pair.Private, "SHA256withRSA").GetEncoded() });

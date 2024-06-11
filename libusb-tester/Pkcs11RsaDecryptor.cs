@@ -11,14 +11,14 @@ namespace libusb_tester
         readonly ISession session;
         readonly IObjectHandle key;
 
-        public Pkcs11RsaDecryptor(ulong bits)
+        public Pkcs11RsaDecryptor(string password, ulong bits)
         {
             var factories = new Pkcs11InteropFactories();
             lib = factories.Pkcs11LibraryFactory.LoadPkcs11Library(factories, "/usr/local/lib/libykcs11.dylib", AppType.SingleThreaded);
             foreach (var slot in lib.GetSlotList(SlotsType.WithTokenPresent))
             {
                 session = slot.OpenSession(SessionType.ReadWrite);
-                session.Login(CKU.CKU_USER, "123456");
+                session.Login(CKU.CKU_USER, password);
 
                 var keys = session.FindAllObjects(new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_PRIVATE_KEY),
                                                                                 factories.ObjectAttributeFactory.Create(CKA.CKA_KEY_TYPE, CKK.CKK_RSA),
