@@ -206,34 +206,35 @@ namespace libusb_tester
         static int count_utf8_points(byte[] str)
         {
             int i, points = 0;
+            /*
             for (i = 0; i < str.Length; i++)
             {
                 Console.Write($"0x{str[i]:x2}, ");
-            }
-            Console.WriteLine($"{Encoding.UTF8.GetCharCount(str)}: '{Encoding.UTF8.GetString(str)}'");
+            }*/
+            //Console.WriteLine($"{str.Length};{Encoding.UTF8.GetCharCount(str)}: '{Encoding.UTF8.GetString(str)}'");
             for (i = 0; i < str.Length; i++)
             {
                 points++;
                 switch (str[i] & 0xf0) {
                     case 0xf0:
-                        Console.WriteLine($"4 byte codepoint {str[i]:b8} at {i}");
+                        //Console.WriteLine($"4 byte codepoint {str[i]:b8} at {i}");
                         i += 3;
                         break;
                     case 0xe0:
-                        Console.WriteLine($"3 byte codepoint {str[i]:b8} at {i}");
+                        //Console.WriteLine($"3 byte codepoint {str[i]:b8} at {i}");
                         i += 2;
                         break;
                     case 0xc0:
-                        Console.WriteLine($"2 byte codepoint {str[i]:b8} at {i}");
+                        //Console.WriteLine($"2 byte codepoint {str[i]:b8} at {i}");
                         i += 1;
                         break;
                     default:
-                        Console.WriteLine($"1 byte codepoint {str[i]:b8} at {i}");
+                        //Console.WriteLine($"1 byte codepoint {str[i]:b8} at {i}");
                         break;
                 }
                 if (i >= str.Length)
                 {
-                    Console.WriteLine($"Incomplete code point at {str.Length}, rejected");
+                    //Console.WriteLine($"Incomplete code point at {str.Length}, rejected");
                     return 0;
                 }
             }
@@ -241,21 +242,22 @@ namespace libusb_tester
         }
         static int count_utf8_points2(byte[] str) {
             int i, points = 0, continuation = 0;
+            /*
             for (i = 0; i < str.Length; i++) {
                 Console.Write($"0x{str[i]:x2}, ");
-            }
-            Console.WriteLine($"{Encoding.UTF8.GetCharCount(str)}: '{Encoding.UTF8.GetString(str)}'");
+            }*/
+            //Console.WriteLine($"{str.Length};{Encoding.UTF8.GetCharCount(str)}: '{Encoding.UTF8.GetString(str)}'");
             for (i = 0; i < str.Length; i++) {
                 if(continuation > 0)
                 {
                     if ((str[i] & 0xc0) == 0x80)
                     { // Continuation bytes begin with 0b10
-                        Console.WriteLine($"Valid continuation byte {str[i]:b8} at {i}");
+                        //Console.WriteLine($"Valid continuation byte {str[i]:b8} at {i}");
                         continuation--;
                     }
                     else
                     {
-                        Console.WriteLine($"Invalid continuation byte {str[i]:b8} at {i}");
+                        //Console.WriteLine($"Invalid continuation byte {str[i]:b8} at {i}");
                         return 0;
                     }
                 }
@@ -264,32 +266,32 @@ namespace libusb_tester
                     points++;
                     if ((str[i] & 0xf8) == 0xf0)
                     { // 4 byte code points begin with 0b11110
-                        Console.WriteLine($"4 byte code point {str[i]:b8} at {i}");
+                        //Console.WriteLine($"4 byte code point {str[i]:b8} at {i}");
                         continuation = 3;
                     }
                     else if ((str[i] & 0xf0) == 0xe0)
                     { // 3 byte code points begin with 0b1110
-                        Console.WriteLine($"3 byte code point {str[i]:b8} at {i}");
+                        //Console.WriteLine($"3 byte code point {str[i]:b8} at {i}");
                         continuation = 2;
                     }
                     else if ((str[i] & 0xe0) == 0xc0)
                     { // 2 byte code points begin with 0b110
-                        Console.WriteLine($"2 byte code point {str[i]:b8} at {i}");
+                        //Console.WriteLine($"2 byte code point {str[i]:b8} at {i}");
                         continuation = 1;
                     }
                     else if ((str[i] & 0x80) == 0x80)
                     { // 1 byte code points must begin with 0xb0
-                        Console.WriteLine($"Invalid initial byte {str[i]:b8} at {i}");
+                        //Console.WriteLine($"Invalid initial byte {str[i]:b8} at {i}");
                         return 0;
                     } else
                     {
-                        Console.WriteLine($"1 byte code point {str[i]:b8} at {i}");
+                        //Console.WriteLine($"1 byte code point {str[i]:b8} at {i}");
                     }
                 }
             }
             if(continuation > 0)
             {
-                Console.WriteLine($"Incomplete code point at {i}");
+                //Console.WriteLine($"Incomplete code point at {i}");
                 return 0;
             }
             else
@@ -297,9 +299,12 @@ namespace libusb_tester
                 return points;
             }
         }
-        static byte[] utf8(string str)
+        static string test_utf8_points(string str)
         {
-            return Encoding.UTF8.GetBytes(str);
+            var bytes = Encoding.UTF8.GetBytes(str);
+            var count = count_utf8_points(bytes);
+            var count2 = count_utf8_points2(bytes);
+            return $"bytes: {bytes.Length} count_utf8_points: {count} count_utf8_points2: {count2} {count == count2}";
         }
         static void Run(string[] args)
         {
@@ -321,28 +326,6 @@ namespace libusb_tester
             Console.WriteLine(get_padded_len2(new byte[] { 1, 2, 3, 4, 0xff, 6, 7, 0xff }));
             Console.WriteLine();
 
-            Console.WriteLine("count_utf8_points");
-            Console.WriteLine(count_utf8_points(new byte[] { 0 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0x7f }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xc0 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xc0, 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xdf, 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xdf, 0xbf }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xdf, 0xdf }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0x31, 0x32, 0x33, 0x34, 0xdf, 0xbf }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xf0, 0x9f, 0x92, 0xa9, 0xf0, 0x9f, 0x92, 0xa9 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xe0, 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xe0, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xef, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xf0, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xf0, 0x80, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xf7, 0x80, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xf8, 0x80, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points(new byte[] { 0xff, 0x80, 0x80, 0x80 }));
-            Console.WriteLine();
-
-            Console.WriteLine("count_utf8_points2");
             Console.WriteLine(count_utf8_points2(new byte[] { 0 }));
             Console.WriteLine(count_utf8_points2(new byte[] { 0x7f }));
             Console.WriteLine(count_utf8_points2(new byte[] { 0x80 }));
@@ -361,12 +344,25 @@ namespace libusb_tester
             Console.WriteLine(count_utf8_points2(new byte[] { 0xf7, 0x80, 0x80, 0x80 }));
             Console.WriteLine(count_utf8_points2(new byte[] { 0xf8, 0x80, 0x80, 0x80 }));
             Console.WriteLine(count_utf8_points2(new byte[] { 0xff, 0x80, 0x80, 0x80 }));
+            Console.WriteLine(count_utf8_points2(new byte[] { 0xef, 0xbf, 0xbe }));
+            Console.WriteLine(count_utf8_points2(new byte[] { 0xef, 0xbf, 0xbf }));
             Console.WriteLine();
 
-            Console.WriteLine("count_utf8_points2 utf8 strings");
-            Console.WriteLine(count_utf8_points2(utf8("abc")));
-            Console.WriteLine(count_utf8_points2(utf8("åäö")));
-            Console.WriteLine(count_utf8_points2(utf8("pölsa")));
+            Console.WriteLine(test_utf8_points("abc"));
+            Console.WriteLine(test_utf8_points("åäö"));
+            Console.WriteLine(test_utf8_points("pölsa"));
+            Console.WriteLine(test_utf8_points("κόσμε")); // Greek letters
+
+            // Some tests from https://kermitproject.org/utf8.html
+            Console.WriteLine(test_utf8_points("Τὴ γλῶσσα μοῦ ἔδωσαν ἑλληνικὴ\nτὸ σπίτι φτωχικὸ στὶς ἀμμουδιὲς τοῦ Ὁμήρου.\nΜονάχη ἔγνοια ἡ γλῶσσα μου στὶς ἀμμουδιὲς τοῦ Ὁμήρου.\nἀπὸ τὸ Ἄξιον ἐστί\nτοῦ Ὀδυσσέα Ἐλύτη"));
+            Console.WriteLine(test_utf8_points("Τη γλώσσα μου έδωσαν ελληνική\nτο σπίτι φτωχικό στις αμμουδιές του Ομήρου.\nΜονάχη έγνοια η γλώσσα μου στις αμμουδιές του Ομήρου.\nαπό το Άξιον Εστί\nτου Οδυσσέα Ελύτη"));
+            Console.WriteLine(test_utf8_points("Sîne klâwen durh die wolken sint geslagen,\ner stîget ûf mit grôzer kraft,\nich sih in grâwen tägelîch als er wil tagen,\nden tac, der im geselleschaft\nerwenden wil, dem werden man,\nden ich mit sorgen în verliez.\nich bringe in hinnen, ob ich kan.\nsîn vil manegiu tugent michz leisten hiez."));
+            Console.WriteLine(test_utf8_points("An preost wes on leoden, Laȝamon was ihoten\nHe wes Leovenaðes sone -- liðe him be Drihten.\nHe wonede at Ernleȝe at æðelen are chirechen,\nUppen Sevarne staþe, sel þar him þuhte,\nOnfest Radestone, þer he bock radde."));
+            Console.WriteLine(test_utf8_points("ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ\nᛋᚳᛖᚪᛚ᛫ᚦᛖᚪᚻ᛫ᛗᚪᚾᚾᚪ᛫ᚷᛖᚻᚹᛦᛚᚳ᛫ᛗᛁᚳᛚᚢᚾ᛫ᚻᛦᛏ᛫ᛞᚫᛚᚪᚾ\nᚷᛁᚠ᛫ᚻᛖ᛫ᚹᛁᛚᛖ᛫ᚠᚩᚱ᛫ᛞᚱᛁᚻᛏᚾᛖ᛫ᛞᚩᛗᛖᛋ᛫ᚻᛚᛇᛏᚪᚾ"));
+            Console.WriteLine(test_utf8_points("ვეპხის ტყაოსანი შოთა რუსთაველი\nღმერთსი შემვედრე, ნუთუ კვლა დამხსნას სოფლისა შრომასა, ცეცხლს, წყალსა და მიწასა, ჰაერთა თანა მრომასა; მომცნეს ფრთენი და აღვფრინდე, მივჰხვდე მას ჩემსა ნდომასა, დღისით და ღამით ვჰხედვიდე მზისა ელვათა კრთომაასა."));
+            Console.WriteLine(test_utf8_points("யாமறிந்த மொழிகளிலே தமிழ்மொழி போல் இனிதாவது எங்கும் காணோம்,\nபாமரராய் விலங்குகளாய், உலகனைத்தும் இகழ்ச்சிசொலப் பான்மை கெட்டு,\nநாமமது தமிழரெனக் கொண்டு இங்கு வாழ்ந்திடுதல் நன்றோ? சொல்லீர்!\nதேமதுரத் தமிழோசை உலகமெலாம் பரவும்வகை செய்தல் வேண்டும்.\n"));
+            Console.WriteLine(test_utf8_points("ಬಾ ಇಲ್ಲಿ ಸಂಭವಿಸು ಇಂದೆನ್ನ ಹೃದಯದಲಿ\nನಿತ್ಯವೂ ಅವತರಿಪ ಸತ್ಯಾವತಾರ\nಮಣ್ಣಾಗಿ ಮರವಾಗಿ ಮಿಗವಾಗಿ ಕಗವಾಗೀ...\nಮಣ್ಣಾಗಿ ಮರವಾಗಿ ಮಿಗವಾಗಿ ಕಗವಾಗಿ\nಭವ ಭವದಿ ಭತಿಸಿಹೇ ಭವತಿ ದೂರ\nನಿತ್ಯವೂ ಅವತರಿಪ ಸತ್ಯಾವತಾರ || ಬಾ ಇಲ್ಲಿ ||"));
+
             Console.WriteLine();
 
             //var z = new NSRecord("DFFFFFFFFFFFFFFFFF7F8188818180bb5c424c1b3121cf630cbcbaf60fa91e53786d1ab9e8b6e5855acb9afbec944555481d88fcd8e32947f7696d80a8f4df55be51dcb967fc5ef3d213a971a11fee54917cbe10d4b6ba69a71ee1434ce6b6cadb46ceff0bbf2ba832cb5516af35a1debf182e0a57544a64bfe2d0f711cf94dffb44dda9d1d4a9abdf1460e783b6f18203010001");
