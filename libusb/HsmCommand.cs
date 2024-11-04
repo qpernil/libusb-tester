@@ -48,9 +48,9 @@ namespace libusb
         PutRsaWrapped = 0x75,
         ExportRsaWrapped = 0x76,
         ImportRsaWrapped = 0x77,
+        UnwrapKwp = 0x78,
+        WrapKwp = 0x79,
         // Fake command codes for now
-        WrapKwp = 0x30,
-        UnwrapKwp = 0x31,
         GetClientPubKey = 0x32,
         GetChallenge = 0x33,
         ClientAuth = 0x34,
@@ -152,7 +152,11 @@ namespace libusb
         EncryptEcb = 1ul << 0x33,
         DecryptCbc = 1ul << 0x34,
         EncryptCbc = 1ul << 0x35,
-        ClientAuth = 1ul << 0x36,
+        PutPublicWrapKey = 1ul << 0x36,
+        DeletePublicWrapKey = 1ul << 0x37,
+        DecryptKwp = 1ul << 0x38,
+        EncryptKwp = 1ul << 0x39,
+        ClientAuth = 1ul << 0x3f,
         All = ulong.MaxValue
     }
 

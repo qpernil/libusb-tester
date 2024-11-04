@@ -206,12 +206,6 @@ namespace libusb_tester
         static int count_utf8_points(byte[] str)
         {
             int i, points = 0;
-            /*
-            for (i = 0; i < str.Length; i++)
-            {
-                Console.Write($"0x{str[i]:x2}, ");
-            }*/
-            //Console.WriteLine($"{str.Length};{Encoding.UTF8.GetCharCount(str)}: '{Encoding.UTF8.GetString(str)}'");
             for (i = 0; i < str.Length; i++)
             {
                 points++;
@@ -242,11 +236,6 @@ namespace libusb_tester
         }
         static int count_utf8_points2(byte[] str) {
             int i, points = 0, continuation = 0;
-            /*
-            for (i = 0; i < str.Length; i++) {
-                Console.Write($"0x{str[i]:x2}, ");
-            }*/
-            //Console.WriteLine($"{str.Length};{Encoding.UTF8.GetCharCount(str)}: '{Encoding.UTF8.GetString(str)}'");
             for (i = 0; i < str.Length; i++) {
                 if(continuation > 0)
                 {
@@ -299,15 +288,33 @@ namespace libusb_tester
                 return points;
             }
         }
+        static string test_utf8_points(byte[] bytes)
+        {
+            var enc = new UTF8Encoding(false, true);
+            var s = new MemoryStream();
+            using (TextWriter w = new StreamWriter(s, enc))
+            {
+                w.Write($"test_utf8_points ({bytes.Length}) ");
+                if(bytes.Length < 16)
+                {
+                    for (int i = 0; i < bytes.Length; i++)
+                    {
+                        w.Write($"0x{bytes[i]:x2}, ");
+                    }
+                }
+                var count = count_utf8_points(bytes);
+                var count2 = count_utf8_points2(bytes);
+                w.Write($"count_utf8_points: {count} count_utf8_points2: {count2} {count == count2}");
+            }
+            return enc.GetString(s.ToArray());
+        }
         static string test_utf8_points(string str)
         {
-            var bytes = Encoding.UTF8.GetBytes(str);
-            var count = count_utf8_points(bytes);
-            var count2 = count_utf8_points2(bytes);
-            return $"bytes: {bytes.Length} count_utf8_points: {count} count_utf8_points2: {count2} {count == count2}";
+            return test_utf8_points(Encoding.UTF8.GetBytes(str));
         }
         static void Run(string[] args)
         {
+            /*
             Console.WriteLine("get_padded_len");
             Console.WriteLine(get_padded_len(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
             Console.WriteLine(get_padded_len(new byte[] { 1, 2, 3, 4, 5, 6, 7, 0xff }));
@@ -326,32 +333,41 @@ namespace libusb_tester
             Console.WriteLine(get_padded_len2(new byte[] { 1, 2, 3, 4, 0xff, 6, 7, 0xff }));
             Console.WriteLine();
 
-            Console.WriteLine(count_utf8_points2(new byte[] { 0 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0x7f }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xc0 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xc0, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xdf, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xdf, 0xbf }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xdf, 0xdf }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0x31, 0x32, 0x33, 0x34, 0xdf, 0xbf }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xf0, 0x9f, 0x92, 0xa9, 0xf0, 0x9f, 0x92, 0xa9 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xe0, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xe0, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xef, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xf0, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xf0, 0x80, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xf7, 0x80, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xf8, 0x80, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xff, 0x80, 0x80, 0x80 }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xef, 0xbf, 0xbe }));
-            Console.WriteLine(count_utf8_points2(new byte[] { 0xef, 0xbf, 0xbf }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0x7f }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xc0 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xc0, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xa0, 0xa1 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xc3, 0xbf }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xc3, 0x28 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xdf, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xdf, 0xbf }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xdf, 0xdf }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xe0, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xe0, 0x80, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xef, 0x80, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xf0, 0x80, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xef, 0xbf, 0xbe }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xef, 0xbf, 0xbf }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xe2, 0x82, 0xa1 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xe2, 0x28, 0xa1 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xe2, 0x82, 0x28 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xf0, 0x80, 0x80, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xf7, 0x80, 0x80, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xf8, 0x80, 0x80, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xff, 0x80, 0x80, 0x80 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xf0, 0x90, 0x8c, 0xbc }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0x31, 0x32, 0x33, 0x34, 0xdf, 0xbf }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xf0, 0x9f, 0x92, 0xa9, 0xf0, 0x9f, 0x92, 0xa9 }));
+            Console.WriteLine(test_utf8_points(new byte[] { 0xdf, 0xbf }));
             Console.WriteLine();
 
             Console.WriteLine(test_utf8_points("abc"));
             Console.WriteLine(test_utf8_points("åäö"));
             Console.WriteLine(test_utf8_points("pölsa"));
             Console.WriteLine(test_utf8_points("κόσμε")); // Greek letters
+            Console.WriteLine();
 
             // Some tests from https://kermitproject.org/utf8.html
             Console.WriteLine(test_utf8_points("Τὴ γλῶσσα μοῦ ἔδωσαν ἑλληνικὴ\nτὸ σπίτι φτωχικὸ στὶς ἀμμουδιὲς τοῦ Ὁμήρου.\nΜονάχη ἔγνοια ἡ γλῶσσα μου στὶς ἀμμουδιὲς τοῦ Ὁμήρου.\nἀπὸ τὸ Ἄξιον ἐστί\nτοῦ Ὀδυσσέα Ἐλύτη"));
@@ -362,8 +378,8 @@ namespace libusb_tester
             Console.WriteLine(test_utf8_points("ვეპხის ტყაოსანი შოთა რუსთაველი\nღმერთსი შემვედრე, ნუთუ კვლა დამხსნას სოფლისა შრომასა, ცეცხლს, წყალსა და მიწასა, ჰაერთა თანა მრომასა; მომცნეს ფრთენი და აღვფრინდე, მივჰხვდე მას ჩემსა ნდომასა, დღისით და ღამით ვჰხედვიდე მზისა ელვათა კრთომაასა."));
             Console.WriteLine(test_utf8_points("யாமறிந்த மொழிகளிலே தமிழ்மொழி போல் இனிதாவது எங்கும் காணோம்,\nபாமரராய் விலங்குகளாய், உலகனைத்தும் இகழ்ச்சிசொலப் பான்மை கெட்டு,\nநாமமது தமிழரெனக் கொண்டு இங்கு வாழ்ந்திடுதல் நன்றோ? சொல்லீர்!\nதேமதுரத் தமிழோசை உலகமெலாம் பரவும்வகை செய்தல் வேண்டும்.\n"));
             Console.WriteLine(test_utf8_points("ಬಾ ಇಲ್ಲಿ ಸಂಭವಿಸು ಇಂದೆನ್ನ ಹೃದಯದಲಿ\nನಿತ್ಯವೂ ಅವತರಿಪ ಸತ್ಯಾವತಾರ\nಮಣ್ಣಾಗಿ ಮರವಾಗಿ ಮಿಗವಾಗಿ ಕಗವಾಗೀ...\nಮಣ್ಣಾಗಿ ಮರವಾಗಿ ಮಿಗವಾಗಿ ಕಗವಾಗಿ\nಭವ ಭವದಿ ಭತಿಸಿಹೇ ಭವತಿ ದೂರ\nನಿತ್ಯವೂ ಅವತರಿಪ ಸತ್ಯಾವತಾರ || ಬಾ ಇಲ್ಲಿ ||"));
-
             Console.WriteLine();
+            */
 
             //var z = new NSRecord("DFFFFFFFFFFFFFFFFF7F8188818180bb5c424c1b3121cf630cbcbaf60fa91e53786d1ab9e8b6e5855acb9afbec944555481d88fcd8e32947f7696d80a8f4df55be51dcb967fc5ef3d213a971a11fee54917cbe10d4b6ba69a71ee1434ce6b6cadb46ceff0bbf2ba832cb5516af35a1debf182e0a57544a64bfe2d0f711cf94dffb44dda9d1d4a9abdf1460e783b6f18203010001");
             /*
@@ -404,6 +420,8 @@ namespace libusb_tester
 
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
                                 {
+                                    //var x = File.ReadAllBytes("/Users/pnilsson/Downloads/pubkey3.bin");
+                                    //scp03_session.Transfer(x, x.Length);
                                     //scp03_session.SendCmd(HsmCommand.Reset);
                                     /*
                                     var opts = scp03_session.SendCmd(new GetAlgorithmToggleReq { });
@@ -438,8 +456,7 @@ namespace libusb_tester
 
                                     Debug.Assert(decrypted.SequenceEqual(decrypted2.ToArray()));
 
-                                    /*
-                                    var encrypted2 = scp03_session.SendCmd(new WrapKwpReq { key_id = 4, data = new byte[1125] });
+                                    var encrypted2 = scp03_session.SendCmd(new WrapKwpReq { key_id = 4, data = new byte[3000] });
                                     var decrypted3 = scp03_session.SendCmd(new UnwrapKwpReq { key_id = 4, data = encrypted2.ToArray() });
 
                                     File.WriteAllBytes("kwp-wrapped", encrypted2.ToArray());
@@ -448,7 +465,7 @@ namespace libusb_tester
                                     Console.Write($"/opt/homebrew/opt/openssl@3/bin/openssl enc -d -id-aes128-wrap-pad -iv A65959A6 -K ");
                                     foreach (var b in new byte[16])
                                         Console.Write($"{b:x2}");
-                                    Console.WriteLine(" -in kwp-wrapped");
+                                    Console.WriteLine(" -in kwp-wrapped -out openssl-unwrapped");
 
                                     Console.WriteLine($"KWP wrapped data {encrypted2.Length}");
                                     foreach (var b in encrypted2.ToArray())
@@ -458,11 +475,7 @@ namespace libusb_tester
                                     foreach (var b in decrypted3.ToArray())
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-                                    */
 
-                                    var opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 }).ToArray();
-                                    File.WriteAllBytes("attestation.cer", opaque);
-                                    
                                     var id = Context.PutEcP256Key(scp03_session, 5);
                                     Context.SignEcdsa(scp03_session, 5);
                                     var id2 = Context.PutEd25519Key(scp03_session, 6);
@@ -504,6 +517,8 @@ namespace libusb_tester
                                     var sk_oce = context.GenerateKeyPair();
                                     //usb_session.SendCmd(new SetAttestKeyReq { algorithm = Algorithm.EC_P256, key = sk_oce.D.ToByteArrayFixed() });
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(context.pk_oce, sk_oce).GetEncoded() });
+                                    var opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 }).ToArray();
+                                    File.WriteAllBytes("attestation.cer", opaque);
                                     var pair = Scp11Context.GenerateRsaKeyPair(2048);
                                     var rsa = (RsaKeyParameters)pair.Public;
                                     var crt = (RsaPrivateCrtKeyParameters)pair.Private;

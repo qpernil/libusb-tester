@@ -281,7 +281,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc | Capability.ExportUnderWrap,
+                capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc | Capability.ExportUnderWrap | Capability.DecryptKwp | Capability.EncryptKwp,
                 algorithm = Algorithm.AES_128,
                 key = key
             };
