@@ -420,6 +420,8 @@ namespace libusb_tester
 
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
                                 {
+                                    scp03_session.SendCmd(new GetForcedAuditReq());
+                                    scp03_session.SendCmd(new GetCommandAuditReq());
                                     //var x = File.ReadAllBytes("/Users/pnilsson/Downloads/pubkey3.bin");
                                     //scp03_session.Transfer(x, x.Length);
                                     //scp03_session.SendCmd(HsmCommand.Reset);

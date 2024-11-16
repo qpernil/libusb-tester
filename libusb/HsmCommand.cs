@@ -25,6 +25,7 @@ namespace libusb
         ExportWrapped = 0x4a,
         ImportWrapped = 0x4b,
         PutWrapKey = 0x4c,
+        GetLogs = 0x4d,
         GetObjectInfo = 0x4e,
         PutOption = 0x4f,
         GetOption = 0x50,
@@ -35,6 +36,7 @@ namespace libusb
         DecryptEcdh = 0x57,
         DeleteObject = 0x58,
         AttestAsymmetric = 0x64,
+        SetLogIndex = 0x67,
         ChangeAuthKey = 0x6c,
         PutSymmetricKey = 0x6d,
         GenerateSymmetricKey = 0x6e,
@@ -374,6 +376,54 @@ namespace libusb
             s.Write(domains);
             s.Write((ulong)capabilities);
             s.WriteByte((byte)algorithm);
+        }
+    }
+
+    public class GetForcedAuditReq : IWriteable
+    {
+        public HsmCommand Command => HsmCommand.GetOption;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(1);
+        }
+    }
+
+    public class PutForcedAuditReq : IWriteable
+    {
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.PutOption;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(1);
+            s.Write((ushort)data.Length);
+            s.Write(data.Span);
+        }
+    }
+
+    public class GetCommandAuditReq : IWriteable
+    {
+        public HsmCommand Command => HsmCommand.GetOption;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(3);
+        }
+    }
+
+    public class PutCommandAuditReq : IWriteable
+    {
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.PutOption;
+
+        public void WriteTo(Stream s)
+        {
+            s.WriteByte(3);
+            s.Write((ushort)data.Length);
+            s.Write(data.Span);
         }
     }
 
