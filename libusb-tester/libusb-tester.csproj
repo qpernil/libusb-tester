@@ -10,7 +10,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
   <ItemGroup>
     <PackageReference Include="BouncyCastle.NetCore" Version="2.2.1" />
-    <PackageReference Include="Pkcs11Interop" Version="5.1.2" />
+    <PackageReference Include="Pkcs11Interop" Version="5.2.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="libusb-connector\obj\Debug\netcoreapp3.1\libusb-connector.AssemblyInfo.cs" />

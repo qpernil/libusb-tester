@@ -30,11 +30,6 @@ namespace libusb_tester
                     key = keys[0];
                     break;
                 }
-                else
-                {
-                    session.Dispose();
-                    session = null;
-                }
             }
         }
 
@@ -48,7 +43,7 @@ namespace libusb_tester
 
         public byte[] GetModulus()
         {
-            return session.GetAttributeValue(key, new List<CKA> { CKA.CKA_MODULUS })[0].GetValueAsByteArray();
+            return session?.GetAttributeValue(key, new List<CKA> { CKA.CKA_MODULUS })[0].GetValueAsByteArray();
         }
     }
 }

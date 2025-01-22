@@ -457,13 +457,13 @@ namespace libusb_tester
                                     decrypted2 = scp03_session.SendCmd(new DecryptCbcReq { key_id = 4, iv = new byte[16], data = encrypted.ToArray() });
 
                                     Debug.Assert(decrypted.SequenceEqual(decrypted2.ToArray()));
-
+                                    /*
                                     var encrypted2 = scp03_session.SendCmd(new WrapKwpReq { key_id = 4, data = new byte[3000] });
                                     var decrypted3 = scp03_session.SendCmd(new UnwrapKwpReq { key_id = 4, data = encrypted2.ToArray() });
 
                                     File.WriteAllBytes("kwp-wrapped", encrypted2.ToArray());
                                     File.WriteAllBytes("kwp-unwrapped", decrypted3.ToArray());
-
+                                    
                                     Console.Write($"/opt/homebrew/opt/openssl@3/bin/openssl enc -d -id-aes128-wrap-pad -iv A65959A6 -K ");
                                     foreach (var b in new byte[16])
                                         Console.Write($"{b:x2}");
@@ -477,7 +477,7 @@ namespace libusb_tester
                                     foreach (var b in decrypted3.ToArray())
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-
+                                    */
                                     var id = Context.PutEcP256Key(scp03_session, 5);
                                     Context.SignEcdsa(scp03_session, 5);
                                     var id2 = Context.PutEd25519Key(scp03_session, 6);
