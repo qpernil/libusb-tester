@@ -533,12 +533,13 @@ namespace libusb_tester
                                     var attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 0, attest_id = 0 }).ToArray();
                                     File.WriteAllBytes("attestation0.cer", attestation);
                                     new X509Certificate(attestation).Verify(attcert.GetPublicKey());
-                                    Context.PutOpaque(scp03_session, 4, Algorithm.OPAQUE_X509_CERT, opaque);
-                                    var opaque2 = scp03_session.SendCmd(new GetOpaqueReq { object_id = 4 }).ToArray();
-                                    Debug.Assert(opaque.SequenceEqual(opaque2));
                                     attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 4, attest_id = 0 }).ToArray();
-                                    File.WriteAllBytes("attestation4.cer", attestation);
+                                    var attcert4 = new X509Certificate(attestation);
                                     new X509Certificate(attestation).Verify(attcert.GetPublicKey());
+                                    Context.PutOpaque(scp03_session, 4, Algorithm.OPAQUE_X509_CERT, attestation);
+                                    attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 4, attest_id = 4 }).ToArray();
+                                    new X509Certificate(attestation).Verify(attcert4.GetPublicKey());
+                                    File.WriteAllBytes("attestation4.cer", attestation);
                                     Context.SignPkcs1(scp03_session, 4);
                                     Context.SignPss(scp03_session, 4, Algorithm.MGF1_SHA256, new byte[32]);
                                     Console.WriteLine($"<<<<< p {p.Length} q {q.Length} n {n.Length}");
