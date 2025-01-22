@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using libusb;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.X509;
 
 namespace libusb_tester
 {
@@ -521,6 +522,7 @@ namespace libusb_tester
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(context.pk_oce, sk_oce).GetEncoded() });
                                     var opaque = scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 }).ToArray();
                                     File.WriteAllBytes("attestation.cer", opaque);
+                                    var attcert = new X509Certificate(opaque);
                                     var pair = Scp11Context.GenerateRsaKeyPair(2048);
                                     var rsa = (RsaKeyParameters)pair.Public;
                                     var crt = (RsaPrivateCrtKeyParameters)pair.Private;
@@ -530,11 +532,13 @@ namespace libusb_tester
                                     Context.PutRsaKey(scp03_session, 4, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
                                     var attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 0, attest_id = 0 }).ToArray();
                                     File.WriteAllBytes("attestation0.cer", attestation);
+                                    new X509Certificate(attestation).Verify(attcert.GetPublicKey());
                                     Context.PutOpaque(scp03_session, 4, Algorithm.OPAQUE_X509_CERT, opaque);
                                     var opaque2 = scp03_session.SendCmd(new GetOpaqueReq { object_id = 4 }).ToArray();
                                     Debug.Assert(opaque.SequenceEqual(opaque2));
-                                    attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 4, attest_id = 4 }).ToArray();
+                                    attestation = scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 4, attest_id = 0 }).ToArray();
                                     File.WriteAllBytes("attestation4.cer", attestation);
+                                    new X509Certificate(attestation).Verify(attcert.GetPublicKey());
                                     Context.SignPkcs1(scp03_session, 4);
                                     Context.SignPss(scp03_session, 4, Algorithm.MGF1_SHA256, new byte[32]);
                                     Console.WriteLine($"<<<<< p {p.Length} q {q.Length} n {n.Length}");
