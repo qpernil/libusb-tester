@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using libusb;
+using Org.BouncyCastle.Crypto.Encodings;
+using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.X509;
 
@@ -529,6 +531,12 @@ namespace libusb_tester
                                     var q = crt.Q.ToByteArrayUnsigned();
                                     var n = crt.Modulus.ToByteArrayUnsigned();
                                     Context.PutRsaKey(scp03_session, 4, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
+                                    var engine = new Pkcs1Encoding(new RsaEngine());
+                                    engine.Init(true, rsa);
+                                    var encrypted2 = engine.ProcessBlock(new byte[100], 0, 100);
+                                    Console.WriteLine($"***** p {p.Length} q {q.Length} n {n.Length}");
+                                    var decrypted3 = scp03_session.SendCmd(new DecryptPkcs1Req { key_id = 4, data = encrypted2 }).ToArray();
+                                    Console.WriteLine("*****");
                                     var attestation = new X509Certificate(scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 0, attest_id = 0 }).ToArray());
                                     File.WriteAllBytes("attestation0.cer", attestation.GetEncoded());
                                     attestation.Verify(attcert.GetPublicKey());

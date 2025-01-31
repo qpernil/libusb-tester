@@ -22,6 +22,7 @@ namespace libusb
         GenerateAsymmetricKey = 0x46,
         SignPkcs1 = 0x47,
         ListObjects = 0x48,
+        DecryptPkcs1 = 0x49,
         ExportWrapped = 0x4a,
         ImportWrapped = 0x4b,
         PutWrapKey = 0x4c,
@@ -35,6 +36,7 @@ namespace libusb
         SignEcdsa = 0x56,
         DecryptEcdh = 0x57,
         DeleteObject = 0x58,
+        DecryptOaep = 0x59,
         AttestAsymmetric = 0x64,
         SetLogIndex = 0x67,
         ChangeAuthKey = 0x6c,
@@ -136,7 +138,8 @@ namespace libusb
         SignPss = 1ul << 0x06,
         SignEcdsa = 1ul << 0x07,
         SignEddsa = 1ul << 0x08,
-        DeleteAsymmetricKey = 1ul << 0x09,
+        DecryptPkcs1 = 1ul << 0x09,
+        DecryptOaep = 1ul << 0x0a,
         DecryptEcdh = 1ul << 0x0b,
         ExportWrapped = 1ul << 0x0c,
         ImportWrapped = 1ul << 0x0d,
@@ -146,6 +149,7 @@ namespace libusb
         Reset = 1ul << 0x1c,
         Attest = 1ul << 0x22,
         DeleteAuthKey = 1ul << 0x28,
+        DeleteAsymmetricKey = 1ul << 0x29,
         ChangeAuthKey = 1ul << 0x2e,
         PutSymmetricKey = 1ul << 0x2f,
         GenerateSymmetricKey = 1ul << 0x30,
@@ -980,6 +984,36 @@ namespace libusb
         {
             s.WriteByte(2);
             s.WriteByte((byte)type);
+        }
+    }
+
+    public class DecryptPkcs1Req : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.DecryptPkcs1;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(data.Span);
+        }
+    }
+
+    public class DecryptOaepReq : IWriteable
+    {
+        public ushort key_id;
+        public Algorithm mgf_algorithm;
+        public ReadOnlyMemory<byte> data;
+
+        public HsmCommand Command => HsmCommand.DecryptOaep;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte((byte)mgf_algorithm);
+            s.Write(data.Span);
         }
     }
 }

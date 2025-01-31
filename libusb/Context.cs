@@ -113,7 +113,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.SignPkcs | Capability.SignPss | Capability.Attest | Capability.ExportUnderWrap,
+                capabilities = Capability.SignPkcs | Capability.SignPss | Capability.Attest | Capability.ExportUnderWrap | Capability.DecryptPkcs1 | Capability.DecryptOaep,
                 algorithm = algorithm,
                 key = key
             };
@@ -139,7 +139,7 @@ namespace libusb
                 key_id = key_id,
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
-                capabilities = Capability.SignPkcs | Capability.SignPss | Capability.Attest | Capability.ExportUnderWrap,
+                capabilities = Capability.SignPkcs | Capability.SignPss | Capability.Attest | Capability.ExportUnderWrap | Capability.DecryptPkcs1 | Capability.DecryptOaep,
                 algorithm = Algorithm.RSA_2048,
             };
             return session.SendCmd(genasym_req);
