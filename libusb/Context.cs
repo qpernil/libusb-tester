@@ -237,7 +237,7 @@ namespace libusb
             return session.SendCmd(signeddsa_req);
         }
 
-        public static Span<byte> GenerateAesKey(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> GenerateAesKey(Session session, ushort key_id, Algorithm algorithm = Algorithm.AES_128, bool delete = true)
         {
             if (delete)
             {
@@ -257,7 +257,7 @@ namespace libusb
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
                 capabilities = Capability.DecryptEcb | Capability.EncryptEcb | Capability.DecryptCbc | Capability.EncryptCbc | Capability.ExportUnderWrap,
-                algorithm = Algorithm.AES_128
+                algorithm = algorithm
             };
             return session.SendCmd(req);
         }
