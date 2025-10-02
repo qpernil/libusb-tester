@@ -11,6 +11,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
+using Org.BouncyCastle.X509.Extension;
 
 namespace libusb
 {
@@ -132,7 +133,7 @@ namespace libusb
             certGen.SetSubjectDN(new X509Name(ord, attrs));
             certGen.SetPublicKey(pubkey);
             certGen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true));
-            certGen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifier(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubkey)));
+            certGen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, X509ExtensionUtilities.CreateAuthorityKeyIdentifier(pubkey));
 
             return certGen.Generate(new Asn1SignatureFactory(algo, signer));
         }
