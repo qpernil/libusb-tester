@@ -440,8 +440,9 @@ namespace libusb_tester
                                     var res = scp03_session.SendCmd(new PutAlgorithmToggleReq { data = opts.ToArray() });
                                     scp11_context.PutAuthKey(scp03_session, 0);
                                     scp03_context.PutAuthKey(scp03_session, 0);
-                                    
-                                    res = scp03_session.SendCmd(new PutFipsModeReq { fips = 1 });
+                                    */
+                                    //var res = scp03_session.SendCmd(new PutFipsModeReq { fips = 1 });
+                                    /*
                                     var fips = scp03_session.SendCmd(new GetFipsModeReq { });
                                     Console.WriteLine("GetFipsMode over scp03_session");
                                     foreach (var b in fips)
