@@ -94,6 +94,37 @@ namespace libusb
             return session.SendCmd(putasym_req);
         }
 
+        public static Span<byte> PutX25519Key(Session session, ushort key_id, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.AsymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var putasym_req = new PutAsymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.SignEddsa | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
+                algorithm = Algorithm.X25519,
+                key = new byte[] {
+                    0x01, 0x02, 0x03, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    0xff, 0xff, 0xff, 0xff, 0xff, 0x04, 0x05, 0x06,
+                }
+            };
+            return session.SendCmd(putasym_req);
+        }
+
         public static Span<byte> PutRsaKey(Session session, ushort key_id, Algorithm algorithm, ReadOnlyMemory<byte> key, bool delete = true)
         {
             if (delete)
@@ -195,6 +226,31 @@ namespace libusb
             return session.SendCmd(genasym_req);
         }
 
+        public static Span<byte> GenerateX25519Key(Session session, ushort key_id, bool delete = true)
+        {
+            if (delete)
+            {
+                try
+                {
+                    DeleteObject(session, key_id, ObjectType.AsymmetricKey);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            var genasym_req = new GenerateAsymmetricKeyReq
+            {
+                key_id = key_id,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.SignEcdsa | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
+                algorithm = Algorithm.X25519,
+            };
+            return session.SendCmd(genasym_req);
+        }
+
         public static Span<byte> SignPkcs1(Session session, ushort key_id)
         {
             var signecdsa_req = new SignPkcs1Req
@@ -233,6 +289,16 @@ namespace libusb
             {
                 key_id = key_id,
                 hash = new byte[20]
+            };
+            return session.SendCmd(signeddsa_req);
+        }
+
+        public static Span<byte> DecryptEcdh(Session session, ushort key_id, ReadOnlyMemory<byte> pubkey)
+        {
+            var signeddsa_req = new DecryptEcdhReq
+            {
+                key_id = key_id,
+                pubkey = pubkey
             };
             return session.SendCmd(signeddsa_req);
         }

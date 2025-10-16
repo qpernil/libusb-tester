@@ -495,6 +495,22 @@ namespace libusb_tester
                                     Context.SignEcdsa(scp03_session, 7);
                                     var id4 = Context.GenerateEd25519Key(scp03_session, 8);
                                     Context.SignEddsa(scp03_session, 8);
+                                    var id5 = Context.GenerateX25519Key(scp03_session, 9);
+                                    var pub5 = Context.GetPubKey(scp03_session, 9, out algo).ToArray();
+                                    Console.WriteLine(algo);
+                                    var id6  = Context.PutX25519Key(scp03_session, 10);
+                                    var pub6 = Context.GetPubKey(scp03_session, 10, out algo).ToArray();
+                                    Console.WriteLine(algo);
+                                    var sec1 = Context.DecryptEcdh(scp03_session, 9, pub6).ToArray();
+                                    var sec2 = Context.DecryptEcdh(scp03_session, 10, pub5).ToArray();
+                                    Console.Write("sec1: ");
+                                    foreach (var b in sec1)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+                                    Console.Write("sec2: ");
+                                    foreach (var b in sec2)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
                                     Context.PutWrapKey(scp03_session, 2, Algorithm.AES256_CCM_WRAP, new byte[32]);
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 5);
                                     var ed_key = Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 6).ToArray();

@@ -126,6 +126,7 @@ namespace libusb
         AES_128 = 50,
         AES_192 = 51,
         AES_256 = 52,
+        X25519 = 56,
     }
 
     [Flags]
@@ -953,6 +954,20 @@ namespace libusb
         {
             s.Write(key_id);
             s.Write(hash.Span);
+        }
+    }
+
+    public class DecryptEcdhReq : IWriteable
+    {
+        public ushort key_id;
+        public ReadOnlyMemory<byte> pubkey;
+
+        public HsmCommand Command => HsmCommand.DecryptEcdh;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.Write(pubkey.Span);
         }
     }
 
