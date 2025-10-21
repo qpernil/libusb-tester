@@ -25,7 +25,7 @@ namespace libusb
             return session.SendCmd(delete_req);
         }
 
-        public static Span<byte> PutEcP256Key(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> PutEcP256Key(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
         {
             if (delete)
             {
@@ -49,21 +49,12 @@ namespace libusb
                 domains = 0xffff,
                 capabilities = Capability.SignEcdsa | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
                 algorithm = Algorithm.EC_P256,
-                key = new byte[] {
-//                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-//                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-//                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-//                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
-                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    0xbc, 0xe6, 0xfa, 0xad, 0xa7, 0x17, 0x9e, 0x84,
-                    0xf3, 0xb9, 0xca, 0xc2, 0xfc, 0x63, 0x25, 0x50-8
-                }
+                key = key
             };
             return session.SendCmd(putasym_req);
         }
 
-        public static Span<byte> PutEd25519Key(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> PutEd25519Key(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
         {
             if (delete)
             {
@@ -84,17 +75,12 @@ namespace libusb
                 domains = 0xffff,
                 capabilities = Capability.SignEddsa | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
                 algorithm = Algorithm.ED25519,
-                key = new byte[] {
-                    0x01, 0x02, 0x03, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    0xff, 0xff, 0xff, 0xff, 0xff, 0x04, 0x05, 0x06,
-                }
+                key = key
             };
             return session.SendCmd(putasym_req);
         }
 
-        public static Span<byte> PutX25519Key(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> PutX25519Key(Session session, ushort key_id, ReadOnlyMemory<byte> key, bool delete = true)
         {
             if (delete)
             {
@@ -115,12 +101,7 @@ namespace libusb
                 domains = 0xffff,
                 capabilities = Capability.SignEddsa | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
                 algorithm = Algorithm.X25519,
-                key = new byte[] {
-                    0x01, 0x02, 0x03, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                    0xff, 0xff, 0xff, 0xff, 0xff, 0x04, 0x05, 0x06,
-                }
+                key = key
             };
             return session.SendCmd(putasym_req);
         }

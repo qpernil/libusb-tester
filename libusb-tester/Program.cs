@@ -7,6 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using libusb;
+using Net.Pkcs11Interop.Common;
+using Net.Pkcs11Interop.HighLevelAPI;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto.Encodings;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -317,6 +320,170 @@ namespace libusb_tester
         }
         static void Run(string[] args)
         {
+            var scp03_context = new Scp03Context("password");
+            using (var usb_ctx = new UsbContext())
+            {
+                foreach (var device in usb_ctx.GetDeviceList())
+                {
+                    Console.WriteLine($"Id {device.Id} Vendor 0x{device.Vendor:x} Product 0x{device.Product:x}");
+                    if (device.IsYubiHsm)
+                    {
+                        using (var usb_device = usb_ctx.Open(device, 1))
+                        {
+                            Console.WriteLine($"Manufacturer '{usb_device.Manufacturer}' Product '{usb_device.Product}' Serial '{usb_device.SerialNumber}'");
+                            using (var usb_session = usb_device.Claim(0))
+                            {
+                                using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
+                                {
+                                    var fred_id = Context.GenerateX25519Key(scp03_session, 11);
+                                    var fred_pub = Context.GetPubKey(scp03_session, 11, out var fred_algo).ToArray();
+
+                                    var alice_priv = Convert.FromHexString("77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a");
+                                    var alice_id = Context.PutX25519Key(scp03_session, 9, alice_priv);
+                                    var alice_pub = Context.GetPubKey(scp03_session, 9, out var alice_algo).ToArray();
+                                    var alice_ref = Convert.FromHexString("8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a");
+
+                                    var bob_priv = Convert.FromHexString("5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb");
+                                    var bob_id = Context.PutX25519Key(scp03_session, 10, bob_priv);
+                                    var bob_pub = Context.GetPubKey(scp03_session, 10, out var bob_algo).ToArray();
+                                    var bob_ref = Convert.FromHexString("de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f");
+
+                                    var alice_sec = Context.DecryptEcdh(scp03_session, 9, bob_pub).ToArray();
+                                    var bob_sec = Context.DecryptEcdh(scp03_session, 10, alice_pub).ToArray();
+
+                                    var sec_ref = Convert.FromHexString("4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742");
+
+                                    var alice_fred_sec = Context.DecryptEcdh(scp03_session, 9, fred_pub).ToArray();
+                                    var fred_alice_sec = Context.DecryptEcdh(scp03_session, 11, alice_pub).ToArray();
+
+                                    Console.WriteLine();
+
+                                    Console.Write($"alice_priv ({alice_algo}): ");
+                                    foreach (var b in alice_priv)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.Write($"alice_pub ({alice_algo}): ");
+                                    foreach (var b in alice_pub)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.Write($"alice_ref ({alice_algo}): ");
+                                    foreach (var b in alice_ref)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.WriteLine();
+
+                                    Console.Write($"bob_priv ({bob_algo}): ");
+                                    foreach (var b in bob_priv)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.Write($"bob_pub ({bob_algo}): ");
+                                    foreach (var b in bob_pub)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.Write($"bob_ref ({bob_algo}): ");
+                                    foreach (var b in bob_ref)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.WriteLine();
+
+                                    Console.Write("alice_sec: ");
+                                    foreach (var b in alice_sec)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.Write("bob_sec: ");
+                                    foreach (var b in bob_sec)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.Write("sec_ref: ");
+                                    foreach (var b in sec_ref)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.WriteLine();
+
+                                    Console.Write("alice_fred_sec: ");
+                                    foreach (var b in alice_fred_sec)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+
+                                    Console.Write("fred_alice_sec: ");
+                                    foreach (var b in fred_alice_sec)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
+                                    Console.WriteLine();
+
+                                    var factories = new Pkcs11InteropFactories();
+                                    using (var lib = factories.Pkcs11LibraryFactory.LoadPkcs11Library(factories, "/usr/local/lib/libykcs11.dylib", AppType.SingleThreaded))
+                                    {
+                                        foreach (var slot in lib.GetSlotList(SlotsType.WithTokenPresent))
+                                        {
+                                            using (var s = slot.OpenSession(SessionType.ReadWrite))
+                                            {
+                                                s.Login(CKU.CKU_USER, "123456");
+
+                                                var keys = s.FindAllObjects(new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_PRIVATE_KEY),
+                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_KEY_TYPE, 0x41),
+                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_MODULUS_BITS, 253),
+                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_EXTRACTABLE, false),
+                                                                                factories.ObjectAttributeFactory.Create(CKA.CKA_TOKEN, true)});
+
+                                                if (keys.Count > 0)
+                                                {
+                                                    var bytes = s.GetAttributeValue(keys[0], new List<CKA> { CKA.CKA_EC_POINT })[0].GetValueAsByteArray();
+                                                    var octetString = (Asn1OctetString)Asn1Object.FromByteArray(bytes);
+                                                    var yubikey_pub = octetString.GetOctets();
+
+                                                    var mech = factories.MechanismFactory.Create(CKM.CKM_ECDH1_DERIVE,
+                                                        factories.MechanismParamsFactory.CreateCkEcdh1DeriveParams((ulong)CKD.CKD_NULL, null, fred_pub));
+
+                                                    var obj = s.DeriveKey(mech, keys[0], new List<IObjectAttribute> { factories.ObjectAttributeFactory.Create(CKA.CKA_CLASS, CKO.CKO_SECRET_KEY),
+                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_KEY_TYPE, CKK.CKK_GENERIC_SECRET),
+                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_EXTRACTABLE, true),
+                                                                                        factories.ObjectAttributeFactory.Create(CKA.CKA_TOKEN, false)});
+
+                                                    var value = s.GetAttributeValue(obj, new List<CKA> { CKA.CKA_VALUE });
+                                                    var yubikey_fred_sec = value[0].GetValueAsByteArray();
+
+                                                    s.DestroyObject(obj);
+
+                                                    var fred_yubikey_sec = Context.DecryptEcdh(scp03_session, 11, yubikey_pub).ToArray();
+
+                                                    Console.WriteLine();
+
+                                                    Console.Write("yubikey_fred_sec: ");
+                                                    foreach (var b in yubikey_fred_sec)
+                                                        Console.Write($"{b:x2}");
+                                                    Console.WriteLine();
+
+                                                    Console.Write("fred_yubikey_sec: ");
+                                                    foreach (var b in fred_yubikey_sec)
+                                                        Console.Write($"{b:x2}");
+                                                    Console.WriteLine();
+
+                                                    Console.WriteLine();
+
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        static void Run2(string[] args)
+        {
             /*
             Console.WriteLine("get_padded_len");
             Console.WriteLine(get_padded_len(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
@@ -482,9 +649,19 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
                                     */
-                                    var id = Context.PutEcP256Key(scp03_session, 5);
+                                    var key = new byte[] {
+                    //                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    //                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    //                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                    //                    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                        0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00,
+                                        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+                                        0xbc, 0xe6, 0xfa, 0xad, 0xa7, 0x17, 0x9e, 0x84,
+                                        0xf3, 0xb9, 0xca, 0xc2, 0xfc, 0x63, 0x25, 0x50-8
+                                    };
+                                    var id = Context.PutEcP256Key(scp03_session, 5, key);
                                     Context.SignEcdsa(scp03_session, 5);
-                                    var id2 = Context.PutEd25519Key(scp03_session, 6);
+                                    var id2 = Context.PutEd25519Key(scp03_session, 6, key);
                                     Context.SignEddsa(scp03_session, 6);
                                     var pub = BitConverter.ToString(Context.GetPubKey(scp03_session, 6, out var algo).ToArray()).Replace("-", string.Empty);
                                     Console.WriteLine($"{algo} GetPubKey over scp03_session");
@@ -498,7 +675,7 @@ namespace libusb_tester
                                     var id5 = Context.GenerateX25519Key(scp03_session, 9);
                                     var pub5 = Context.GetPubKey(scp03_session, 9, out algo).ToArray();
                                     Console.WriteLine(algo);
-                                    var id6  = Context.PutX25519Key(scp03_session, 10);
+                                    var id6  = Context.GenerateX25519Key(scp03_session, 10);
                                     var pub6 = Context.GetPubKey(scp03_session, 10, out algo).ToArray();
                                     Console.WriteLine(algo);
                                     var sec1 = Context.DecryptEcdh(scp03_session, 9, pub6).ToArray();
