@@ -325,12 +325,12 @@ namespace libusb_tester
             {
                 foreach (var device in usb_ctx.GetDeviceList())
                 {
-                    Console.WriteLine($"Id {device.Id} Vendor 0x{device.Vendor:x} Product 0x{device.Product:x}");
+                    //Console.WriteLine($"Id {device.Id} Vendor 0x{device.Vendor:x} Product 0x{device.Product:x}");
                     if (device.IsYubiHsm)
                     {
                         using (var usb_device = usb_ctx.Open(device, 1))
                         {
-                            Console.WriteLine($"Manufacturer '{usb_device.Manufacturer}' Product '{usb_device.Product}' Serial '{usb_device.SerialNumber}'");
+                            //Console.WriteLine($"Manufacturer '{usb_device.Manufacturer}' Product '{usb_device.Product}' Serial '{usb_device.SerialNumber}'");
                             using (var usb_session = usb_device.Claim(0))
                             {
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
@@ -351,7 +351,7 @@ namespace libusb_tester
                                     var alice_sec = Context.DecryptEcdh(scp03_session, 9, bob_pub).ToArray();
                                     var bob_sec = Context.DecryptEcdh(scp03_session, 10, alice_pub).ToArray();
 
-                                    var sec_ref = Convert.FromHexString("4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742");
+                                    var ref_sec = Convert.FromHexString("4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742");
 
                                     var alice_fred_sec = Context.DecryptEcdh(scp03_session, 9, fred_pub).ToArray();
                                     var fred_alice_sec = Context.DecryptEcdh(scp03_session, 11, alice_pub).ToArray();
@@ -402,8 +402,8 @@ namespace libusb_tester
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
 
-                                    Console.Write("sec_ref: ");
-                                    foreach (var b in sec_ref)
+                                    Console.Write("ref_sec: ");
+                                    foreach (var b in ref_sec)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
 
