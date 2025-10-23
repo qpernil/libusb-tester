@@ -675,6 +675,10 @@ namespace libusb_tester
                                     var id5 = Context.GenerateX25519Key(scp03_session, 9);
                                     var pub5 = Context.GetPubKey(scp03_session, 9, out algo).ToArray();
                                     Console.WriteLine(algo);
+                                    Console.Write("pub5: ");
+                                    foreach (var b in pub5)
+                                        Console.Write($"{b:x2}");
+                                    Console.WriteLine();
                                     var id6  = Context.GenerateX25519Key(scp03_session, 10);
                                     var pub6 = Context.GetPubKey(scp03_session, 10, out algo).ToArray();
                                     Console.WriteLine(algo);
