@@ -318,7 +318,7 @@ namespace libusb_tester
         {
             return test_utf8_points(Encoding.UTF8.GetBytes(str));
         }
-        static void Run(string[] args)
+        static void Run0(string[] args)
         {
             var scp03_context = new Scp03Context("password");
             using (var usb_ctx = new UsbContext())
@@ -482,7 +482,7 @@ namespace libusb_tester
                 }
             }
         }
-        static void Run2(string[] args)
+        static void Run(string[] args)
         {
             /*
             Console.WriteLine("get_padded_len");
@@ -688,6 +688,8 @@ namespace libusb_tester
                                     foreach (var b in sec2)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
+                                    var attestation = new X509Certificate(scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 9, attest_id = 0 }).ToArray());
+                                    File.WriteAllBytes("attestation9.cer", attestation.GetEncoded());
                                     Context.PutWrapKey(scp03_session, 2, Algorithm.AES256_CCM_WRAP, new byte[32]);
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 5);
                                     var ed_key = Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 6).ToArray();
@@ -731,7 +733,7 @@ namespace libusb_tester
                                     Console.WriteLine($"***** p {p.Length} q {q.Length} n {n.Length}");
                                     var decrypted3 = scp03_session.SendCmd(new DecryptPkcs1Req { key_id = 4, data = encrypted2 }).ToArray();
                                     Console.WriteLine("*****");
-                                    var attestation = new X509Certificate(scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 0, attest_id = 0 }).ToArray());
+                                    attestation = new X509Certificate(scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 0, attest_id = 0 }).ToArray());
                                     File.WriteAllBytes("attestation0.cer", attestation.GetEncoded());
                                     attestation.Verify(attcert.GetPublicKey());
                                     var attcert4 = new X509Certificate(scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 4, attest_id = 0 }).ToArray());
