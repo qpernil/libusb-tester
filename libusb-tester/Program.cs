@@ -423,8 +423,10 @@ namespace libusb_tester
                                     var factories = new Pkcs11InteropFactories();
                                     using (var lib = factories.Pkcs11LibraryFactory.LoadPkcs11Library(factories, "/usr/local/lib/libykcs11.dylib", AppType.SingleThreaded))
                                     {
+                                        Console.WriteLine($"{lib.GetInfo().ManufacturerId} {lib.GetInfo().LibraryDescription}");
                                         foreach (var slot in lib.GetSlotList(SlotsType.WithTokenPresent))
                                         {
+                                            Console.WriteLine($"{slot.GetTokenInfo().Label}");
                                             using (var s = slot.OpenSession(SessionType.ReadWrite))
                                             {
                                                 s.Login(CKU.CKU_USER, "123456");
@@ -437,6 +439,8 @@ namespace libusb_tester
 
                                                 if (keys.Count > 0)
                                                 {
+                                                    var label = s.GetAttributeValue(keys[0], new List<CKA> { CKA.CKA_LABEL })[0].GetValueAsString();
+                                                    Console.WriteLine($"{label}");
                                                     var bytes = s.GetAttributeValue(keys[0], new List<CKA> { CKA.CKA_EC_POINT })[0].GetValueAsByteArray();
                                                     var octetString = (Asn1OctetString)Asn1Object.FromByteArray(bytes);
                                                     var yubikey_pub = octetString.GetOctets();
