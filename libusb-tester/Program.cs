@@ -570,13 +570,11 @@ namespace libusb_tester
             using (var usb_ctx = new UsbContext())
             {
                 foreach (var device in usb_ctx.GetDeviceList())
-                {
-                    Console.WriteLine($"Id {device.Id} Vendor 0x{device.Vendor:x} Product 0x{device.Product:x}");
+                { 
+                    Console.WriteLine($"Id {device.Id} Vendor 0x{device.Vendor:x} Product 0x{device.Product:x} Configuration {device.Configuration} IsCCID {device.IsCCID}");
                     if (device.IsYubiHsm)
                     {
-                        //var config = usb_ctx.GetConfigDescriptor(device, 0);
-                        //var config_id = config.bConfigurationValue;
-                        using (var usb_device = usb_ctx.Open(device, 1))
+                        using (var usb_device = usb_ctx.Open(device, device.Configuration))
                         {
                             Console.WriteLine($"Manufacturer '{usb_device.Manufacturer}' Product '{usb_device.Product}' Serial '{usb_device.SerialNumber}'");
                             using (var usb_session = usb_device.Claim(0))

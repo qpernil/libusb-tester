@@ -82,6 +82,14 @@ namespace libusb
     };
 
     [StructLayout(LayoutKind.Sequential)]
+    public struct libusb_interface
+    {
+        public IntPtr altsetting;
+
+        public int num_altsetting;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     public struct interface_descriptor
     {
         public byte bLength;
@@ -128,7 +136,13 @@ namespace libusb
     public delegate int libusb_get_device_descriptor(IntPtr device, ref device_descriptor descriptor);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int libusb_get_active_config_descriptor(IntPtr device, out IntPtr descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_get_config_descriptor(IntPtr device, byte index, out IntPtr descriptor);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int libusb_get_config_descriptor_by_value(IntPtr device, byte value, out IntPtr descriptor);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void libusb_free_config_descriptor(IntPtr descriptor);
@@ -183,7 +197,9 @@ namespace libusb
         public readonly libusb_get_device_list get_device_list;
         public readonly libusb_free_device_list free_device_list;
         public readonly libusb_get_device_descriptor get_device_descriptor;
+        public readonly libusb_get_active_config_descriptor get_active_config_descriptor;
         public readonly libusb_get_config_descriptor get_config_descriptor;
+        public readonly libusb_get_config_descriptor_by_value get_config_descriptor_by_value;
         public readonly libusb_free_config_descriptor free_config_descriptor;
         public readonly libusb_ref_device ref_device;
         public readonly libusb_unref_device unref_device;
@@ -215,7 +231,9 @@ namespace libusb
             libusb.GetExport(out get_device_list);
             libusb.GetExport(out free_device_list);
             libusb.GetExport(out get_device_descriptor);
+            libusb.GetExport(out get_active_config_descriptor);
             libusb.GetExport(out get_config_descriptor);
+            libusb.GetExport(out get_config_descriptor_by_value);
             libusb.GetExport(out free_config_descriptor);
             libusb.GetExport(out ref_device);
             libusb.GetExport(out unref_device);

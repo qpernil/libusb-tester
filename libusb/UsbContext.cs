@@ -10,7 +10,7 @@ namespace libusb
     {
         public UsbContext()
         {
-            libusb = new LibUsb(/*"/Users/PNilsson/Firmware/YubiCrypt/build/libykhsim-usb.dylib"*/);
+            libusb = new LibUsb(/*"/Users/PNilsson/Firmware/YubiCrypt/build/libusb-1.0.0.dylib"*/);
             var status = libusb.init(out ctx);
             if (status != 0)
                 throw new IOException($"libusb.init: {libusb.StrError(status)}");
@@ -37,16 +37,6 @@ namespace libusb
             {
                 libusb.free_device_list(device_list, 1);
             }
-        }
-
-        public config_descriptor GetConfigDescriptor(IntPtr device, byte index)
-        {
-            var status = libusb.get_config_descriptor(device, index, out var descriptor);
-            if (status != 0)
-                throw new IOException($"libusb.get_config_descriptor({index}): {libusb.StrError(status)}");
-            var ret = Marshal.PtrToStructure<config_descriptor>(descriptor);
-            libusb.free_config_descriptor(descriptor);
-            return ret;
         }
 
         public UsbDevice Open(UsbDescriptor descriptor, int configuration, byte control_endpoint = 0x80)

@@ -68,9 +68,9 @@ namespace libusb
             return descriptor;
         }
 
-        public string SerialNumber => GetStringDescriptor(descriptor.descriptor.iSerialNumber);
-        public string Manufacturer => GetStringDescriptor(descriptor.descriptor.iManufacturer);
-        public string Product => GetStringDescriptor(descriptor.descriptor.iProduct);
+        public string SerialNumber => GetStringDescriptor(descriptor.device_descriptor.iSerialNumber);
+        public string Manufacturer => GetStringDescriptor(descriptor.device_descriptor.iManufacturer);
+        public string Product => GetStringDescriptor(descriptor.device_descriptor.iProduct);
 
         public void Reset()
         {
