@@ -117,6 +117,31 @@ namespace libusb
         public int ExtraLength;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct endpoint_descriptor
+    {
+        public byte bLength;
+
+        public byte bDescriptorType;
+
+        public byte bEndpointAddress;
+
+        public byte bmAttributes;
+
+        public ushort wMaxPacketSize;
+
+        public byte bInterval;
+
+        public byte bRefresh;
+
+        public byte bSynchAddress;
+
+        public IntPtr Extra;
+
+        public int ExtraLength;
+    };
+
+
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int libusb_init(out IntPtr ctx);
 

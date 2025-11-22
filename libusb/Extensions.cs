@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Math;
@@ -10,6 +11,11 @@ namespace libusb
 {
     public static class Extensions
     {
+        public static T PtrToStructureAt<T>(IntPtr pointer, int index)
+        {
+            return Marshal.PtrToStructure<T>(pointer + index * Marshal.SizeOf<T>());
+        }
+
         public static byte[] ToByteArrayFixed(this BigInteger num, int size = 32)
         {
             var ret = num.ToByteArrayUnsigned();

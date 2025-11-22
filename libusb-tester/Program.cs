@@ -328,7 +328,7 @@ namespace libusb_tester
                     //Console.WriteLine($"Id {device.Id} Vendor 0x{device.Vendor:x} Product 0x{device.Product:x}");
                     if (device.IsYubiHsm)
                     {
-                        using (var usb_device = usb_ctx.Open(device, 1))
+                        using (var usb_device = usb_ctx.Open(device, device.Configuration))
                         {
                             //Console.WriteLine($"Manufacturer '{usb_device.Manufacturer}' Product '{usb_device.Product}' Serial '{usb_device.SerialNumber}'");
                             using (var usb_session = usb_device.Claim(0))
