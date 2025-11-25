@@ -34,6 +34,7 @@ namespace libusb
         public long Id => device.ToInt64();
         public ushort Vendor => device_descriptor.idVendor;
         public ushort Product => device_descriptor.idProduct;
+        public byte NumConfigurations => device_descriptor.bNumConfigurations;
         public byte Configuration => config_descriptor.bConfigurationValue;
 
         public bool IsYubiHsm => Vendor == 0x1050 && Product == 0x30;
