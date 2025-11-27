@@ -694,8 +694,6 @@ namespace libusb_tester
                                     foreach (var b in sec2)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-                                    var attestation = new X509Certificate(scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 9, attest_id = 0 }).ToArray());
-                                    File.WriteAllBytes("attestation9.cer", attestation.GetEncoded());
                                     Context.PutWrapKey(scp03_session, 2, Algorithm.AES256_CCM_WRAP, new byte[32]);
                                     Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 5);
                                     var ed_key = Context.ExportWrapped(scp03_session, 2, ObjectType.AsymmetricKey, 6).ToArray();
@@ -726,6 +724,8 @@ namespace libusb_tester
                                     //usb_session.SendCmd(new SetAttestCertReq { cert = Scp11Context.GenerateCertificate(context.pk_oce, sk_oce).GetEncoded() });
                                     var attcert = new X509Certificate(scp03_session.SendCmd(new GetOpaqueReq { object_id = 0 }).ToArray());
                                     File.WriteAllBytes("attestation.cer", attcert.GetEncoded());
+                                    var attestation = new X509Certificate(scp03_session.SendCmd(new AttestAsymmetricReq { key_id = 9, attest_id = 0 }).ToArray());
+                                    File.WriteAllBytes("attestation9.cer", attestation.GetEncoded());
                                     var pair = Scp11Context.GenerateRsaKeyPair(2048);
                                     var rsa = (RsaKeyParameters)pair.Public;
                                     var crt = (RsaPrivateCrtKeyParameters)pair.Private;

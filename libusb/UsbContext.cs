@@ -10,7 +10,7 @@ namespace libusb
     {
         public UsbContext()
         {
-            libusb = new LibUsb(/*"/Users/PNilsson/Firmware/YkPlus/build/libusb-1.0.0.dylib"*/);
+            libusb = new LibUsb(/*"/Users/PNilsson/Firmware/YubiCrypt/build/libusb-1.0.0.dylib"*/);
             var status = libusb.init(out ctx);
             if (status != 0)
                 throw new IOException($"libusb.init: {libusb.StrError(status)}");
