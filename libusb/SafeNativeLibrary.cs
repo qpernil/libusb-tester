@@ -20,7 +20,7 @@ namespace libusb
             NativeLibrary.Free(handle);
             return true;
         }
-        public IntPtr GetExport(string name)
+        public nint GetExport(string name)
         {
             return NativeLibrary.GetExport(handle, name);
         }

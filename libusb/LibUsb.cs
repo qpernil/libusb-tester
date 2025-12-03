@@ -3,6 +3,11 @@ using System.Runtime.InteropServices;
 
 namespace libusb
 {
+    public interface Extra
+    {
+        nint GetExtra();
+        int GetExtraLength();
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct device_descriptor
@@ -56,7 +61,7 @@ namespace libusb
     };
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct config_descriptor
+    public struct config_descriptor : Extra
     {
         public byte bLength;
 
@@ -74,23 +79,33 @@ namespace libusb
 
         public byte MaxPower;
 
-        public IntPtr Interfaces;
+        public nint Interfaces;
 
-        public IntPtr Extra;
+        public nint Extra;
 
         public int ExtraLength;
+
+        nint Extra.GetExtra()
+        {
+            return Extra;
+        }
+
+        int Extra.GetExtraLength()
+        {
+            return ExtraLength;
+        }
     };
 
     [StructLayout(LayoutKind.Sequential)]
     public struct libusb_interface
     {
-        public IntPtr altsetting;
+        public nint altsetting;
 
         public int num_altsetting;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct interface_descriptor
+    public struct interface_descriptor : Extra
     {
         public byte bLength;
 
@@ -110,15 +125,25 @@ namespace libusb
 
         public byte iInterface;
 
-        public IntPtr Endpoints;
+        public nint Endpoints;
 
-        public IntPtr Extra;
+        public nint Extra;
 
         public int ExtraLength;
+
+        nint Extra.GetExtra()
+        {
+            return Extra;
+        }
+
+        int Extra.GetExtraLength()
+        {
+            return ExtraLength;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct endpoint_descriptor
+    public struct endpoint_descriptor : Extra
     {
         public byte bLength;
 
@@ -136,83 +161,93 @@ namespace libusb
 
         public byte bSynchAddress;
 
-        public IntPtr Extra;
+        public nint Extra;
 
         public int ExtraLength;
+
+        nint Extra.GetExtra()
+        {
+            return Extra;
+        }
+
+        int Extra.GetExtraLength()
+        {
+            return ExtraLength;
+        }
     };
 
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_init(out IntPtr ctx);
+    public delegate int libusb_init(out nint ctx);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void libusb_exit(IntPtr ctx);
+    public delegate void libusb_exit(nint ctx);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate IntPtr libusb_strerror(int code);
+    public delegate nint libusb_strerror(int code);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_get_device_list(IntPtr ctx, out IntPtr device_list);
+    public delegate int libusb_get_device_list(nint ctx, out nint device_list);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void libusb_free_device_list(IntPtr device_list, int unref_devices);
+    public delegate void libusb_free_device_list(nint device_list, int unref_devices);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_get_device_descriptor(IntPtr device, ref device_descriptor descriptor);
+    public delegate int libusb_get_device_descriptor(nint device, ref device_descriptor descriptor);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_get_active_config_descriptor(IntPtr device, out IntPtr descriptor);
+    public delegate int libusb_get_active_config_descriptor(nint device, out nint descriptor);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_get_config_descriptor(IntPtr device, byte index, out IntPtr descriptor);
+    public delegate int libusb_get_config_descriptor(nint device, byte index, out nint descriptor);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_get_config_descriptor_by_value(IntPtr device, byte value, out IntPtr descriptor);
+    public delegate int libusb_get_config_descriptor_by_value(nint device, byte value, out nint descriptor);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void libusb_free_config_descriptor(IntPtr descriptor);
+    public delegate void libusb_free_config_descriptor(nint descriptor);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate IntPtr libusb_ref_device(IntPtr device);
+    public delegate nint libusb_ref_device(nint device);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void libusb_unref_device(IntPtr device);
+    public delegate void libusb_unref_device(nint device);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_open(IntPtr device, out IntPtr device_handle);
+    public delegate int libusb_open(nint device, out nint device_handle);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void libusb_close(IntPtr device_handle);
+    public delegate void libusb_close(nint device_handle);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_get_configuration(IntPtr device_handle, out int configuration);
+    public delegate int libusb_get_configuration(nint device_handle, out int configuration);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_set_configuration(IntPtr device_handle, int configuration);
+    public delegate int libusb_set_configuration(nint device_handle, int configuration);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_clear_halt(IntPtr device_handle, byte endpoint);
+    public delegate int libusb_clear_halt(nint device_handle, byte endpoint);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_reset_device(IntPtr device_handle);
+    public delegate int libusb_reset_device(nint device_handle);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_claim_interface(IntPtr device_handle, int interface_number);
+    public delegate int libusb_claim_interface(nint device_handle, int interface_number);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_release_interface(IntPtr device_handle, int interface_number);
+    public delegate int libusb_release_interface(nint device_handle, int interface_number);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_set_interface_alt_setting(IntPtr device_handle, int interface_number, int alt_setting);
+    public delegate int libusb_set_interface_alt_setting(nint device_handle, int interface_number, int alt_setting);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_interrupt_transfer(IntPtr device_handle, byte endpoint, byte[] data, int length, out int actual_length, uint timeout);
+    public delegate int libusb_interrupt_transfer(nint device_handle, byte endpoint, byte[] data, int length, out int actual_length, uint timeout);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_bulk_transfer(IntPtr device_handle, byte endpoint, byte[] data, int length, out int actual_length, uint timeout);
+    public delegate int libusb_bulk_transfer(nint device_handle, byte endpoint, byte[] data, int length, out int actual_length, uint timeout);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int libusb_control_transfer(IntPtr device_handle, byte request_type, byte request, ushort value, ushort index, byte[] data, ushort length, uint timeout);
+    public delegate int libusb_control_transfer(nint device_handle, byte request_type, byte request, ushort value, ushort index, byte[] data, ushort length, uint timeout);
 
     public class LibUsb
     {

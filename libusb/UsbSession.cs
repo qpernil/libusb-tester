@@ -9,7 +9,7 @@ namespace libusb
         {
             return $"UsbSession on {device_handle}";
         }
-        public UsbSession(LibUsb libusb, IntPtr device_handle, int configuration, int interface_number, int alt_setting, byte write_endpoint, byte read_endpoint)
+        public UsbSession(LibUsb libusb, nint device_handle, int configuration, int interface_number, int alt_setting, byte write_endpoint, byte read_endpoint)
         {
             this.libusb = libusb;
             this.device_handle = device_handle;
@@ -93,7 +93,7 @@ namespace libusb
         }
 
         private readonly LibUsb libusb;
-        private readonly IntPtr device_handle;
+        private readonly nint device_handle;
         private readonly int interface_number;
         private readonly byte write_endpoint, read_endpoint;
     }

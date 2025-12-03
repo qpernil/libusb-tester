@@ -6,13 +6,13 @@ namespace libusb
     public class PCSC
     {
         [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-        public delegate uint SCardEstablishContext(uint scope, IntPtr reserved1, IntPtr reserved2, out IntPtr ctx);
+        public delegate uint SCardEstablishContext(uint scope, nint reserved1, nint reserved2, out nint ctx);
 
         [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-        public delegate uint SCardReleaseContext(IntPtr ctx);
+        public delegate uint SCardReleaseContext(nint ctx);
 
         [UnmanagedFunctionPointer(CallingConvention.Winapi, CharSet = CharSet.Ansi)]
-        public delegate uint SCardListReaders(IntPtr ctx, string groups, byte[] readers, ref int cb_readers);
+        public delegate uint SCardListReaders(nint ctx, string groups, byte[] readers, ref int cb_readers);
 
         private readonly SafeNativeLibrary pcsc;
         public readonly SCardEstablishContext establish_context;

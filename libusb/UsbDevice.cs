@@ -88,7 +88,7 @@ namespace libusb
 
         private readonly LibUsb libusb;
         private readonly UsbDescriptor descriptor;
-        private readonly IntPtr device_handle;
+        private readonly nint device_handle;
         private readonly int configuration;
         private readonly byte control_endpoint;
     }

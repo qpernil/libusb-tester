@@ -30,7 +30,7 @@ namespace libusb
             {
                 for (int i = 0; i < ret; i++)
                 {
-                    yield return new UsbDescriptor(libusb, Marshal.ReadIntPtr(device_list, i * IntPtr.Size));
+                    yield return new UsbDescriptor(libusb, Marshal.ReadIntPtr(device_list, i * nint.Size));
                 }
             }
             finally
@@ -50,6 +50,6 @@ namespace libusb
         }
 
         private readonly LibUsb libusb;
-        private readonly IntPtr ctx;
+        private readonly nint ctx;
     }
 }

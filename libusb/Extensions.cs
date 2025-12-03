@@ -11,7 +11,7 @@ namespace libusb
 {
     public static class Extensions
     {
-        public static T PtrToStructureAt<T>(IntPtr pointer, int index)
+        public static T PtrToStructureAt<T>(nint pointer, int index)
         {
             return Marshal.PtrToStructure<T>(pointer + index * Marshal.SizeOf<T>());
         }

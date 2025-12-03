@@ -7,7 +7,25 @@ namespace libusb
 {
     public class UsbDescriptor
     {
-        public UsbDescriptor(LibUsb libusb, IntPtr device)
+        public static void parseExtra(Extra obj)
+        {
+            if (obj.GetExtra() != nint.Zero)
+            {
+                Console.WriteLine(obj);
+                var extra = obj.GetExtra();
+                var len = obj.GetExtraLength();
+                while (len > 0)
+                {
+                    var desc_len = Marshal.ReadByte(extra);
+                    var desc_type = Marshal.ReadByte(extra + 1);
+                    Console.WriteLine($"{len}: Extra {desc_type:X} {desc_len}");
+                    extra += desc_len;
+                    len -= desc_len;
+                }
+            }
+        }
+
+        public UsbDescriptor(LibUsb libusb, nint device)
         {
             this.libusb = libusb;
             this.device = device;
@@ -28,6 +46,7 @@ namespace libusb
                 var intf = Extensions.PtrToStructureAt<libusb_interface>(config_descriptor.Interfaces, i);
                 interface_descriptors[i] = new InterfaceDescriptor(intf.altsetting);
             }
+            parseExtra(config_descriptor);
             libusb.free_config_descriptor(config_ptr);
         }
 
@@ -41,7 +60,7 @@ namespace libusb
         public bool IsCCID => interface_descriptors.Any(d => d.IsCCID);
 
         public readonly LibUsb libusb;
-        public readonly IntPtr device;
+        public readonly nint device;
         public readonly device_descriptor device_descriptor;
         public readonly config_descriptor config_descriptor;
         public readonly InterfaceDescriptor[] interface_descriptors;
