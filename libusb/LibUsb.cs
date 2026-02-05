@@ -85,15 +85,9 @@ namespace libusb
 
         public int ExtraLength;
 
-        nint Extra.GetExtra()
-        {
-            return Extra;
-        }
+        nint Extra.GetExtra() => Extra;
 
-        int Extra.GetExtraLength()
-        {
-            return ExtraLength;
-        }
+        int Extra.GetExtraLength() => ExtraLength;
     };
 
     [StructLayout(LayoutKind.Sequential)]
@@ -131,15 +125,9 @@ namespace libusb
 
         public int ExtraLength;
 
-        nint Extra.GetExtra()
-        {
-            return Extra;
-        }
+        nint Extra.GetExtra() => Extra;
 
-        int Extra.GetExtraLength()
-        {
-            return ExtraLength;
-        }
+        int Extra.GetExtraLength() => ExtraLength;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -165,15 +153,9 @@ namespace libusb
 
         public int ExtraLength;
 
-        nint Extra.GetExtra()
-        {
-            return Extra;
-        }
+        nint Extra.GetExtra() => Extra;
 
-        int Extra.GetExtraLength()
-        {
-            return ExtraLength;
-        }
+        int Extra.GetExtraLength() => ExtraLength;
     };
 
 

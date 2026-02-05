@@ -11,14 +11,13 @@ namespace libusb
         {
             if (obj.GetExtra() != nint.Zero)
             {
-                Console.WriteLine(obj);
                 var extra = obj.GetExtra();
                 var len = obj.GetExtraLength();
                 while (len > 0)
                 {
                     var desc_len = Marshal.ReadByte(extra);
                     var desc_type = Marshal.ReadByte(extra + 1);
-                    Console.WriteLine($"{len}: Extra {desc_type:X} {desc_len}");
+                    Console.WriteLine($"{obj} - {len}:{extra:X} Extra {desc_type:X} {desc_len}");
                     extra += desc_len;
                     len -= desc_len;
                 }
@@ -40,13 +39,13 @@ namespace libusb
                 throw new IOException($"libusb.get_active_config_descriptor: {libusb.StrError(status)}");
             }
             config_descriptor = Marshal.PtrToStructure<config_descriptor>(config_ptr);
+            parseExtra(config_descriptor);
             interface_descriptors = new InterfaceDescriptor[config_descriptor.bNumInterfaces];
             for (byte i = 0; i < config_descriptor.bNumInterfaces; i++)
             {
                 var intf = Extensions.PtrToStructureAt<libusb_interface>(config_descriptor.Interfaces, i);
                 interface_descriptors[i] = new InterfaceDescriptor(intf.altsetting);
             }
-            parseExtra(config_descriptor);
             libusb.free_config_descriptor(config_ptr);
         }
 
@@ -57,6 +56,7 @@ namespace libusb
         public byte Configuration => config_descriptor.bConfigurationValue;
 
         public bool IsYubiHsm => Vendor == 0x1050 && Product == 0x30;
+        public bool IsYubiKey => Vendor == 0x1050 && Product == 0x407;
         public bool IsCCID => interface_descriptors.Any(d => d.IsCCID);
 
         public readonly LibUsb libusb;
