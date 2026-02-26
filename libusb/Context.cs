@@ -157,7 +157,7 @@ namespace libusb
             return session.SendCmd(genasym_req);
         }
 
-        public static Span<byte> GenerateEcP256Key(Session session, ushort key_id, bool delete = true)
+        public static Span<byte> GenerateEcKey(Session session, Algorithm algorithm, ushort key_id, bool delete = true)
         {
             if (delete)
             {
@@ -177,7 +177,7 @@ namespace libusb
                 label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
                 domains = 0xffff,
                 capabilities = Capability.SignEcdsa | Capability.DecryptEcdh | Capability.Attest | Capability.ExportUnderWrap,
-                algorithm = Algorithm.EC_P256,
+                algorithm = algorithm,
             };
             return session.SendCmd(genasym_req);
         }
@@ -538,6 +538,36 @@ namespace libusb
                 digest = digest
             };
             return session.SendCmd(getwrapped_req);
+        }
+
+        public static Span<byte> PutRsaWrapped(Session session, ushort key_id, ObjectType target_type, ushort target_key, Algorithm target_algo, Algorithm hash_algo, Algorithm mgf_algo, ReadOnlyMemory<byte> wrapped_key, ReadOnlyMemory<byte> digest, ObjectType type = ObjectType.None, ushort delete = 0)
+        {
+            if (delete > 0)
+            {
+                try
+                {
+                    DeleteObject(session, delete, type);
+                }
+                catch (IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+            var importwrapped_req = new PutRsaWrappedReq
+            {
+                key_id = key_id,
+                target_type = target_type,
+                target_key = target_key,
+                label = Encoding.UTF8.GetBytes("0123456789012345678901234567890123456789"),
+                domains = 0xffff,
+                capabilities = Capability.All,
+                algorithm = target_algo,
+                hash_algorithm = hash_algo,
+                mgf_algorithm = mgf_algo,
+                wrapped_key = wrapped_key,
+                digest = digest
+            };
+            return session.SendCmd(importwrapped_req);
         }
 
         public static Span<byte> GetPubKey(Session session, ushort key_id, out Algorithm algo) {

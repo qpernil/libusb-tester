@@ -100,6 +100,7 @@ namespace libusb
 
     public enum Algorithm : byte
     {
+        None = 0,
         RSA_2048 = 9,
         RSA_3072 = 10,
         RSA_4096 = 11,
@@ -338,6 +339,38 @@ namespace libusb
             s.WriteByte((byte)aes_algorithm);
             s.WriteByte((byte)hash_algorithm);
             s.WriteByte((byte)mgf_algorithm);
+            s.Write(digest.Span);
+        }
+    }
+
+    public class PutRsaWrappedReq : IWriteable
+    {
+        public ushort key_id;
+        public ObjectType target_type;
+        public ushort target_key;
+        public ReadOnlyMemory<byte> label;
+        public ushort domains;
+        public Capability capabilities;
+        public Algorithm algorithm;
+        public Algorithm hash_algorithm;
+        public Algorithm mgf_algorithm;
+        public ReadOnlyMemory<byte> wrapped_key;
+        public ReadOnlyMemory<byte> digest;
+
+        public HsmCommand Command => HsmCommand.PutRsaWrapped;
+
+        public void WriteTo(Stream s)
+        {
+            s.Write(key_id);
+            s.WriteByte((byte)target_type);
+            s.Write(target_key);
+            s.Write(label.Span);
+            s.Write(domains);
+            s.Write((ulong)capabilities);
+            s.WriteByte((byte)algorithm);
+            s.WriteByte((byte)hash_algorithm);
+            s.WriteByte((byte)mgf_algorithm);
+            s.Write(wrapped_key.Span);
             s.Write(digest.Span);
         }
     }

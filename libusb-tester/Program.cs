@@ -104,7 +104,7 @@ namespace libusb_tester
                 }
             }
         }
-        static void Run1(string[] args)
+        static void Run0(string[] args)
         {
             using (var usb_ctx = new UsbContext())
             {
@@ -318,7 +318,7 @@ namespace libusb_tester
         {
             return test_utf8_points(Encoding.UTF8.GetBytes(str));
         }
-        static void Run0(string[] args)
+        static void Run(string[] args)
         {
             var scp03_context = new Scp03Context("password");
             using (var usb_ctx = new UsbContext())
@@ -335,9 +335,26 @@ namespace libusb_tester
                             {
                                 using (var scp03_session = scp03_context.CreateSession(usb_session, 1))
                                 {
+                                    var pair = Scp11Context.GenerateRsaKeyPair(2048);
+                                    var rsa = (RsaKeyParameters)pair.Public;
+                                    var crt = (RsaPrivateCrtKeyParameters)pair.Private;
+                                    var p = crt.P.ToByteArrayUnsigned();
+                                    var q = crt.Q.ToByteArrayUnsigned();
+                                    var n = rsa.Modulus.ToByteArrayUnsigned();
+                                    var e = rsa.Exponent.ToByteArrayUnsigned();
+
                                     var fred_id = Context.GenerateX25519Key(scp03_session, 11);
                                     var fred_pub = Context.GetPubKey(scp03_session, 11, out var fred_algo).ToArray();
 
+                                    Context.PutWrapKey(scp03_session, 555, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
+                                    Context.PutPublicWrapKey(scp03_session, 556, AlgoFromBitLength(rsa.Modulus.BitLength), n);
+                                    
+                                    var wrapped = Context.ExportRsaWrapped(scp03_session, 556, ObjectType.AsymmetricKey, 11, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, new byte[32]).ToArray();
+                                    Context.ImportRsaWrapped(scp03_session, 555, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, wrapped, new byte[32], ObjectType.AsymmetricKey, 11);
+                                    
+                                    wrapped = Context.GetRsaWrapped(scp03_session, 556, ObjectType.AsymmetricKey, 11, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, new byte[32]).ToArray();
+                                    Context.PutRsaWrapped(scp03_session, 555, ObjectType.AsymmetricKey, 11, Algorithm.None, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, wrapped, new byte[32], ObjectType.AsymmetricKey, 11);
+                                                                    
                                     var alice_priv = Convert.FromHexString("77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a");
                                     var alice_id = Context.PutX25519Key(scp03_session, 9, alice_priv);
                                     var alice_pub = Context.GetPubKey(scp03_session, 9, out var alice_algo).ToArray();
@@ -486,7 +503,7 @@ namespace libusb_tester
                 }
             }
         }
-        static void Run(string[] args)
+        static void Run1(string[] args)
         {
             /*
             Console.WriteLine("get_padded_len");
@@ -570,8 +587,18 @@ namespace libusb_tester
             using (var usb_ctx = new UsbContext())
             {
                 foreach (var device in usb_ctx.GetDeviceList())
-                { 
-                    Console.WriteLine($"Id {device.Id} Vendor 0x{device.Vendor:x} Product 0x{device.Product:x} Configuration {device.Configuration} IsCCID {device.IsCCID}");
+                {
+                    if (device.IsCCID || device.IsYubiHsm)
+                    {
+                        Console.WriteLine($"Id {device.Id} Vendor 0x{device.Vendor:x} Product 0x{device.Product:x} Configuration {device.Configuration} IsCCID {device.IsCCID}");
+                        foreach (var x in device.interface_descriptors)
+                        {
+                            foreach (var y in x.endpoint_descriptors)
+                            {
+                                Console.WriteLine($"{x.interface_descriptor.bInterfaceNumber} ({x.interface_descriptor.bInterfaceClass}.{x.interface_descriptor.bInterfaceSubClass}.{x.interface_descriptor.bInterfaceProtocol}): {y.bEndpointAddress:X} ({y.wMaxPacketSize})");
+                            }
+                        }
+                    }
                     if (device.IsYubiHsm)
                     {
                         using (var usb_device = usb_ctx.Open(device, device.Configuration))
@@ -670,7 +697,7 @@ namespace libusb_tester
                                     foreach (var b in pub)
                                         Console.Write($"{b:x2}");
                                     Console.WriteLine();
-                                    var id3 = Context.GenerateEcP256Key(scp03_session, 7);
+                                    var id3 = Context.GenerateEcKey(scp03_session, Algorithm.EC_P256, 7);
                                     Context.SignEcdsa(scp03_session, 7);
                                     var id4 = Context.GenerateEd25519Key(scp03_session, 8);
                                     Context.SignEddsa(scp03_session, 8);
