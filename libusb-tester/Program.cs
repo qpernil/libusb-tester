@@ -13,6 +13,7 @@ using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto.Encodings;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.X509;
 
 namespace libusb_tester
@@ -348,13 +349,27 @@ namespace libusb_tester
 
                                     Context.PutWrapKey(scp03_session, 555, AlgoFromBitLength(crt.Modulus.BitLength), p.Concat(q).ToArray());
                                     Context.PutPublicWrapKey(scp03_session, 556, AlgoFromBitLength(rsa.Modulus.BitLength), n);
+
+                                    var digest = new Sha256Digest();
+                                    var hash = new byte[digest.GetDigestSize()];
+                                    digest.BlockUpdate("OAEP Label");
+                                    digest.DoFinal(hash, 0);
                                     
-                                    var wrapped = Context.ExportRsaWrapped(scp03_session, 556, ObjectType.AsymmetricKey, 11, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, new byte[32]).ToArray();
-                                    Context.ImportRsaWrapped(scp03_session, 555, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, wrapped, new byte[32], ObjectType.AsymmetricKey, 11);
+                                    var wrapped = Context.ExportRsaWrapped(scp03_session, 556, ObjectType.AsymmetricKey, 11, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, hash).ToArray();
+                                    Context.ImportRsaWrapped(scp03_session, 555, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, wrapped, hash, ObjectType.AsymmetricKey, 11);
                                     
-                                    wrapped = Context.GetRsaWrapped(scp03_session, 556, ObjectType.AsymmetricKey, 11, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, new byte[32]).ToArray();
-                                    Context.PutRsaWrapped(scp03_session, 555, ObjectType.AsymmetricKey, 11, Algorithm.None, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, wrapped, new byte[32], ObjectType.AsymmetricKey, 11);
-                                                                    
+                                    wrapped = Context.GetRsaWrapped(scp03_session, 556, ObjectType.AsymmetricKey, 11, Algorithm.AES_256, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, hash).ToArray();
+                                    Context.PutRsaWrapped(scp03_session, 555, ObjectType.AsymmetricKey, 11, Algorithm.None, Algorithm.RSA_OAEP_SHA256, Algorithm.MGF1_SHA256, wrapped, hash, ObjectType.AsymmetricKey, 11);
+
+                                    /*
+                                    var engine = new RsaEngine();
+                                    engine.Init(false, crt);
+                                    var cipher = new OaepEncoding(engine, new Sha256Digest(), new Sha256Digest(), hash);
+
+                                    var len = crt.Modulus.GetLengthofByteArrayUnsigned();
+                                    var dec = cipher.ProcessBlock(wrapped, 0, len);
+                                    */
+                                    
                                     var alice_priv = Convert.FromHexString("77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a");
                                     var alice_id = Context.PutX25519Key(scp03_session, 9, alice_priv);
                                     var alice_pub = Context.GetPubKey(scp03_session, 9, out var alice_algo).ToArray();
@@ -443,7 +458,6 @@ namespace libusb_tester
                                         Console.WriteLine($"{lib.GetInfo().ManufacturerId} {lib.GetInfo().LibraryDescription}");
                                         foreach (var slot in lib.GetSlotList(SlotsType.WithTokenPresent))
                                         {
-                                            Console.WriteLine($"{slot.GetTokenInfo().Label}");
                                             using (var s = slot.OpenSession(SessionType.ReadWrite))
                                             {
                                                 s.Login(CKU.CKU_USER, "123456");
@@ -454,6 +468,7 @@ namespace libusb_tester
                                                                                 factories.ObjectAttributeFactory.Create(CKA.CKA_EXTRACTABLE, false),
                                                                                 factories.ObjectAttributeFactory.Create(CKA.CKA_TOKEN, true)});
 
+                                                Console.WriteLine($"{slot.GetTokenInfo().Label}: Found {keys.Count} keys");
                                                 if (keys.Count > 0)
                                                 {
                                                     var label = s.GetAttributeValue(keys[0], new List<CKA> { CKA.CKA_LABEL })[0].GetValueAsString();
@@ -490,8 +505,6 @@ namespace libusb_tester
                                                     Console.WriteLine();
 
                                                     Console.WriteLine();
-
-                                                    break;
                                                 }
                                             }
                                         }

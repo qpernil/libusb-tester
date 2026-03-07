@@ -17,7 +17,7 @@ namespace libusb
                 {
                     var desc_len = Marshal.ReadByte(extra);
                     var desc_type = Marshal.ReadByte(extra + 1);
-                    Console.WriteLine($"{obj} - {len}:{extra:X} Extra {desc_type:X} {desc_len}");
+                    //Console.WriteLine($"{obj} - {len}:{extra:X} Extra {desc_type:X} {desc_len}");
                     extra += desc_len;
                     len -= desc_len;
                 }
