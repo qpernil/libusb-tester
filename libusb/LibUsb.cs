@@ -264,9 +264,9 @@ namespace libusb
             return $"{Marshal.PtrToStringUTF8(strerror(code))} ({code})";
         }
 
-        public LibUsb(string libraryPath = "libusb-1.0")
+        public LibUsb(string library = null)
         {
-            libusb = new SafeNativeLibrary(libraryPath);
+            libusb = new SafeNativeLibrary(library ?? "libusb-1.0", library ?? "/usr/local/lib/libusb-1.0.dylib", library ?? "libusb-1.0");
             libusb.GetExport(out init);
             libusb.GetExport(out exit);
             libusb.GetExport(out strerror);
